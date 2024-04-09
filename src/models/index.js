@@ -1,0 +1,9 @@
+module.exports.Token = require('./token.model');
+module.exports.User = require('./user.model');
+module.exports.ActiveDay = require('./activeDay.model');
+module.exports.InventoryProduct = require('./inventoryProduct.model');
+module.exports.SalesProduct = require('./salesProduct.model');
+module.exports.Sales = require('./sales.model');
+module.exports.Inventory = require('./inventory.model');
+module.exports.Credit = require('./credit.model');
+module.exports.Order = require('./order.model');
