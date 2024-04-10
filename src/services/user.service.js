@@ -29,12 +29,12 @@ const getUserById = async (id) => {
 
 
 /**
- * Get user by username
- * @param {string} username
+ * Get user by phone
+ * @param {string} phone
  * @returns {Promise<User>}
  */
-const getUserByUserName = async (username) => {
-    return User.findOne({username});
+const getUserByPhone = async (phone) => {
+    return User.findOne({phone});
 };
 
 /**
@@ -74,7 +74,7 @@ module.exports = {
     createUser,
     queryUsers,
     getUserById,
-    getUserByUserName,
+    getUserByPhone,
     updateUserById,
     deleteUserById,
 };

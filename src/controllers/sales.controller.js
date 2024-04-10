@@ -1,6 +1,6 @@
 const httpStatus = require('http-status');
 
-const {Inventory, InventoryProduct, SalesProduct, Sales, Credit} = require('../models');
+const {InventoryProduct, SalesProduct, Sales, Credit} = require('../models');
 const catchAsync = require('../utils/catchAsync');
 const {checkActive} = require('./activeDay.controller');
 
@@ -63,7 +63,7 @@ const newSales = catchAsync(async (req, res) => {
 
     // if not fully paid, create new credit
     if (!isFullyPaid) {
-        const credit = await Credit.create({sales: sales.id, totalAmount: totalPrice - amountPaid});
+        const credit = await Credit.create({sales: sales.id, totalAmount: totalPrice - amountPaid, description});
 
         if (!credit) {
             return res.status(httpStatus.CREATED).json({

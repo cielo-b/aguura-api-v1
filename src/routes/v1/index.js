@@ -1,7 +1,14 @@
 const express = require('express');
 
 const authRoute = require('./auth.route');
-const reportRoute = require('./report.route');
+const activeDayRoute = require('./activeDay.route');
+const creditRoute = require('./credit.route');
+const inventoryRoute = require('./inventory.route');
+const inventoryProductRoute = require('./inventoryProduct.route');
+const orderRoute = require('./order.route');
+const salesRoute = require('./sales.route');
+const salesProductRoute = require('./salesProduct.route');
+
 const docsRoute = require('./docs.route');
 
 const router = express.Router();
@@ -12,9 +19,34 @@ const defaultRoutes = [
         route: authRoute,
     },
     {
-        path: '/report',
-        route: reportRoute,
+        path: '/active-day',
+        route: activeDayRoute,
     },
+    {
+        path: '/credit',
+        route: creditRoute,
+    },
+    {
+        path: '/inventory',
+        route: inventoryRoute,
+    },
+    {
+        path: '/inventory-product',
+        route: inventoryProductRoute,
+    },
+    {
+        path: '/order',
+        route: orderRoute,
+    },
+    {
+        path: '/sales',
+        route: salesRoute,
+    },
+    {
+        path: '/sales-product',
+        route: salesProductRoute,
+    },
+
     {
         path: '/docs',
         route: docsRoute,

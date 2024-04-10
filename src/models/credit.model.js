@@ -20,11 +20,16 @@ const creditSchema = mongoose.Schema(
             required: true,
         },
 
+        description: {
+            type: String,
+            required: true,
+        },
+
         isFullyPaid: {
             type: Boolean,
             required: true,
             default: false
-        }
+        },
     },
     {
         timestamps: true,

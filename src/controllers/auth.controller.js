@@ -3,13 +3,36 @@ const catchAsync = require('../utils/catchAsync');
 const {authService, userService, tokenService} = require('../services');
 const {Token, User} = require('../models');
 
-const register = catchAsync(async (req, res) => {
-    const reqBody = req.body;
 
-    if (await User.isUsernameTaken(reqBody.username)) {
+const adminRegister = catchAsync(async (req, res) => {
+
+    const {password, phone, fullName} = req.body;
+
+    if (await User.isPhoneTaken(phone)) {
         return res.status(httpStatus.BAD_REQUEST).json({
             success: false,
-            message: 'Username already taken.'
+            message: 'Phone already taken.'
+        });
+    }
+
+    const user = await User.create({password, phone, fullName, role: 'admin'});
+    const tokens = await tokenService.generateAuthTokens(user);
+    res.status(httpStatus.CREATED).json({
+        success: true,
+        tokens,
+        user
+    });
+});
+
+
+const register = catchAsync(async (req, res) => {
+
+    const reqBody = req.body;
+
+    if (await User.isPhoneTaken(reqBody.phone)) {
+        return res.status(httpStatus.BAD_REQUEST).json({
+            success: false,
+            message: 'Phone already taken.'
         });
     }
 
@@ -23,8 +46,8 @@ const register = catchAsync(async (req, res) => {
 });
 
 const login = catchAsync(async (req, res) => {
-    const {username, password} = req.body;
-    const user = await authService.loginWithUsernameAndPassword(username, password);
+    const {phone, password} = req.body;
+    const user = await authService.loginWithPhoneAndPassword(phone, password);
 
     const token = await Token.findOne({user: user.id});
 
@@ -89,6 +112,7 @@ const resetPassword = catchAsync(async (req, res) => {
 
 
 module.exports = {
+    adminRegister,
     register,
     login,
     logout,
