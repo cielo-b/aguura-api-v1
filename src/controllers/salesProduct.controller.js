@@ -17,7 +17,7 @@ const newProduct = catchAsync(async (req, res) => {
         });
     }
 
-    const existingProduct = await SalesProduct.find({inventoryProducd: inventoryProductId});
+    const existingProduct = await SalesProduct.findOne({inventoryProduct: inventoryProductId});
     if (existingProduct) {
         return res.status(httpStatus.BAD_REQUEST).json({
             success: false,
@@ -25,7 +25,7 @@ const newProduct = catchAsync(async (req, res) => {
         });
     }
 
-    const newProduct = await SalesProduct.create({InventoryProduct: inventoryProductId, price});
+    const newProduct = await SalesProduct.create({inventoryProduct: inventoryProductId, price});
 
     return res.status(httpStatus.CREATED).json({
         success: true,
@@ -67,8 +67,9 @@ const allProducts = catchAsync(async (req, res) => {
 
     for (let i = 0; i < products.length; i++) {
         resProducts.push({
-            name: products[i].inventoryProducd.name,
-            price: products[i].price
+            name: products[i].inventoryProduct.name,
+            price: products[i].price,
+            id: products[i]._id
         });
     }
 

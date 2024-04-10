@@ -5,6 +5,7 @@ const salesProductSchema = mongoose.Schema(
     {
         inventoryProduct: {
             type: mongoose.SchemaTypes.ObjectId,
+            ref: 'InventoryProduct',
             required: true,
             trim: true,
         },

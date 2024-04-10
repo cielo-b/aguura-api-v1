@@ -9,7 +9,7 @@ const newProduct = catchAsync(async (req, res) => {
     const {name, price} = req.body;
     const productName = name.replace(/\s/g, '').toLowerCase();
 
-    const product = await InventoryProduct.find({productName});
+    const product = await InventoryProduct.findOne({productName});
 
     if (product) {
         return res.status(httpStatus.BAD_REQUEST).json({
@@ -18,7 +18,7 @@ const newProduct = catchAsync(async (req, res) => {
         });
     }
 
-    const newProduct = await InventoryProduct.create({name, price});
+    const newProduct = await InventoryProduct.create({name, price, productName});
 
     return res.status(httpStatus.CREATED).json({
         success: true,
@@ -44,20 +44,12 @@ const editProduct = catchAsync(async (req, res) => {
     const {name, price} = req.body;
     const productName = name.replace(/\s/g, '').toLowerCase();
 
-    const existingProduct = await InventoryProduct.find({productName});
-
-    if (existingProduct) {
-        return res.status(httpStatus.BAD_REQUEST).json({
-            success: false,
-            message: 'Product already exist.',
-        });
-    }
-
     const pName = name ? name : product.name;
     const pPrice = price ? price : product.price;
 
     product.name = pName;
     product.price = pPrice;
+    product.productName = productName
 
     await product.save({validateBeforeSave: false});
 

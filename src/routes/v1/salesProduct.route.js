@@ -4,8 +4,8 @@ const {salesProductController} = require('../../controllers');
 
 const router = express.Router();
 
-router.post('/new-sales-product', auth('admin'), salesProductController.newProduct);
-router.patch('/edit-sales-product', auth('admin'), salesProductController.editProduct);
-router.get('/all-sales-products', auth('admin'), salesProductController.allProducts);
+router.post('/new-product', auth('admin'), salesProductController.newProduct);
+router.patch('/edit-product/:productId', auth('admin'), salesProductController.editProduct);
+router.get('/all-products', auth('admin'), salesProductController.allProducts);
 
 module.exports = router;
