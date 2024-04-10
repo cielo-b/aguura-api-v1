@@ -79,10 +79,32 @@ const allProducts = catchAsync(async (req, res) => {
     });
 });
 
+const availableProducts = catchAsync(async (req, res) => {
+
+    const products = await SalesProduct.find({}).populate('inventoryProduct');
+    let resProducts = [];
+
+    for (let i = 0; i < products.length; i++) {
+        if (products[i].inventoryProduct.totalAvailable > 0) {
+            resProducts.push({
+                name: products[i].inventoryProduct.name,
+                price: products[i].price,
+                id: products[i]._id
+            });
+        }
+    }
+
+    return res.status(httpStatus.OK).json({
+        success: true,
+        products: resProducts
+    });
+});
+
 
 
 module.exports = {
     newProduct,
     editProduct,
-    allProducts
+    allProducts,
+    availableProducts
 };
