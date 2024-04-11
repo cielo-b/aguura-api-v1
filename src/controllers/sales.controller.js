@@ -62,7 +62,7 @@ const newSales = catchAsync(async (req, res) => {
 
     // if not fully paid, create new credit
     if (!isFullyPaid) {
-        const credit = await Credit.create({sales: sales.id, totalAmount: totalPrice - amountPaid, description});
+        const credit = await Credit.create({sales: sales.id, totalAmount: totalPrice - amountPaid, description, customerName, customerPhone});
 
         if (!credit) {
             return res.status(httpStatus.CREATED).json({

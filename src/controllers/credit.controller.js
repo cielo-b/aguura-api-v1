@@ -18,8 +18,8 @@ const payCredit = catchAsync(async (req, res) => {
         });
     }
 
-    credit.amountPaid += amount;
-    sales.amountPaid += amount;
+    credit.amountPaid = parseInt(credit.amountPaid) + parseInt(amount);
+    sales.amountPaid += parseInt(sales.amountPaid) + parseInt(amount);
 
     if (credit.amountPaid >= credit.totalAmount) {
         credit.isFullyPaid = true;
@@ -31,8 +31,7 @@ const payCredit = catchAsync(async (req, res) => {
     await credit.save({validateBeforeSave: false});
     await sales.save({validateBeforeSave: false});
 
-
-    return res.status(httpStatus.CREATED).json({
+    return res.status(httpStatus.OK).json({
         success: true,
         message: 'Credit paid successfully.',
     });

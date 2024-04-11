@@ -144,6 +144,17 @@ const getActiveDay = catchAsync(async (req, res) => {
     });
 });
 
+const getActiveDays = catchAsync(async (req, res) => {
+
+    const activeDays = await ActiveDay.find({});
+
+    return res.status(httpStatus.OK).json({
+        success: true,
+        message: 'Days found successfully.',
+        activeDays
+    });
+});
+
 const startDay = catchAsync(async (req, res) => {
 
     const activeDay = await ActiveDay.findOne({isActive: true});
@@ -195,10 +206,13 @@ const endDay = catchAsync(async (req, res) => {
     });
 });
 
+
+
 module.exports = {
     checkActive,
     checkDay,
     getActiveDay,
+    getActiveDays,
     startDay,
     endDay,
     generatePDF

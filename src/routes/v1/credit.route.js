@@ -4,7 +4,7 @@ const {credidController} = require('../../controllers');
 
 const router = express.Router();
 
-router.post('/pay-credit', auth('admin'), credidController.payCredit);
+router.post('/pay', auth('admin'), credidController.payCredit);
 router.get('/all-credits', auth('admin'), credidController.adminCredits);
 
 module.exports = router;

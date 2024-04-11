@@ -30,6 +30,15 @@ const creditSchema = mongoose.Schema(
             required: true,
             default: false
         },
+
+        customerName: {
+            type: String,
+            required: true,
+        },
+
+        customerPhone: {
+            type: String,
+        }
     },
     {
         timestamps: true,

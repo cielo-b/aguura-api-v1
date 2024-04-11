@@ -73,7 +73,7 @@ const allInventory = catchAsync(async (req, res) => {
 
     return res.status(httpStatus.OK).json({
         success: true,
-        products: products.flat()
+        inventories: products.flat()
     });
 });
 
@@ -100,7 +100,7 @@ const dailyInventory = catchAsync(async (req, res) => {
 
     return res.status(httpStatus.OK).json({
         success: true,
-        products: products.flat()
+        inventories: products.flat()
     });
 });
 
