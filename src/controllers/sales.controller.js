@@ -109,8 +109,30 @@ const dailySales = catchAsync(async (req, res) => {
 
 });
 
+const salesStats = catchAsync(async (req, res) => {
+    const sales = await Sales.find({}, {activeDay: 0, products: 0});
+
+    let totalSales = 0;
+    let totalAmountSold = 0;
+
+    sales.forEach(sale => {
+        totalSales++;
+        totalAmountSold += sale.totalPrice;
+    });
+
+    return res.status(httpStatus.OK).json({
+        success: true,
+        stats: {
+            totalSales,
+            totalAmountSold
+        }
+    });
+});
+
+
 module.exports = {
     newSales,
     allSales,
-    dailySales
+    dailySales,
+    salesStats
 };

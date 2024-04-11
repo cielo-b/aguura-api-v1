@@ -104,8 +104,29 @@ const dailyInventory = catchAsync(async (req, res) => {
     });
 });
 
+const inventoryStats = catchAsync(async (req, res) => {
+    const inventories = await Inventory.find({}, {activeDay: 0, products: 0});
+
+    let totalInventory = 0;
+    let totalAmount = 0;
+
+    inventories.forEach(i => {
+        totalInventory++;
+        totalAmount += i.totalPrice;
+    });
+
+    return res.status(httpStatus.OK).json({
+        success: true,
+        stats: {
+            totalInventory,
+            totalAmount
+        }
+    });
+});
+
 module.exports = {
     newInventory,
     allInventory,
-    dailyInventory
+    dailyInventory,
+    inventoryStats
 };
