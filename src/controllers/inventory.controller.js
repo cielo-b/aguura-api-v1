@@ -2,13 +2,11 @@ const httpStatus = require('http-status');
 
 const {Inventory, InventoryProduct} = require('../models');
 const catchAsync = require('../utils/catchAsync');
-const {checkActive} = require('./activeDay.controller');
+const {checkActive, checkDay} = require('./activeDay.controller');
 
 const newInventory = catchAsync(async (req, res) => {
 
-    const dayId = req.params.dayId
-
-    const activeDay = await checkActive(dayId);
+    const activeDay = await checkDay();
 
     if (!activeDay) {
         return res.status(httpStatus.BAD_REQUEST).json({
@@ -37,7 +35,7 @@ const newInventory = catchAsync(async (req, res) => {
         totalPrice += inventoryProduct.totalPrice;
     }
 
-    const inventory = await Inventory.create({activeDay: dayId, products, totalPrice});
+    const inventory = await Inventory.create({activeDay: activeDay.id, products, totalPrice});
 
     if (!inventory) {
         return res.status(httpStatus.BAD_REQUEST).json({
@@ -51,7 +49,7 @@ const newInventory = catchAsync(async (req, res) => {
         let reqProduct = reqProducts[i];
         let product = await InventoryProduct.findById(reqProduct.id);
 
-        product.totalAvailable = product.totalAvailable + reqProduct.quantity;
+        product.totalAvailable += parseInt(reqProduct.quantity);
         await product.save({validateBeforeSave: false});
     }
 

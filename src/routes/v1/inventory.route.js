@@ -4,7 +4,7 @@ const {inventoryController} = require('../../controllers');
 
 const router = express.Router();
 
-router.post('/new-inventory', auth('admin'), inventoryController.newInventory);
+router.post('/new', auth('admin'), inventoryController.newInventory);
 router.get('/all-inventories', auth('admin'), inventoryController.allInventory);
 router.get('/daily-inventory/day/:dayId', auth('admin'), inventoryController.dailyInventory);
 

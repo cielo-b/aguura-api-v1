@@ -7,7 +7,7 @@ const activeDaySchema = mongoose.Schema(
             type: String,
             required: true,
             trim: true,
-            default: () => new Date().getDate() + ' -- ' + new Date().getDay()
+            default: () => new Date().getDate() + '-' + new Date().getMonth() + '-' + new Date().getFullYear()
         },
 
         isActive: {

@@ -85,11 +85,12 @@ const availableProducts = catchAsync(async (req, res) => {
     let resProducts = [];
 
     for (let i = 0; i < products.length; i++) {
-        if (products[i].inventoryProduct.totalAvailable > 0) {
+        if (parseInt(products[i].inventoryProduct.totalAvailable) > 0) {
             resProducts.push({
                 name: products[i].inventoryProduct.name,
                 price: products[i].price,
-                id: products[i]._id
+                id: products[i]._id,
+                number: products[i].inventoryProduct.totalAvailable
             });
         }
     }

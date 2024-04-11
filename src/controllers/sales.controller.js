@@ -2,15 +2,14 @@ const httpStatus = require('http-status');
 
 const {InventoryProduct, SalesProduct, Sales, Credit} = require('../models');
 const catchAsync = require('../utils/catchAsync');
-const {checkActive} = require('./activeDay.controller');
+const {checkActive, checkDay} = require('./activeDay.controller');
+const formatNumber = require('../utils/numberFormat');
 
 const newSales = catchAsync(async (req, res) => {
 
-    const dayId = req.params.dayId;
-
     const {products: reqProducts, isFullyPaid, customerName, customerPhone, amountPaid} = req.body;
 
-    const activeDay = await checkActive(dayId);
+    const activeDay = await checkDay();
 
     if (!activeDay) {
         return res.status(httpStatus.BAD_REQUEST).json({
@@ -36,13 +35,13 @@ const newSales = catchAsync(async (req, res) => {
 
         products.push(salesProduct);
         totalPrice += salesProduct.totalPrice;
-        description = description + `${salesProduct.name}: ${salesProduct.quantity} x ${salesProduct.unitPrice} = ${salesProduct.totalPrice} \n`;
+        description = description + `${salesProduct.name}: ${formatNumber(salesProduct.quantity)} x ${formatNumber(salesProduct.unitPrice)} = ${formatNumber(salesProduct.totalPrice)} \n`;
     }
 
     // handle amount
     let amount = isFullyPaid ? totalPrice : amountPaid;
 
-    const sales = await Sales.create({activeDay: dayId, products, totalPrice, isFullyPaid, customerName, customerPhone, amountPaid: amount});
+    const sales = await Sales.create({activeDay: activeDay.id, products, totalPrice, isFullyPaid, customerName, customerPhone, amountPaid: amount, description});
 
     if (!sales) {
         return res.status(httpStatus.BAD_REQUEST).json({

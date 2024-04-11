@@ -4,7 +4,8 @@ const {activeDayController} = require('../../controllers');
 
 const router = express.Router();
 
-router.post('/start-day', auth('admin'), activeDayController.startDay);
-router.patch('/end-day/day/:id', auth('admin'), activeDayController.endDay);
+router.get('/active', auth('admin'), activeDayController.getActiveDay);
+router.post('/start', auth('admin'), activeDayController.startDay);
+router.patch('/end/:id', auth('admin'), activeDayController.endDay);
 
 module.exports = router;

@@ -7,6 +7,6 @@ const router = express.Router();
 router.post('/new-product', auth('admin'), salesProductController.newProduct);
 router.patch('/edit-product/:productId', auth('admin'), salesProductController.editProduct);
 router.get('/all-products', auth('admin'), salesProductController.allProducts);
-router.get('/available-products', auth([]), salesProductController.availableProducts);
+router.get('/available-products', auth(), salesProductController.availableProducts);
 
 module.exports = router;
