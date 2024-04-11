@@ -2,6 +2,8 @@ const httpStatus = require('http-status');
 
 const {InventoryProduct, SalesProduct, Sales, Credit, User, Order, ActiveDay} = require('../models');
 const catchAsync = require('../utils/catchAsync');
+const formatNumber = require('../utils/formatNumber');
+const {checkDay} = require('./activeDay.controller');
 
 const newOrder = catchAsync(async (req, res) => {
 
@@ -17,12 +19,14 @@ const newOrder = catchAsync(async (req, res) => {
 
     let products = [];
     let totalPrice = 0;
+    let description = ``;
 
     for (let i = 0; i < reqProducts.length; i++) {
         let reqProduct = reqProducts[i];
         let product = await SalesProduct.findById(reqProduct.id).populate('inventoryProduct');
 
         const salesProduct = {
+            id: product.id,
             name: product.inventoryProduct.name,
             quantity: reqProduct.quantity,
             unitPrice: product.inventoryProduct.price,
@@ -31,9 +35,11 @@ const newOrder = catchAsync(async (req, res) => {
 
         products.push(salesProduct);
         totalPrice += salesProduct.totalPrice;
+        description = description + `${salesProduct.name}: ${formatNumber(salesProduct.quantity)} x ${formatNumber(salesProduct.unitPrice)} = ${formatNumber(salesProduct.totalPrice)} \n`;
+
     }
 
-    const order = await Order.create({totalPrice, products});
+    const order = await Order.create({totalPrice, products, description, customer: user.id});
 
     if (!order) {
         return res.status(httpStatus.BAD_REQUEST).json({
@@ -87,7 +93,7 @@ const editOrder = catchAsync(async (req, res) => {
 
         products.push(salesProduct);
         totalPrice += salesProduct.totalPrice;
-        description = description + `${salesProduct.name}: ${salesProduct.quantity} x ${salesProduct.unitPrice} = ${salesProduct.totalPrice} \n`;
+        description = description + `${salesProduct.name}: ${formatNumber(salesProduct.quantity)} x ${formatNumber(salesProduct.unitPrice)} = ${formatNumber(salesProduct.totalPrice)} \n`;
     }
 
     const order = await Order.create({totalPrice, products, description});
@@ -108,15 +114,6 @@ const editOrder = catchAsync(async (req, res) => {
 
 const completeOrder = catchAsync(async (req, res) => {
 
-    const user = await User.findById(req.user._id);
-
-    if (!user) {
-        return res.status(httpStatus.BAD_REQUEST).json({
-            success: false,
-            message: 'User not found.'
-        });
-    }
-
     const order = await Order.findById(req.params.id).populate('customer');
     if (!order) {
         return res.status(httpStatus.BAD_REQUEST).json({
@@ -125,14 +122,14 @@ const completeOrder = catchAsync(async (req, res) => {
         });
     }
 
-    const activeDay = await ActiveDay.find({isActive: true});
+    const activeDay = await checkDay();
 
-    const {isFullyPaid, amountPaid} = req.body;
+    const {amountPaid} = req.body;
 
     // handle amount
-    let amount = isFullyPaid ? order.totalPrice : amountPaid;
+    let paid = order.totalPrice === amountPaid;
 
-    const sales = await Sales.create({activeDay: activeDay.id, products: order.products, totalPrice: order.totalPrice, isFullyPaid, customerName: customer.fullName, customerPhone: customer.phone, amountPaid: amount, description: order.description});
+    const sales = await Sales.create({activeDay: activeDay.id, products: order.products, totalPrice: order.totalPrice, isFullyPaid: paid, customerName: order.customer.fullName, customerPhone: order.customer.phone, amountPaid, description: order.description});
 
     if (!sales) {
         return res.status(httpStatus.BAD_REQUEST).json({
@@ -152,8 +149,8 @@ const completeOrder = catchAsync(async (req, res) => {
     }
 
     // if not fully paid, create new credit
-    if (!isFullyPaid) {
-        const credit = await Credit.create({sales: sales.id, totalAmount: totalPrice - amountPaid});
+    if (!paid) {
+        const credit = await Credit.create({sales: sales.id, totalAmount: order.totalPrice - amountPaid, customerName: order.customer.fullName, description: order.description});
 
         if (!credit) {
             return res.status(httpStatus.CREATED).json({
@@ -184,7 +181,7 @@ const myOrders = catchAsync(async (req, res) => {
         });
     }
 
-    const orders = await Order.find({customer: user.id}, {products: 0});
+    const orders = await Order.find({customer: user.id});
 
     return res.status(httpStatus.OK).json({
         success: true,
@@ -195,8 +192,17 @@ const myOrders = catchAsync(async (req, res) => {
 
 const adminOrders = catchAsync(async (req, res) => {
 
-    const orders = await Order.find({isCompleted: req.query.isCompleted}, {products: 0});
-
+    let orders = await Order.find({isCompleted: req.query.isCompleted}, {products: 0}).populate('customer');
+    orders = orders.map(o => {
+        return {
+            name: o.customer.fullName,
+            description: o.description,
+            id: o.id,
+            isCompleted: o.isCompleted,
+            isFullyPaid: o.isFullyPaid,
+            totalPrice: o.totalPrice,
+        };
+    });
     return res.status(httpStatus.OK).json({
         success: true,
         orders

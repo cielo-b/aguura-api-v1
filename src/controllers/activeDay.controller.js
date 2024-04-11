@@ -6,7 +6,7 @@ const path = require('path');
 const {ActiveDay, Inventory, Sales, InventoryProduct} = require('../models');
 const catchAsync = require('../utils/catchAsync');
 const config = require('../config/config');
-const formatNumber = require('../utils/numberFormat');
+const formatNumber = require('../utils/formatNumber');
 
 const generatePDF = async (activeDay) => {
 

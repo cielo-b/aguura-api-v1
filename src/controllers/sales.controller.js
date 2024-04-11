@@ -3,7 +3,7 @@ const httpStatus = require('http-status');
 const {InventoryProduct, SalesProduct, Sales, Credit} = require('../models');
 const catchAsync = require('../utils/catchAsync');
 const {checkActive, checkDay} = require('./activeDay.controller');
-const formatNumber = require('../utils/numberFormat');
+const formatNumber = require('../utils/formatNumber');
 
 const newSales = catchAsync(async (req, res) => {
 
