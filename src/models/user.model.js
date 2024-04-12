@@ -34,6 +34,7 @@ const userSchema = mongoose.Schema(
 
         role: {
             type: String,
+            required: true,
             enum: roles,
         }
     },

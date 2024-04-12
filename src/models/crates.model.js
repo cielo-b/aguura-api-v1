@@ -3,6 +3,12 @@ const {toJSON} = require('./plugins');
 
 const cratesSchema = mongoose.Schema(
     {
+        activeDay: {
+            type: mongoose.SchemaTypes.ObjectId,
+            ref: 'ActiveDay',
+            required: true,
+        },
+
         products: [
             {
                 id: {

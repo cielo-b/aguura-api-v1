@@ -43,6 +43,7 @@ app.use(compression());
 app.use(cors({
     origin: [
         'http://localhost:5173',
+        'https://stock-frontend-mocha.vercel.app'
     ]
 }));
 

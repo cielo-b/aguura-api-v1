@@ -8,3 +8,5 @@ module.exports.Inventory = require('./inventory.model');
 module.exports.Credit = require('./credit.model');
 module.exports.Order = require('./order.model');
 module.exports.Crates = require('./crates.model');
+module.exports.Payment = require('./payment.model');
+module.exports.PaymentMethod = require('./paymentMethod.model');

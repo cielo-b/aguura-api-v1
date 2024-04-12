@@ -17,7 +17,6 @@ const superAdminRegister = catchAsync(async (req, res) => {
     }
 
     const user = await userService.createUser(reqBody);
-    console.log(user);
     const tokens = await tokenService.generateAuthTokens(user);
     res.status(httpStatus.CREATED).json({
         success: true,
@@ -30,6 +29,7 @@ const adminRegister = catchAsync(async (req, res) => {
 
     let reqBody = req.body;
     reqBody.role = 'admin';
+    console.log(reqBody);
 
     if (await User.isPhoneTaken(phone)) {
         return res.status(httpStatus.BAD_REQUEST).json({
@@ -39,6 +39,7 @@ const adminRegister = catchAsync(async (req, res) => {
     }
 
     const user = await userService.createUser(reqBody);
+    console.log(user);
     const tokens = await tokenService.generateAuthTokens(user);
     res.status(httpStatus.CREATED).json({
         success: true,
@@ -113,10 +114,11 @@ const logout = catchAsync(async (req, res) => {
 });
 
 const refreshTokens = catchAsync(async (req, res) => {
-    console.log('reqested');
     const tokens = await authService.refreshAuth(req.body.refreshToken);
-    console.log(tokens);
-    res.send({...tokens});
+    return res.status(httpStatus.OK).json({
+        success: true,
+        tokens
+    });
 });
 
 const forgotPassword = catchAsync(async (req, res) => {
