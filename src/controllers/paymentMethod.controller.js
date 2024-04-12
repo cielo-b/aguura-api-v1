@@ -1,0 +1,84 @@
+const httpStatus = require('http-status');
+
+const {PaymentMethod} = require('../models');
+const catchAsync = require('../utils/catchAsync');
+
+
+const newMethod = catchAsync(async (req, res) => {
+
+    const {name} = req.body;
+    const methodName = name.replace(/\s/g, '').toLowerCase();
+
+    const method = await PaymentMethod.findOne({methodName});
+
+    if (method) {
+        return res.status(httpStatus.BAD_REQUEST).json({
+            success: false,
+            message: 'Method already exist.',
+        });
+    }
+
+    const newMethod = await PaymentMethod.create({name, methodName});
+
+    return res.status(httpStatus.CREATED).json({
+        success: true,
+        message: 'method created successfully.',
+        method: newMethod
+    });
+
+});
+
+
+const editMethod = catchAsync(async (req, res) => {
+
+    const method = await PaymentMethod.findById(req.params.methodId);
+
+    if (!method) {
+        return res.status(httpStatus.BAD_REQUEST).json({
+            success: false,
+            message: 'method not found.',
+        });
+    }
+
+
+    const {name} = req.body;
+    const methodName = name.replace(/\s/g, '').toLowerCase();
+
+    const _method = await PaymentMethod.findOne({methodName});
+
+    if (_method) {
+        return res.status(httpStatus.BAD_REQUEST).json({
+            success: false,
+            message: 'Method already exist.',
+        });
+    }
+
+    method.name = name;
+    method.methodName = methodName;
+
+    await method.save({validateBeforeSave: false});
+
+    return res.status(httpStatus.OK).json({
+        success: true,
+        message: 'Method edited successfully.',
+        method
+    });
+
+});
+
+const allmethods = catchAsync(async (req, res) => {
+    const methods = await PaymentMethod.find({}, {methodName: 0});
+
+    return res.status(httpStatus.OK).json({
+        success: true,
+        methods
+    });
+});
+
+
+
+module.exports = {
+    newMethod,
+    editMethod,
+    allmethods
+};

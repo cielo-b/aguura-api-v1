@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 const {toJSON} = require('./plugins');
 
-const paymentSchema = mongoose.Schema(
+const emptyCratesSchema = mongoose.Schema(
     {
         activeDay: {
             type: mongoose.SchemaTypes.ObjectId,
@@ -9,25 +9,20 @@ const paymentSchema = mongoose.Schema(
             required: true,
         },
 
-        method: {
-            type: mongoose.SchemaTypes.ObjectId,
-            ref: 'PaymentMethod',
+        name: {
+            type: String,
             required: true,
         },
 
-        amount: {
+        number: {
             type: Number,
             required: true,
         },
 
-        customerName: {
-            type: String,
-            required: true,
+        isBrarirwa: {
+            type: Boolean,
+            required: true
         },
-
-        customerPhone: {
-            type: String,
-        }
     },
     {
         timestamps: true,
@@ -35,12 +30,12 @@ const paymentSchema = mongoose.Schema(
 );
 
 // add plugin that converts mongoose to json
-paymentSchema.plugin(toJSON);
+emptyCratesSchema.plugin(toJSON);
 
 /**
- * @typedef Payment
+ * @typedef EmpetyCrates
  */
 
-const Payment = mongoose.model('Payment', paymentSchema);
+const EmpetyCrates = mongoose.model('EmpetyCrates', emptyCratesSchema);
 
-module.exports = Payment;
+module.exports = EmpetyCrates;

@@ -6,7 +6,11 @@ const paymentMethodSchema = mongoose.Schema(
         name: {
             type: String,
             required: true,
-        }
+        },
+        methodName: {
+            type: String,
+            required: true,
+        },
     },
     {
         timestamps: true,

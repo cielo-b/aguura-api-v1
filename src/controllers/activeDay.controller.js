@@ -3,7 +3,7 @@ const fs = require('fs');
 const PDFDocument = require('pdfkit');
 const path = require('path');
 
-const {ActiveDay, Inventory, Sales, InventoryProduct, Crates} = require('../models');
+const {ActiveDay, Inventory, Sales, InventoryProduct, Crates, PaymentMethod, Payment, EmptyCrates} = require('../models');
 const catchAsync = require('../utils/catchAsync');
 const config = require('../config/config');
 const formatNumber = require('../utils/formatNumber');
@@ -91,9 +91,63 @@ const generatePDF = async (activeDay) => {
 
     // crates rendering
     doc.fontSize(12).text('Crates Rendering \n\n', {underline: true});
+    const crates = await Crates.find({activeDay: activeDay.id});
+    let givenC, returnedC, remainingC = 0;
+
+    for (let crate of crates) {
+        let given, returned, remaining = 0;
+        doc.fontSize(10).text(`${crate.customerName} ${crate.customerPhone ? crate.customerPhone : ''}\n\n`);
+
+        const products = crate.products;
+        for (let product of products) {
+            doc.fontSize(10)
+                .text(`${product.name} => `, {underline: true})
+                .text(`given: ${formatNumber(product.given)} | `)
+                .text(`returned: ${formatNumber(product.returned)} | `)
+                .text(`remaining: ${formatNumber(product.remaining)} \n`);
+
+            given += parseInt(product.given);
+            returned += parseInt(product.returned);
+            remaining += parseInt(product.remaining);
+        }
+        doc.fontSize(10).text(`Total => given:${formatNumber(given)} | returned:${formatNumber(returned)} | remaining:${formatNumber(remaining)}\n\n`);
+        givenC += given;
+        returnedC += returned;
+        remainingC += remaining;
+    }
+    doc.fontSize(12).text(`Total => given:${formatNumber(givenC)} | returned:${formatNumber(returnedC)} | remaining:${formatNumber(remainingC)}\n\n\n\n`);
 
     // crates remaining
-    doc.fontSize(12).text('Empth Crates \n\n', {underline: true});
+    doc.fontSize(12).text('Empty Crates \n\n', {underline: true});
+    const emptyCrates = await EmptyCrates.find({activeDay: activeDay.id});
+    let totalECrates = 0;
+    let totalB = 0;
+
+    for (let ec of emptyCrates) {
+        doc.fontSize(10).text(`${ec.name}: ${formatNumber(ec.number)}\n`);
+        totalECrates += parseInt(ec.number);
+        if (ec.isBrarirwa) totalB += parseInt(ec.number);
+    }
+    doc.fontSize(12).text(`Brarirwa: ${formatNumber(totalB)} \n`);
+    doc.fontSize(12).text(`Skol: ${formatNumber(totalECrates - totalB)} \n`);
+    doc.fontSize(12).text(`Total: ${formatNumber(totalECrates)} \n\n\n\n`);
+
+    // payment
+    doc.fontSize(12).text('Payments \n\n', {underline: true});
+    const methods = await PaymentMethod.find({});
+    let totalPayments = 0;
+
+    for (const m of methods) {
+        const payments = await Payment.find({method: m.id});
+        let total = 0;
+
+        for (let p of payments) {
+            total += parseInt(p.amount);
+        }
+        doc.fontSize(12).text(`${m.name}: ${formatNumber(total)} Rwf\n`, {underline: true});
+        totalPayments += total;
+    }
+    doc.fontSize(12).text(`Total payments: ${formatNumber(totalPayments)} \n\n\n\n`);
 
     // inventory balancing
     doc.fontSize(12).text('Inventory Balancing \n\n', {underline: true});
