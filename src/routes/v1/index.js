@@ -8,6 +8,7 @@ const inventoryProductRoute = require('./inventoryProduct.route');
 const orderRoute = require('./order.route');
 const salesRoute = require('./sales.route');
 const salesProductRoute = require('./salesProduct.route');
+const cratesRoute = require('./crates.route');
 
 const docsRoute = require('./docs.route');
 
@@ -45,6 +46,10 @@ const defaultRoutes = [
     {
         path: '/sales-product',
         route: salesProductRoute,
+    },
+    {
+        path: '/crates',
+        route: cratesRoute,
     },
 
     {

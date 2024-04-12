@@ -19,7 +19,7 @@ const payCredit = catchAsync(async (req, res) => {
     }
 
     credit.amountPaid = parseInt(credit.amountPaid) + parseInt(amount);
-    sales.amountPaid += parseInt(sales.amountPaid) + parseInt(amount);
+    sales.amountPaid = parseInt(sales.amountPaid) + parseInt(amount);
 
     if (credit.amountPaid >= credit.totalAmount) {
         credit.isFullyPaid = true;

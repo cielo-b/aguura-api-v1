@@ -7,3 +7,4 @@ module.exports.Sales = require('./sales.model');
 module.exports.Inventory = require('./inventory.model');
 module.exports.Credit = require('./credit.model');
 module.exports.Order = require('./order.model');
+module.exports.Crates = require('./crates.model');

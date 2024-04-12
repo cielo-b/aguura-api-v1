@@ -6,3 +6,4 @@ module.exports.inventoryProductController = require('./inventoryProduct.controll
 module.exports.orderController = require('./order.controller');
 module.exports.salesController = require('./sales.controller');
 module.exports.salesProductController = require('./salesProduct.controller');
+module.exports.cratesController = require('./crates.controller')
