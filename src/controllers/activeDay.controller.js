@@ -91,13 +91,22 @@ const generatePDF = async (activeDay) => {
 
     // inventory balancing
     doc.fontSize(12).text('Inventory Balancing \n\n', {underline: true});
-    doc.fontSize(10).text('Product Name         Initial Inventory          Final Inventory');
-
+    doc.fontSize(10).text('Product Name | Initial Inventory | Added Today | Final Inventory');
 
     const iProducts = await InventoryProduct.find({});
 
     for (let product of iProducts) {
-        doc.fontSize(10).text(`${product.name}      ${formatNumber(product.prevDayRemaining)}       ${formatNumber(product.totalAvailable)}`);
+        doc.fontSize(10).text(`${product.name} | ${formatNumber(product.prevDayRemaining)} | ${formatNumber(product.dailyAdded)} | ${formatNumber(product.totalAvailable)}\n`);
+    }
+    
+    
+    // crates rendering
+    doc.fontSize(12).text('Crates Rendering \n\n', {underline: true});
+
+    const crates = await InventoryProduct.find({});
+
+    for (let product of iProducts) {
+        doc.fontSize(10).text(`${product.name} | ${formatNumber(product.prevDayRemaining)} | ${formatNumber(product.dailyAdded)} | ${formatNumber(product.totalAvailable)}\n`);
     }
 
     doc.fontSize(10).font('Times-Bold').text(`\n\n\n\n ${config.name}`, {underline: true});
@@ -194,6 +203,7 @@ const endDay = catchAsync(async (req, res) => {
     const products = await InventoryProduct.find({});
     for (const product of products) {
         product.prevDayRemaining = product.totalAvailable;
+        product.dailyAdded = 0;
         await product.save({validateBeforeSave: false});
     }
 

@@ -50,6 +50,7 @@ const newInventory = catchAsync(async (req, res) => {
         let product = await InventoryProduct.findById(reqProduct.id);
 
         product.totalAvailable += parseInt(reqProduct.quantity);
+        product.dailyAdded += parseInt(reqProduct.quantity);
         await product.save({validateBeforeSave: false});
     }
 

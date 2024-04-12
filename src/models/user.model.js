@@ -11,7 +11,7 @@ const userSchema = mongoose.Schema(
             required: true,
             trim: true,
         },
-        
+
         phone: {
             type: String,
             required: true,
@@ -34,8 +34,7 @@ const userSchema = mongoose.Schema(
 
         role: {
             type: String,
-            required: true,
-            enum: roles,
+            required: true
         }
     },
     {

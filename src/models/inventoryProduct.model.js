@@ -31,6 +31,12 @@ const inventoryProductSchema = mongoose.Schema(
             type: Number,
             required: true,
             default: 0
+        },
+        
+        dailyAdded: {
+            type: Number,
+            required: true,
+            default: 0
         }
     },
     {

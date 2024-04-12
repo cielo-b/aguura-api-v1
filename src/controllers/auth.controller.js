@@ -4,32 +4,9 @@ const {authService, userService, tokenService} = require('../services');
 const {Token, User} = require('../models');
 
 
-const superAdminRegister = catchAsync(async (req, res) => {
+const register = catchAsync(async (req, res) => {
 
-    let reqBody = req.body;
-    reqBody.role = 'superAdmin';
-
-    if (await User.isPhoneTaken(reqBody.phone)) {
-        return res.status(httpStatus.BAD_REQUEST).json({
-            success: false,
-            message: 'Phone already taken.'
-        });
-    }
-
-    const user = await userService.createUser(reqBody);
-    const tokens = await tokenService.generateAuthTokens(user);
-    res.status(httpStatus.CREATED).json({
-        success: true,
-        tokens,
-        user
-    });
-});
-
-const adminRegister = catchAsync(async (req, res) => {
-
-    let reqBody = req.body;
-    reqBody.role = 'admin';
-    console.log(reqBody);
+    let {fullName, phone, password, role} = req.body;
 
     if (await User.isPhoneTaken(phone)) {
         return res.status(httpStatus.BAD_REQUEST).json({
@@ -38,8 +15,7 @@ const adminRegister = catchAsync(async (req, res) => {
         });
     }
 
-    const user = await userService.createUser(reqBody);
-    console.log(user);
+    const user = await userService.createUser({fullName, phone, password, role});
     const tokens = await tokenService.generateAuthTokens(user);
     res.status(httpStatus.CREATED).json({
         success: true,
@@ -48,27 +24,6 @@ const adminRegister = catchAsync(async (req, res) => {
     });
 });
 
-
-const register = catchAsync(async (req, res) => {
-
-    let reqBody = req.body;
-    reqBody.role = 'user';
-
-    if (await User.isPhoneTaken(reqBody.phone)) {
-        return res.status(httpStatus.BAD_REQUEST).json({
-            success: false,
-            message: 'Phone already taken.'
-        });
-    }
-
-    const user = await userService.createUser(reqBody);
-    const tokens = await tokenService.generateAuthTokens(user);
-    res.status(httpStatus.CREATED).json({
-        success: true,
-        tokens,
-        user
-    });
-});
 
 const login = catchAsync(async (req, res) => {
     const {phone, password} = req.body;
@@ -140,8 +95,6 @@ const resetPassword = catchAsync(async (req, res) => {
 
 
 module.exports = {
-    superAdminRegister,
-    adminRegister,
     register,
     login,
     logout,

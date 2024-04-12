@@ -6,9 +6,7 @@ const auth = require('../../middlewares/auth');
 
 const router = express.Router();
 
-router.post('/super-admin-register', validate(authValidation.register), authController.superAdminRegister);
-router.post('/admin-register', validate(authValidation.register), authController.register);
-router.post('/user-register', validate(authValidation.register), authController.register);
+router.post('/register', validate(authValidation.register), authController.register);
 router.post('/login', validate(authValidation.login), authController.login);
 router.post('/logout', validate(authValidation.logout), authController.logout);
 router.get('/profile', auth(''), authController.getUser);
@@ -27,7 +25,7 @@ module.exports = router;
 
 /**
  * @swagger
- * /auth/admin-register:
+ * /auth/register:
  *   post:
  *     summary: Register as user
  *     tags: [Auth]
@@ -40,9 +38,12 @@ module.exports = router;
  *             required:
  *               - fullName
  *               - phone
+ *               - role
  *               - password
  *             properties:
  *               fullName:
+ *                 type: string
+ *               role:
  *                 type: string
  *               phone:
  *                 type: string
@@ -53,7 +54,8 @@ module.exports = router;
  *                 description: At least one number and one letter
  *             example:
  *               fullName: Valens DABAGIRE
- *               phone: 0790016651
+ *               phone: '0790016651'
+ *               role: user
  *               password: Const@123
  *     responses:
  *       "201":

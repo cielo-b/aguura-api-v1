@@ -56,7 +56,7 @@ const newSales = catchAsync(async (req, res) => {
         let product = await SalesProduct.findById(reqProduct.id);
         let inventoryProduct = await InventoryProduct.findById(product.inventoryProduct);
 
-        inventoryProduct.totalAvailable = product.totalAvailable - reqProduct.quantity;
+        inventoryProduct.totalAvailable = (parseInt(product.totalAvailable) - parseInt(reqProduct.quantity));
         await inventoryProduct.save({validateBeforeSave: false});
     }
 
