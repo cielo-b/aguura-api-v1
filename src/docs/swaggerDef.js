@@ -1,4 +1,4 @@
-const { version } = require('../../package.json');
+const {version} = require('../../package.json');
 const config = require('../config/config');
 
 const swaggerDef = {
@@ -16,7 +16,7 @@ const swaggerDef = {
             url: `http://localhost:${config.port}/api/v1`,
         },
         {
-            url: `https://backend.onrender.com/api/v1`,
+            url: `https://stock-backend-9qub.onrender.com/api/v1`,
         },
     ],
 };
