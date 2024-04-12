@@ -4,9 +4,32 @@ const {authService, userService, tokenService} = require('../services');
 const {Token, User} = require('../models');
 
 
+const superAdminRegister = catchAsync(async (req, res) => {
+
+    let reqBody = req.body;
+    reqBody.role = 'superAdmin';
+
+    if (await User.isPhoneTaken(reqBody.phone)) {
+        return res.status(httpStatus.BAD_REQUEST).json({
+            success: false,
+            message: 'Phone already taken.'
+        });
+    }
+
+    const user = await userService.createUser(reqBody);
+    console.log(user);
+    const tokens = await tokenService.generateAuthTokens(user);
+    res.status(httpStatus.CREATED).json({
+        success: true,
+        tokens,
+        user
+    });
+});
+
 const adminRegister = catchAsync(async (req, res) => {
 
-    const {password, phone, fullName} = req.body;
+    let reqBody = req.body;
+    reqBody.role = 'admin';
 
     if (await User.isPhoneTaken(phone)) {
         return res.status(httpStatus.BAD_REQUEST).json({
@@ -15,7 +38,7 @@ const adminRegister = catchAsync(async (req, res) => {
         });
     }
 
-    const user = await User.create({password, phone, fullName, role: 'admin'});
+    const user = await userService.createUser(reqBody);
     const tokens = await tokenService.generateAuthTokens(user);
     res.status(httpStatus.CREATED).json({
         success: true,
@@ -27,7 +50,8 @@ const adminRegister = catchAsync(async (req, res) => {
 
 const register = catchAsync(async (req, res) => {
 
-    const reqBody = req.body;
+    let reqBody = req.body;
+    reqBody.role = 'user';
 
     if (await User.isPhoneTaken(reqBody.phone)) {
         return res.status(httpStatus.BAD_REQUEST).json({
@@ -89,7 +113,9 @@ const logout = catchAsync(async (req, res) => {
 });
 
 const refreshTokens = catchAsync(async (req, res) => {
+    console.log('reqested');
     const tokens = await authService.refreshAuth(req.body.refreshToken);
+    console.log(tokens);
     res.send({...tokens});
 });
 
@@ -112,6 +138,7 @@ const resetPassword = catchAsync(async (req, res) => {
 
 
 module.exports = {
+    superAdminRegister,
     adminRegister,
     register,
     login,
