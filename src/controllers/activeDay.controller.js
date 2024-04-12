@@ -18,7 +18,7 @@ const generatePDF = async (activeDay) => {
     doc.pipe(writeStream);
 
     // Header
-    doc.fontSize(18).text(`${config.name} | ${activeDay.name} Daily Report. \n\n\n\n`, {underline: true});
+    doc.fontSize(18).text(`${config.name}  ${activeDay.name} Daily Report. \n\n\n\n`, {underline: true});
 
     // Inventory Section
     doc.fontSize(12).text('Inventories \n\n', {underline: true});
@@ -30,16 +30,16 @@ const generatePDF = async (activeDay) => {
         let total = 0;
 
         for (let product of products) {
-            doc.fontSize(10).text(`Product : ${product.name} \n`);
+            doc.fontSize(10).text(`Product : ${product.name} \n\n`);
             doc.fontSize(10).text(`Quantity : ${formatNumber(product.quantity)}\n`);
             doc.fontSize(10).text(`Unit Price : ${formatNumber(product.unitPrice)} Rwf\n`);
-            doc.fontSize(10).text(`Total Price : ${formatNumber(product.totalPrice)} Rwf\n`);
+            doc.fontSize(10).text(`Total Price : ${formatNumber(product.totalPrice)} Rwf\n\n`, {underline: true});
             total += product.totalPrice;
         }
-        doc.fontSize(12).text(`Total : ${formatNumber(total)} Rwf \n\n`);
+        doc.fontSize(12).text(`Total : ${formatNumber(total)} Rwf \n\n\n`, {underline: true});
         totalInventoryPrice += total;
     }
-    doc.fontSize(13).text(`Total Inventory Amount: ${formatNumber(totalInventoryPrice)} \n\n\n\n`);
+    doc.fontSize(13).text(`Total Inventory Amount: ${formatNumber(totalInventoryPrice)} \n\n\n\n Rwf`, {underline: true});
 
 
     // Sales Section
@@ -50,25 +50,25 @@ const generatePDF = async (activeDay) => {
     const sales = await Sales.find({activeDay: activeDay.id});
 
     for (const sale of sales) {
-        doc.fontSize(10).text(`${sale.customerName} ${sale.customerPhone ? sale.customerPhone : ''}\n`);
+        doc.fontSize(10).text(`${sale.customerName} ${sale.customerPhone ? sale.customerPhone : ''}\n`, {underline: true});
 
         for (const product of sale.products) {
             doc.fontSize(10).text(`Product : ${product.name} \n`);
             doc.fontSize(10).text(`Quantity : ${formatNumber(product.quantity)} \n`);
             doc.fontSize(10).text(`Unit Price : ${formatNumber(product.unitPrice)} Rwf\n`);
-            doc.fontSize(10).text(`Total Price : ${formatNumber(product.totalPrice)}\n`);
+            doc.fontSize(10).text(`Total Price : ${formatNumber(product.totalPrice)} Rwf\n\n`, {underline: true});
         }
-        doc.fontSize(10).text(`Amount Paid : ${formatNumber(sale.amountPaid)}\n`);
+        doc.fontSize(10).text(`\nAmount Paid : ${formatNumber(sale.amountPaid)}\n`);
         if (!sale.isFullyPaid) {
             doc.fontSize(10).text(`Remaining : ${formatNumber(sale.totalPrice - sale.amountPaid)} Rwf \n`);
             remaining += (sale.totalPrice - sale.amountPaid);
         }
-        doc.fontSize(12).text(`Total : ${formatNumber(total)} Rwf \n\n`);
+        doc.fontSize(12).text(`Total : ${formatNumber(sale.totalPrice)} Rwf \n\n\n`, {underline: true});
         totalSalesPrice += sale.totalPrice;
     }
     doc.fontSize(13).text(`Total Paid: ${formatNumber(totalSalesPrice - remaining)} Rwf \n`);
     doc.fontSize(13).text(`Total Reaming: ${formatNumber(remaining)} Rwf \n`);
-    doc.fontSize(13).text(`Total Sales Amount: ${formatNumber(totalSalesPrice)} Rwf \n\n\n\n`);
+    doc.fontSize(13).text(`Total Sales Amount: ${formatNumber(totalSalesPrice)} Rwf \n\n\n\n`, {underline: true});
 
 
     // Credit Section
@@ -81,12 +81,12 @@ const generatePDF = async (activeDay) => {
         doc.fontSize(10).text(`${sale.customerName} ${sale.customerPhone ? sale.customerPhone : ''}\n`);
         doc.fontSize(10).text(`Amount To Be Paid : ${formatNumber(sale.totalPrice)}\n`);
         doc.fontSize(10).text(`Amount Paid : ${formatNumber(sale.amountPaid)}\n`);
-        doc.fontSize(10).text(`Amount Remaining : ${formatNumber(sale.totalPrice - sale.amountPaid)}\n`);
+        doc.fontSize(10).text(`Amount Remaining : ${formatNumber(sale.totalPrice - sale.amountPaid)}\n\n`);
 
-        doc.fontSize(12).text(`Total : ${formatNumber(total)} Rwf \n\n`);
-        totalCredit += (sale.totalPrice - sale.amountPaid);
+        doc.fontSize(12).text(`Total : ${formatNumber(sale.totalPrice)} Rwf \n\n`, {underline: true});
+        totalCredit += parseInt(sale.totalPrice - sale.amountPaid);
     }
-    doc.fontSize(13).text(`Total Credit: ${formatNumber(totalCredit)} Rwf \n\n\n\n`);
+    doc.fontSize(13).text(`Total Credit: ${formatNumber(totalCredit)} Rwf \n\n\n\n`, {underline: true});
 
 
     // inventory balancing
@@ -188,6 +188,7 @@ const endDay = catchAsync(async (req, res) => {
 
     // generate pdf
     const pdfFileName = await generatePDF(activeDay);
+    const url = config.url + '/public/reports/' + pdfFileName;
 
     // update remaining products in inventory
     const products = await InventoryProduct.find({});
@@ -202,7 +203,7 @@ const endDay = catchAsync(async (req, res) => {
     return res.status(httpStatus.OK).json({
         success: true,
         message: 'Day ended successfully.',
-        pdfFileName
+        url
     });
 });
 
