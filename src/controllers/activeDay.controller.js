@@ -3,7 +3,7 @@ const fs = require('fs');
 const PDFDocument = require('pdfkit');
 const path = require('path');
 
-const {ActiveDay, Inventory, Sales, InventoryProduct} = require('../models');
+const {ActiveDay, Inventory, Sales, InventoryProduct, Crates} = require('../models');
 const catchAsync = require('../utils/catchAsync');
 const config = require('../config/config');
 const formatNumber = require('../utils/formatNumber');
@@ -89,6 +89,12 @@ const generatePDF = async (activeDay) => {
     doc.fontSize(13).text(`Total Credit: ${formatNumber(totalCredit)} Rwf \n\n\n\n`, {underline: true});
 
 
+    // crates rendering
+    doc.fontSize(12).text('Crates Rendering \n\n', {underline: true});
+
+    // crates remaining
+    doc.fontSize(12).text('Empth Crates \n\n', {underline: true});
+
     // inventory balancing
     doc.fontSize(12).text('Inventory Balancing \n\n', {underline: true});
     doc.fontSize(10).text('Product Name | Initial Inventory | Added Today | Final Inventory');
@@ -98,16 +104,8 @@ const generatePDF = async (activeDay) => {
     for (let product of iProducts) {
         doc.fontSize(10).text(`${product.name} | ${formatNumber(product.prevDayRemaining)} | ${formatNumber(product.dailyAdded)} | ${formatNumber(product.totalAvailable)}\n`);
     }
-    
-    
-    // crates rendering
-    doc.fontSize(12).text('Crates Rendering \n\n', {underline: true});
 
-    const crates = await InventoryProduct.find({});
 
-    for (let product of iProducts) {
-        doc.fontSize(10).text(`${product.name} | ${formatNumber(product.prevDayRemaining)} | ${formatNumber(product.dailyAdded)} | ${formatNumber(product.totalAvailable)}\n`);
-    }
 
     doc.fontSize(10).font('Times-Bold').text(`\n\n\n\n ${config.name}`, {underline: true});
     doc.end();

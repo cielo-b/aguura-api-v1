@@ -29,7 +29,7 @@ const logout = async (refreshToken) => {
     if (!refreshTokenDoc) {
         throw new ApiError(httpStatus.NOT_FOUND, 'Not found');
     }
-    await refreshTokenDoc.deleteOne()
+    await refreshTokenDoc.deleteOne();
 };
 
 /**
@@ -40,15 +40,13 @@ const logout = async (refreshToken) => {
 const refreshAuth = async (refreshToken) => {
     try {
         const refreshTokenDoc = await tokenService.verifyToken(refreshToken, tokenTypes.REFRESH);
-        console.log(refreshTokenDoc)
         const user = await userService.getUserById(refreshTokenDoc.user);
         if (!user) {
             throw new Error();
         }
-        await refreshTokenDoc.remove();
+        await Token.findByIdAndDelete(refreshTokenDoc._id);
         return tokenService.generateAuthTokens(user);
     } catch (error) {
-        console.log('error', error)
         throw new ApiError(httpStatus.UNAUTHORIZED, 'Please authenticate');
     }
 };
