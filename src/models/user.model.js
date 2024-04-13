@@ -2,10 +2,14 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 
 const {toJSON} = require('./plugins');
-const {roles} = require('../config/roles');
 
 const userSchema = mongoose.Schema(
     {
+        stock: {
+            type: mongoose.SchemaTypes.ObjectId,
+            ref: 'Stock',
+        },
+
         fullName: {
             type: String,
             required: true,

@@ -2,9 +2,19 @@ const httpStatus = require('http-status');
 
 const {InventoryProduct, SalesProduct} = require('../models');
 const catchAsync = require('../utils/catchAsync');
+const {checkStock} = require('./stock.controller');
 
 
 const newProduct = catchAsync(async (req, res) => {
+    const stockId = req.query.stockId;
+    const stock = await checkStock(stockId);
+
+    if (!stock) {
+        return res.status(httpStatus.BAD_REQUEST).json({
+            success: false,
+            message: 'Stock Not Found.'
+        });
+    }
 
     const {inventoryProductId, price} = req.body;
 
@@ -25,7 +35,7 @@ const newProduct = catchAsync(async (req, res) => {
         });
     }
 
-    const newProduct = await SalesProduct.create({inventoryProduct: inventoryProductId, price});
+    const newProduct = await SalesProduct.create({inventoryProduct: inventoryProductId, price, stock: stock.id});
 
     return res.status(httpStatus.CREATED).json({
         success: true,
@@ -62,7 +72,7 @@ const editProduct = catchAsync(async (req, res) => {
 });
 
 const allProducts = catchAsync(async (req, res) => {
-    const products = await SalesProduct.find({}).populate('inventoryProduct');
+    const products = await SalesProduct.find({stock: req.query.stockId}).populate('inventoryProduct');
     let resProducts = [];
 
     for (let i = 0; i < products.length; i++) {
@@ -81,7 +91,7 @@ const allProducts = catchAsync(async (req, res) => {
 
 const availableProducts = catchAsync(async (req, res) => {
 
-    const products = await SalesProduct.find({}).populate('inventoryProduct');
+    const products = await SalesProduct.find({stock: req.query.stockId}).populate('inventoryProduct');
     let resProducts = [];
 
     for (let i = 0; i < products.length; i++) {

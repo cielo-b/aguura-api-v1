@@ -3,6 +3,12 @@ const {toJSON} = require('./plugins');
 
 const orderSchema = mongoose.Schema(
     {
+        stock: {
+            type: mongoose.SchemaTypes.ObjectId,
+            ref: 'Stock',
+            required: true,
+        },
+        
         customer: {
             type: mongoose.SchemaTypes.ObjectId,
             ref: 'User',

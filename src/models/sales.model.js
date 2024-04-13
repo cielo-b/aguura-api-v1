@@ -9,6 +9,12 @@ const salesSchema = mongoose.Schema(
             required: true,
         },
 
+        stock: {
+            type: mongoose.SchemaTypes.ObjectId,
+            ref: 'Stock',
+            required: true,
+        },
+
         products: [
             {
                 name: {

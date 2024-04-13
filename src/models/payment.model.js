@@ -3,6 +3,12 @@ const {toJSON} = require('./plugins');
 
 const paymentSchema = mongoose.Schema(
     {
+        stock: {
+            type: mongoose.SchemaTypes.ObjectId,
+            ref: 'Stock',
+            required: true,
+        },
+        
         activeDay: {
             type: mongoose.SchemaTypes.ObjectId,
             ref: 'ActiveDay',

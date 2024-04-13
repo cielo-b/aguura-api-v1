@@ -2,9 +2,20 @@ const httpStatus = require('http-status');
 
 const {InventoryProduct} = require('../models');
 const catchAsync = require('../utils/catchAsync');
+const {checkStock} = require('./stock.controller');
 
 
 const newProduct = catchAsync(async (req, res) => {
+
+    const stockId = req.query.stockId;
+    const stock = await checkStock(stockId);
+
+    if (!stock) {
+        return res.status(httpStatus.BAD_REQUEST).json({
+            success: false,
+            message: 'Stock Not Found.'
+        });
+    }
 
     const {name, price} = req.body;
     const productName = name.replace(/\s/g, '').toLowerCase();
@@ -18,7 +29,7 @@ const newProduct = catchAsync(async (req, res) => {
         });
     }
 
-    const newProduct = await InventoryProduct.create({name, price, productName});
+    const newProduct = await InventoryProduct.create({name, price, productName, stock: stock.id});
 
     return res.status(httpStatus.CREATED).json({
         success: true,
@@ -62,7 +73,7 @@ const editProduct = catchAsync(async (req, res) => {
 });
 
 const allProducts = catchAsync(async (req, res) => {
-    const products = await InventoryProduct.find({}, {productName: 0});
+    const products = await InventoryProduct.find({stock: req.query.stockId}, {productName: 0});
 
     return res.status(httpStatus.OK).json({
         success: true,

@@ -3,6 +3,12 @@ const {toJSON} = require('./plugins');
 
 const creditSchema = mongoose.Schema(
     {
+        stock: {
+            type: mongoose.SchemaTypes.ObjectId,
+            ref: 'Stock',
+            required: true,
+        },
+
         sales: {
             type: mongoose.SchemaTypes.ObjectId,
             ref: 'Sales',

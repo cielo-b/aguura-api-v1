@@ -3,10 +3,20 @@ const httpStatus = require('http-status');
 const {Payment} = require('../models');
 const catchAsync = require('../utils/catchAsync');
 const {checkActive} = require('./activeDay.controller');
+const {checkStock} = require('./stock.controller');
 
 
 const allPayments = catchAsync(async (req, res) => {
-    let payments = await Payment.find({}, {activeDay: 0}).populate('method');
+    const stockId = req.query.stockId;
+    const stock = await checkStock(stockId);
+
+    if (!stock) {
+        return res.status(httpStatus.BAD_REQUEST).json({
+            success: false,
+            message: 'Stock Not Found.'
+        });
+    }
+    let payments = await Payment.find({stock: stock.id}, {activeDay: 0}).populate('method');
     payments = payments.map(payment => {
         return {
             id: payment.id,

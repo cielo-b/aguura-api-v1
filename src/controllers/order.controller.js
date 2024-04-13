@@ -1,11 +1,22 @@
 const httpStatus = require('http-status');
 
-const {InventoryProduct, SalesProduct, Sales, Credit, User, Order, ActiveDay} = require('../models');
+const {InventoryProduct, SalesProduct, Sales, Credit, User, Order} = require('../models');
 const catchAsync = require('../utils/catchAsync');
 const formatNumber = require('../utils/formatNumber');
 const {checkDay} = require('./activeDay.controller');
+const {checkStock} = require('./stock.controller');
 
 const newOrder = catchAsync(async (req, res) => {
+
+    const stockId = req.query.stockId;
+    const stock = await checkStock(stockId);
+
+    if (!stock) {
+        return res.status(httpStatus.BAD_REQUEST).json({
+            success: false,
+            message: 'Stock Not Found.'
+        });
+    }
 
     const {products: reqProducts} = req.body;
     const user = await User.findById(req.user._id);
@@ -13,7 +24,7 @@ const newOrder = catchAsync(async (req, res) => {
     if (!user) {
         return res.status(httpStatus.BAD_REQUEST).json({
             success: false,
-            message: 'User not found.'
+            message: 'User Not Found.'
         });
     }
 
@@ -39,18 +50,18 @@ const newOrder = catchAsync(async (req, res) => {
 
     }
 
-    const order = await Order.create({totalPrice, products, description, customer: user.id});
+    const order = await Order.create({totalPrice, products, description, customer: user.id, stock: stock.id});
 
     if (!order) {
         return res.status(httpStatus.BAD_REQUEST).json({
             success: false,
-            message: 'Something went wrong, plz start new day and try again.'
+            message: 'Something Went Wrong, Plz Try Again.'
         });
     }
 
     return res.status(httpStatus.CREATED).json({
         success: true,
-        message: 'Order sent successfully.',
+        message: 'Order Sent Successfully.',
     });
 
 });
@@ -63,15 +74,15 @@ const editOrder = catchAsync(async (req, res) => {
     if (!user) {
         return res.status(httpStatus.BAD_REQUEST).json({
             success: false,
-            message: 'User not found.'
+            message: 'User Not Found.'
         });
     }
 
-    const existingOrder = await Order.findById(req.params.id);
-    if (!existingOrder) {
+    const order = await Order.findById(req.params.id);
+    if (!order) {
         return res.status(httpStatus.BAD_REQUEST).json({
             success: false,
-            message: 'Order not found.'
+            message: 'Order Not Found.'
         });
     }
 
@@ -96,23 +107,29 @@ const editOrder = catchAsync(async (req, res) => {
         description = description + `${salesProduct.name}: ${formatNumber(salesProduct.quantity)} x ${formatNumber(salesProduct.unitPrice)} = ${formatNumber(salesProduct.totalPrice)} \n`;
     }
 
-    const order = await Order.create({totalPrice, products, description});
+    order.products = products;
+    order.totalPrice = totalPrice;
+    order.description = description;
 
-    if (!order) {
-        return res.status(httpStatus.BAD_REQUEST).json({
-            success: false,
-            message: 'Something went wrong, plz start new day and try again.'
-        });
-    }
+    await order.save({validateBeforeSave: false});
 
     return res.status(httpStatus.OK).json({
         success: true,
-        message: 'Order edited successfully.',
+        message: 'Order Was Edited Successfully.',
     });
 
 });
 
 const completeOrder = catchAsync(async (req, res) => {
+    const stockId = req.query.stockId;
+    const stock = await checkStock(stockId);
+
+    if (!stock) {
+        return res.status(httpStatus.BAD_REQUEST).json({
+            success: false,
+            message: 'Stock Not Found.'
+        });
+    }
 
     const order = await Order.findById(req.params.id).populate('customer');
     if (!order) {
@@ -129,7 +146,7 @@ const completeOrder = catchAsync(async (req, res) => {
     // handle amount
     let paid = order.totalPrice === amountPaid;
 
-    const sales = await Sales.create({activeDay: activeDay.id, products: order.products, totalPrice: order.totalPrice, isFullyPaid: paid, customerName: order.customer.fullName, customerPhone: order.customer.phone, amountPaid, description: order.description});
+    const sales = await Sales.create({activeDay: activeDay.id, products: order.products, totalPrice: order.totalPrice, isFullyPaid: paid, customerName: order.customer.fullName, customerPhone: order.customer.phone, amountPaid, description: order.description, stock: req.query.stockId});
 
     if (!sales) {
         return res.status(httpStatus.BAD_REQUEST).json({
@@ -150,7 +167,7 @@ const completeOrder = catchAsync(async (req, res) => {
 
     // if not fully paid, create new credit
     if (!paid) {
-        const credit = await Credit.create({sales: sales.id, totalAmount: order.totalPrice - amountPaid, customerName: order.customer.fullName, description: order.description});
+        const credit = await Credit.create({sales: sales.id, totalAmount: order.totalPrice - amountPaid, customerName: order.customer.fullName, description: order.description, stock: stock.id});
 
         if (!credit) {
             return res.status(httpStatus.CREATED).json({
@@ -181,7 +198,7 @@ const myOrders = catchAsync(async (req, res) => {
         });
     }
 
-    const orders = await Order.find({customer: user.id});
+    const orders = await Order.find({customer: user.id, stock: req.query.stockId});
 
     return res.status(httpStatus.OK).json({
         success: true,
@@ -192,7 +209,7 @@ const myOrders = catchAsync(async (req, res) => {
 
 const adminOrders = catchAsync(async (req, res) => {
 
-    let orders = await Order.find({isCompleted: req.query.isCompleted}, {products: 0}).populate('customer');
+    let orders = await Order.find({isCompleted: req.query.isCompleted, stock: req.query.stockId}, {products: 0}).populate('customer');
     orders = orders.map(o => {
         return {
             name: o.customer.fullName,

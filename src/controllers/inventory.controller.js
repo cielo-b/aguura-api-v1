@@ -3,8 +3,19 @@ const httpStatus = require('http-status');
 const {Inventory, InventoryProduct} = require('../models');
 const catchAsync = require('../utils/catchAsync');
 const {checkActive, checkDay} = require('./activeDay.controller');
+const {checkStock} = require('./stock.controller');
 
 const newInventory = catchAsync(async (req, res) => {
+
+    const stockId = req.query.stockId;
+    const stock = await checkStock(stockId);
+
+    if (!stock) {
+        return res.status(httpStatus.BAD_REQUEST).json({
+            success: false,
+            message: 'Stock Not Found.'
+        });
+    }
 
     const activeDay = await checkDay();
 
@@ -35,7 +46,7 @@ const newInventory = catchAsync(async (req, res) => {
         totalPrice += inventoryProduct.totalPrice;
     }
 
-    const inventory = await Inventory.create({activeDay: activeDay.id, products, totalPrice});
+    const inventory = await Inventory.create({activeDay: activeDay.id, products, totalPrice, stock: stock.id});
 
     if (!inventory) {
         return res.status(httpStatus.BAD_REQUEST).json({
@@ -64,7 +75,7 @@ const newInventory = catchAsync(async (req, res) => {
 
 const allInventory = catchAsync(async (req, res) => {
 
-    const inventories = await Inventory.find({});
+    const inventories = await Inventory.find({stock: req.query.stockId});
 
     let products = [];
 
@@ -106,7 +117,7 @@ const dailyInventory = catchAsync(async (req, res) => {
 });
 
 const inventoryStats = catchAsync(async (req, res) => {
-    const inventories = await Inventory.find({}, {activeDay: 0, products: 0});
+    const inventories = await Inventory.find({stock: req.query.stockId}, {activeDay: 0, products: 0});
 
     let totalInventory = 0;
     let totalAmount = 0;

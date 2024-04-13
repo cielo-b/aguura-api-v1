@@ -94,6 +94,38 @@ const resetPassword = catchAsync(async (req, res) => {
 });
 
 
+const addUser = catchAsync(async (req, res) => {
+
+    let {fullName, phone, stockId} = req.body;
+
+    if (await User.isPhoneTaken(phone)) {
+        return res.status(httpStatus.BAD_REQUEST).json({
+            success: false,
+            message: 'Phone Already Taken.'
+        });
+    }
+    const password = fullName.split(" ")[0].toString().toLowerCase() + phone.substring(phone.length - 3);
+    const role = 'user';
+
+    const user = await userService.createUser({fullName, phone, password, role});
+    res.status(httpStatus.CREATED).json({
+        success: true,
+        user,
+        message: 'Customer Added Successfully.'
+    });
+});
+
+const allCutomers = catchAsync(async (req, res) => {
+
+    const users = await User.find({stock: req.query.stockId});
+
+    const user = await userService.createUser({fullName, phone, password, role});
+    res.status(httpStatus.CREATED).json({
+        success: true,
+        users,
+    });
+});
+
 module.exports = {
     register,
     login,
@@ -101,5 +133,8 @@ module.exports = {
     refreshTokens,
     forgotPassword,
     resetPassword,
-    getUser
+    getUser,
+
+    addUser,
+    allCutomers
 };

@@ -3,11 +3,17 @@ const {toJSON} = require('./plugins');
 
 const activeDaySchema = mongoose.Schema(
     {
+        stock: {
+            type: mongoose.SchemaTypes.ObjectId,
+            ref: 'Stock',
+            required: true,
+        },
+
         name: {
             type: String,
             required: true,
             trim: true,
-            default: () => new Date().getDate() + '-' + new Date().getMonth() + 1 + '-' + new Date().getFullYear()
+            default: () => new Date().getDate() + '-' + (parseInt(new Date().getMonth()) + 1) + '-' + new Date().getFullYear()
         },
 
         isActive: {

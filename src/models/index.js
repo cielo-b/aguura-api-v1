@@ -10,4 +10,5 @@ module.exports.Order = require('./order.model');
 module.exports.Crates = require('./crates.model');
 module.exports.Payment = require('./payment.model');
 module.exports.PaymentMethod = require('./paymentMethod.model');
-module.exports.EmptyCrates = require('./emptyCrates.model')
+module.exports.EmptyCrates = require('./emptyCrates.model');
+module.exports.Stock = require('./stock.model');

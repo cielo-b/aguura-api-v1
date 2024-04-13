@@ -4,8 +4,18 @@ const {InventoryProduct, SalesProduct, Sales, Credit, PaymentMethod, Payment} = 
 const catchAsync = require('../utils/catchAsync');
 const {checkActive, checkDay} = require('./activeDay.controller');
 const formatNumber = require('../utils/formatNumber');
+const {checkStock} = require('./stock.controller');
 
 const newSales = catchAsync(async (req, res) => {
+    const stockId = req.query.stockId;
+    const stock = await checkStock(stockId);
+
+    if (!stock) {
+        return res.status(httpStatus.BAD_REQUEST).json({
+            success: false,
+            message: 'Stock Not Found.'
+        });
+    }
 
     const {products: reqProducts, isFullyPaid, customerName, customerPhone, amountPaid, payments} = req.body;
 
@@ -41,7 +51,7 @@ const newSales = catchAsync(async (req, res) => {
     // handle amount
     let amount = isFullyPaid ? totalPrice : amountPaid;
 
-    const sales = await Sales.create({activeDay: activeDay.id, products, totalPrice, isFullyPaid, customerName, customerPhone, amountPaid: amount, description});
+    const sales = await Sales.create({stock: stock.id, activeDay: activeDay.id, products, totalPrice, isFullyPaid, customerName, customerPhone, amountPaid: amount, description});
 
     if (!sales) {
         return res.status(httpStatus.BAD_REQUEST).json({
@@ -62,7 +72,7 @@ const newSales = catchAsync(async (req, res) => {
 
     // if not fully paid, create new credit
     if (!isFullyPaid) {
-        const credit = await Credit.create({sales: sales.id, totalAmount: totalPrice - amountPaid, description, customerName, customerPhone});
+        const credit = await Credit.create({stock: stock.id, sales: sales.id, totalAmount: totalPrice - amountPaid, description, customerName, customerPhone});
 
         if (!credit) {
             return res.status(httpStatus.CREATED).json({
@@ -76,7 +86,7 @@ const newSales = catchAsync(async (req, res) => {
     if (payments.length > 0) {
         for (const payment of payments) {
             let method = await PaymentMethod.findById(payment.id);
-            const p = await Payment.create({activeDay: activeDay.id, method: method.id, customerName, customerPhone, amount: payment.amount});
+            const p = await Payment.create({activeDay: activeDay.id, method: method.id, customerName, customerPhone, amount: payment.amount, stock: stock.id});
         }
     }
 
@@ -87,7 +97,7 @@ const newSales = catchAsync(async (req, res) => {
 });
 
 const allSales = catchAsync(async (req, res) => {
-    const sales = await Sales.find({}, {activeDay: 0, products: 0});
+    const sales = await Sales.find({stock: req.query.stockId}, {activeDay: 0, products: 0});
 
     return res.status(httpStatus.OK).json({
         success: true,
@@ -118,7 +128,7 @@ const dailySales = catchAsync(async (req, res) => {
 });
 
 const salesStats = catchAsync(async (req, res) => {
-    const sales = await Sales.find({}, {activeDay: 0, products: 0});
+    const sales = await Sales.find({stock: req.query.stockId}, {activeDay: 0, products: 0});
 
     let totalSales = 0;
     let totalAmountSold = 0;

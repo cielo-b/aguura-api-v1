@@ -7,8 +7,9 @@ const {ActiveDay, Inventory, Sales, InventoryProduct, Crates, PaymentMethod, Pay
 const catchAsync = require('../utils/catchAsync');
 const config = require('../config/config');
 const formatNumber = require('../utils/formatNumber');
+const {checkStock} = require('../controllers/stock.controller');
 
-const generatePDF = async (activeDay) => {
+const generatePDF = async (stock, activeDay) => {
 
     const doc = new PDFDocument();
     const fileName = `${activeDay.name}-report.pdf`;
@@ -22,117 +23,137 @@ const generatePDF = async (activeDay) => {
 
     // Inventory Section
     doc.fontSize(12).text('Inventories \n\n', {underline: true});
-    let totalInventoryPrice = 0;
     const inventories = await Inventory.find({activeDay: activeDay.id});
 
-    for (const inventory of inventories) {
-        const products = inventory.products;
-        let total = 0;
+    if (inventories.length > 0) {
+        let totalInventoryPrice = 0;
 
-        for (let product of products) {
-            doc.fontSize(10).text(`Product : ${product.name} \n`);
-            doc.fontSize(10).text(`Quantity : ${formatNumber(product.quantity)}\n`);
-            doc.fontSize(10).text(`Unit Price : ${formatNumber(product.unitPrice)} Rwf\n`);
-            doc.fontSize(10).text(`Total Price : ${formatNumber(product.totalPrice)} Rwf\n\n`);
-            total += product.totalPrice;
+        for (const inventory of inventories) {
+            const products = inventory.products;
+            let total = 0;
+
+            for (let product of products) {
+                doc.fontSize(10).text(`Product : ${product.name} \n`);
+                doc.fontSize(10).text(`Quantity : ${formatNumber(product.quantity)}\n`);
+                doc.fontSize(10).text(`Unit Price : ${formatNumber(product.unitPrice)} Rwf\n`);
+                doc.fontSize(10).text(`Total Price : ${formatNumber(product.totalPrice)} Rwf\n\n`);
+                total += product.totalPrice;
+            }
+            doc.fontSize(12).text(`Total : ${formatNumber(total)} Rwf \n\n\n`, {underline: true});
+            totalInventoryPrice += total;
         }
-        doc.fontSize(12).text(`Total : ${formatNumber(total)} Rwf \n\n\n`, {underline: true});
-        totalInventoryPrice += total;
+        doc.fontSize(13).text(`Total Inventory: ${formatNumber(totalInventoryPrice)} Rwf \n\n\n\n`, {underline: true});
+    } else {
+        doc.fontSize(13).text(`No Inventories Were Made On ${activeDay.name}.\n\n\n\n`);
     }
-    doc.fontSize(13).text(`Total Inventory: ${formatNumber(totalInventoryPrice)} Rwf \n\n\n\n`, {underline: true});
 
 
     // Sales Section
     doc.fontSize(12).text('Sales \n\n', {underline: true});
-    let totalSalesPrice = 0;
-    let remaining = 0;
-
     const sales = await Sales.find({activeDay: activeDay.id});
 
-    for (const sale of sales) {
-        doc.fontSize(10).text(`${sale.customerName} ${sale.customerPhone ? sale.customerPhone : ''}\n\n`, {underline: true});
+    if (sales.length > 0) {
+        let totalSalesPrice = 0;
+        let remaining = 0;
 
-        for (const product of sale.products) {
-            doc.fontSize(10).text(`Product : ${product.name} \n`);
-            doc.fontSize(10).text(`Quantity : ${formatNumber(product.quantity)} \n`);
-            doc.fontSize(10).text(`Unit Price : ${formatNumber(product.unitPrice)} Rwf\n`);
-            doc.fontSize(10).text(`Total Price : ${formatNumber(product.totalPrice)} Rwf\n\n`);
+        for (const sale of sales) {
+            doc.fontSize(10).text(`${sale.customerName} ${sale.customerPhone ? sale.customerPhone : ''}\n\n`, {underline: true});
+
+            for (const product of sale.products) {
+                doc.fontSize(10).text(`Product : ${product.name} \n`);
+                doc.fontSize(10).text(`Quantity : ${formatNumber(product.quantity)} \n`);
+                doc.fontSize(10).text(`Unit Price : ${formatNumber(product.unitPrice)} Rwf\n`);
+                doc.fontSize(10).text(`Total Price : ${formatNumber(product.totalPrice)} Rwf\n\n`);
+            }
+            doc.fontSize(10).text(`\nPaid : ${formatNumber(sale.amountPaid)}\n`);
+            if (!sale.isFullyPaid) {
+                doc.fontSize(10).text(`Remaining : ${formatNumber(sale.totalPrice - sale.amountPaid)} Rwf \n`);
+                remaining += (sale.totalPrice - sale.amountPaid);
+            }
+            doc.fontSize(12).text(`Total : ${formatNumber(sale.totalPrice)} Rwf \n\n\n`, {underline: true});
+            totalSalesPrice += sale.totalPrice;
         }
-        doc.fontSize(10).text(`\nPaid : ${formatNumber(sale.amountPaid)}\n`);
-        if (!sale.isFullyPaid) {
-            doc.fontSize(10).text(`Remaining : ${formatNumber(sale.totalPrice - sale.amountPaid)} Rwf \n`);
-            remaining += (sale.totalPrice - sale.amountPaid);
-        }
-        doc.fontSize(12).text(`Total : ${formatNumber(sale.totalPrice)} Rwf \n\n\n`, {underline: true});
-        totalSalesPrice += sale.totalPrice;
+        doc.fontSize(13).text(`Total Paid: ${formatNumber(totalSalesPrice - remaining)} Rwf \n`);
+        doc.fontSize(13).text(`Total Reaming: ${formatNumber(remaining)} Rwf \n`);
+        doc.fontSize(13).text(`Total Sales: ${formatNumber(totalSalesPrice)} Rwf \n\n\n\n`, {underline: true});
+    } else {
+        doc.fontSize(13).text(`No Sales Were Made On ${activeDay.name}.\n\n\n\n`);
     }
-    doc.fontSize(13).text(`Total Paid: ${formatNumber(totalSalesPrice - remaining)} Rwf \n`);
-    doc.fontSize(13).text(`Total Reaming: ${formatNumber(remaining)} Rwf \n`);
-    doc.fontSize(13).text(`Total Sales: ${formatNumber(totalSalesPrice)} Rwf \n\n\n\n`, {underline: true});
 
 
     // Credit Section
     doc.fontSize(12).text('Credit \n\n', {underline: true});
-    let totalCredit = 0;
-
     const creditSales = await Sales.find({activeDay: activeDay.id, isFullyPaid: false});
+    if (creditSales.length > 0) {
+        let totalCredit = 0;
 
-    for (const sale of creditSales) {
-        doc.fontSize(10).text(`${sale.customerName} ${sale.customerPhone ? sale.customerPhone : ''}\n\n`);
-        doc.fontSize(10).text(`Amount To Be Paid : ${formatNumber(sale.totalPrice)} Rwf\n`);
-        doc.fontSize(10).text(`Amount Paid : ${formatNumber(sale.amountPaid)} Rwf\n`);
-        doc.fontSize(10).text(`Amount Remaining : ${formatNumber(sale.totalPrice - sale.amountPaid)} Rwf\n\n`);
+        for (const sale of creditSales) {
+            doc.fontSize(10).text(`${sale.customerName} ${sale.customerPhone ? sale.customerPhone : ''}\n\n`);
+            doc.fontSize(10).text(`Amount To Be Paid : ${formatNumber(sale.totalPrice)} Rwf\n`);
+            doc.fontSize(10).text(`Amount Paid : ${formatNumber(sale.amountPaid)} Rwf\n`);
+            doc.fontSize(10).text(`Amount Remaining : ${formatNumber(sale.totalPrice - sale.amountPaid)} Rwf\n\n`);
 
-        totalCredit += parseInt(sale.totalPrice - sale.amountPaid);
+            totalCredit += parseInt(sale.totalPrice - sale.amountPaid);
+        }
+        doc.fontSize(13).text(`Total Credit: ${formatNumber(totalCredit)} Rwf \n\n\n\n`, {underline: true});
+    } else {
+        doc.fontSize(13).text(`No Credits Were Made On ${activeDay.name}.\n\n\n\n`);
     }
-    doc.fontSize(13).text(`Total Credit: ${formatNumber(totalCredit)} Rwf \n\n\n\n`, {underline: true});
 
 
     // crates rendering
     doc.fontSize(12).text('Crates Rendering \n\n', {underline: true});
     const crates = await Crates.find({activeDay: activeDay.id});
 
-    let givenC = 0;
-    let returnedC = 0;
-    let remainingC = 0;
+    if (crates.length > 0) {
+        let givenC = 0;
+        let returnedC = 0;
+        let remainingC = 0;
 
-    for (let crate of crates) {
-        let given, returned, remaining = 0;
-        doc.fontSize(10).text(`${crate.customerName} ${crate.customerPhone ? crate.customerPhone : ''}\n\n`);
+        for (let crate of crates) {
+            let given, returned, remaining = 0;
+            doc.fontSize(10).text(`${crate.customerName} ${crate.customerPhone ? crate.customerPhone : ''}\n\n`);
 
-        const products = crate.products;
-        for (let product of products) {
-            doc.fontSize(10)
-                .text(`${product.name} => `, {underline: true})
-                .text(`given: ${formatNumber(product.given)} | `)
-                .text(`returned: ${formatNumber(product.returned)} | `)
-                .text(`remaining: ${formatNumber(product.remaining)} \n`);
+            const products = crate.products;
+            for (let product of products) {
+                doc.fontSize(10)
+                    .text(`${product.name} => `, {underline: true})
+                    .text(`given: ${formatNumber(product.given)} | `)
+                    .text(`returned: ${formatNumber(product.returned)} | `)
+                    .text(`remaining: ${formatNumber(product.remaining)} \n`);
 
-            given += parseInt(product.given);
-            returned += parseInt(product.returned);
-            remaining += parseInt(product.remaining);
+                given += parseInt(product.given);
+                returned += parseInt(product.returned);
+                remaining += parseInt(product.remaining);
+            }
+            doc.fontSize(10).text(`Total => given:${formatNumber(given)} | returned:${formatNumber(returned)} | remaining:${formatNumber(remaining)}\n\n`);
+            givenC += given;
+            returnedC += returned;
+            remainingC += remaining;
         }
-        doc.fontSize(10).text(`Total => given:${formatNumber(given)} | returned:${formatNumber(returned)} | remaining:${formatNumber(remaining)}\n\n`);
-        givenC += given;
-        returnedC += returned;
-        remainingC += remaining;
+        doc.fontSize(12).text(`Total => given:${formatNumber(parseInt(givenC))} | returned:${formatNumber(parseInt(returnedC))} | remaining:${formatNumber(parseInt(remainingC))}\n\n\n\n`);
+    } else {
+        doc.fontSize(13).text(`No Crates Were Rendered On ${activeDay.name}.\n\n\n\n`);
     }
-    doc.fontSize(12).text(`Total => given:${formatNumber(parseInt(givenC))} | returned:${formatNumber(parseInt(returnedC))} | remaining:${formatNumber(parseInt(remainingC))}\n\n\n\n`);
 
     // crates remaining
     doc.fontSize(12).text('Empty Crates \n\n', {underline: true});
     const emptyCrates = await EmptyCrates.find({activeDay: activeDay.id});
-    let totalECrates = 0;
-    let totalB = 0;
+    if (emptyCrates.length > 0) {
+        let totalECrates = 0;
+        let totalB = 0;
 
-    for (let ec of emptyCrates) {
-        doc.fontSize(10).text(`${ec.name}: ${formatNumber(ec.number)}\n`);
-        totalECrates += parseInt(ec.number);
-        if (ec.isBrarirwa) totalB += parseInt(ec.number);
+        for (let ec of emptyCrates) {
+            doc.fontSize(10).text(`${ec.name}: ${formatNumber(ec.number)}\n`);
+            totalECrates += parseInt(ec.number);
+            if (ec.isBrarirwa) totalB += parseInt(ec.number);
+        }
+        doc.fontSize(12).text(`\nBrarirwa: ${formatNumber(totalB)} \n`);
+        doc.fontSize(12).text(`Skol: ${formatNumber(totalECrates - totalB)} \n`);
+        doc.fontSize(12).text(`Total: ${formatNumber(totalECrates)} \n\n\n\n`);
+    } else {
+        doc.fontSize(13).text(`No Empty Crates Recorded On ${activeDay.name}.\n\n\n\n`);
     }
-    doc.fontSize(12).text(`\nBrarirwa: ${formatNumber(totalB)} \n`);
-    doc.fontSize(12).text(`Skol: ${formatNumber(totalECrates - totalB)} \n`);
-    doc.fontSize(12).text(`Total: ${formatNumber(totalECrates)} \n\n\n\n`);
 
     // payment
     doc.fontSize(12).text('Payments \n\n', {underline: true});
@@ -164,7 +185,7 @@ const generatePDF = async (activeDay) => {
         doc.fontSize(10).text(`${product.name} | initial ${formatNumber(product.prevDayRemaining)} | added ${formatNumber(product.dailyAdded)} | remaining ${formatNumber(product.totalAvailable)}\n\n`);
     }
 
-    doc.fontSize(10).font('Times-Bold').text(`\n\n\n\n ${config.name}`, {underline: true});
+    doc.fontSize(10).font('Times-Bold').text(`\n\n\n\n ${stock}`, {underline: true});
     doc.end();
     return fileName;
 
@@ -192,7 +213,7 @@ const checkDay = async () => {
 
 const getActiveDay = catchAsync(async (req, res) => {
 
-    const activeDay = await ActiveDay.findOne({isActive: true});
+    const activeDay = await ActiveDay.findOne({isActive: true, stock: req.query.stockId});
 
     if (!activeDay) {
         return res.status(httpStatus.BAD_REQUEST).json({
@@ -210,7 +231,7 @@ const getActiveDay = catchAsync(async (req, res) => {
 
 const getActiveDays = catchAsync(async (req, res) => {
 
-    const activeDays = await ActiveDay.find({});
+    const activeDays = await ActiveDay.find({stock: req.query.stockId});
 
     return res.status(httpStatus.OK).json({
         success: true,
@@ -221,6 +242,16 @@ const getActiveDays = catchAsync(async (req, res) => {
 
 const startDay = catchAsync(async (req, res) => {
 
+    const stockId = req.query.stockId;
+    const stock = await checkStock(stockId);
+
+    if (!stock) {
+        return res.status(httpStatus.BAD_REQUEST).json({
+            success: false,
+            message: 'Stock Not Found.'
+        });
+    }
+
     const activeDay = await ActiveDay.findOne({isActive: true});
 
     if (activeDay) {
@@ -230,7 +261,7 @@ const startDay = catchAsync(async (req, res) => {
         });
     }
 
-    const day = await ActiveDay.create({});
+    const day = await ActiveDay.create({stock: stock.id});
 
     return res.status(httpStatus.CREATED).json({
         success: true,
@@ -240,6 +271,16 @@ const startDay = catchAsync(async (req, res) => {
 });
 
 const endDay = catchAsync(async (req, res) => {
+
+    const stockId = req.query.stockId;
+    const stock = await checkStock(stockId);
+
+    if (!stock) {
+        return res.status(httpStatus.BAD_REQUEST).json({
+            success: false,
+            message: 'Stock Not Found.'
+        });
+    }
 
     const activeDay = await ActiveDay.findById(req.params.id);
     const {crates} = req.body;
@@ -253,11 +294,11 @@ const endDay = catchAsync(async (req, res) => {
 
     // register crates
     for (let crate of crates) {
-        const emptyC = await EmptyCrates.create({activeDay: activeDay.id, name: crate.name, number: crate.number, isBrarirwa: crate.isBrarirwa});
+        const emptyC = await EmptyCrates.create({stock: stock.id, activeDay: activeDay.id, name: crate.name, number: crate.number, isBrarirwa: crate.isBrarirwa});
     }
 
     // generate pdf
-    const pdfFileName = await generatePDF(activeDay);
+    const pdfFileName = await generatePDF(stock.name, activeDay);
     const url = config.url + '/public/reports/' + pdfFileName;
 
     // update remaining products in inventory

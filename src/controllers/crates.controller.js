@@ -2,8 +2,19 @@ const httpStatus = require('http-status');
 
 const {Crates} = require('../models');
 const catchAsync = require('../utils/catchAsync');
+const {checkStock} = require('./stock.controller');
 
 const newCratesRender = catchAsync(async (req, res) => {
+
+    const stockId = req.query.stockId;
+    const stock = await checkStock(stockId);
+
+    if (!stock) {
+        return res.status(httpStatus.BAD_REQUEST).json({
+            success: false,
+            message: 'Stock Not Found.'
+        });
+    }
 
     const {products: reqProducts, customerName, customerPhone} = req.body;
     let products = reqProducts.map(p => {
@@ -15,7 +26,7 @@ const newCratesRender = catchAsync(async (req, res) => {
         };
     });
 
-    const crates = await Crates.create({products, customerName, customerPhone});
+    const crates = await Crates.create({products, customerName, customerPhone, stock: stock.id});
 
     if (!crates) {
         return res.status(httpStatus.BAD_REQUEST).json({
@@ -32,7 +43,8 @@ const newCratesRender = catchAsync(async (req, res) => {
 });
 
 const allCrates = catchAsync(async (req, res) => {
-    const crates = await Crates.find({allReturned: req.query.given});
+
+    const crates = await Crates.find({allReturned: req.query.given, stock: req.query.stockId});
 
     return res.status(httpStatus.OK).json({
         success: true,
