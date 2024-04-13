@@ -14,7 +14,7 @@ const newMethod = catchAsync(async (req, res) => {
     if (method) {
         return res.status(httpStatus.BAD_REQUEST).json({
             success: false,
-            message: 'Method already exist.',
+            message: 'Method Already Exist.',
         });
     }
 
@@ -22,7 +22,7 @@ const newMethod = catchAsync(async (req, res) => {
 
     return res.status(httpStatus.CREATED).json({
         success: true,
-        message: 'method created successfully.',
+        message: 'Method Added Successfully.',
         method: newMethod
     });
 
@@ -36,7 +36,7 @@ const editMethod = catchAsync(async (req, res) => {
     if (!method) {
         return res.status(httpStatus.BAD_REQUEST).json({
             success: false,
-            message: 'method not found.',
+            message: 'Method Not Found.',
         });
     }
 
@@ -49,7 +49,7 @@ const editMethod = catchAsync(async (req, res) => {
     if (_method) {
         return res.status(httpStatus.BAD_REQUEST).json({
             success: false,
-            message: 'Method already exist.',
+            message: 'Method Elready Exist.',
         });
     }
 
@@ -60,7 +60,7 @@ const editMethod = catchAsync(async (req, res) => {
 
     return res.status(httpStatus.OK).json({
         success: true,
-        message: 'Method edited successfully.',
+        message: 'Method Edited Successfully.',
         method
     });
 

@@ -6,6 +6,6 @@ const router = express.Router();
 
 router.post('/new', auth('admin'), paymentMethodController.newMethod);
 router.patch('/edit/:methodId', auth('admin'), paymentMethodController.editMethod);
-router.get('/all-method', auth('admin'), paymentMethodController.allmethods);
+router.get('/all-methods', auth('admin'), paymentMethodController.allmethods);
 
 module.exports = router;

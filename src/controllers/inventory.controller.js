@@ -11,7 +11,7 @@ const newInventory = catchAsync(async (req, res) => {
     if (!activeDay) {
         return res.status(httpStatus.BAD_REQUEST).json({
             success: false,
-            message: 'No active day, plz start new day and try again.'
+            message: 'No Active Day, Plz Start New Day And Try Again.'
         });
     }
 
@@ -40,7 +40,7 @@ const newInventory = catchAsync(async (req, res) => {
     if (!inventory) {
         return res.status(httpStatus.BAD_REQUEST).json({
             success: false,
-            message: 'Something went wrong, plz start new day and try again.'
+            message: 'Something Went Wrong, Plz Try Again.'
         });
     }
 
@@ -57,7 +57,7 @@ const newInventory = catchAsync(async (req, res) => {
 
     return res.status(httpStatus.CREATED).json({
         success: true,
-        message: 'Inventory recorded successfully.',
+        message: 'Inventory Recorded Successfully.',
         inventory
     });
 });
@@ -87,7 +87,7 @@ const dailyInventory = catchAsync(async (req, res) => {
     if (!activeDay) {
         return res.status(httpStatus.BAD_REQUEST).json({
             success: false,
-            message: 'No active day, plz start new day and try again.'
+            message: 'No Active Day, Plz Start New Day And Try Again.'
         });
     }
 

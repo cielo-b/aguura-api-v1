@@ -14,7 +14,7 @@ const newProduct = catchAsync(async (req, res) => {
     if (product) {
         return res.status(httpStatus.BAD_REQUEST).json({
             success: false,
-            message: 'Product already exist.',
+            message: 'Product Already Exist.',
         });
     }
 
@@ -22,7 +22,7 @@ const newProduct = catchAsync(async (req, res) => {
 
     return res.status(httpStatus.CREATED).json({
         success: true,
-        message: 'Product created successfully.',
+        message: 'Product Added Successfully.',
         product: newProduct
     });
 
@@ -36,7 +36,7 @@ const editProduct = catchAsync(async (req, res) => {
     if (!product) {
         return res.status(httpStatus.BAD_REQUEST).json({
             success: false,
-            message: 'Product not found.',
+            message: 'Product Not Found.',
         });
     }
 
@@ -55,7 +55,7 @@ const editProduct = catchAsync(async (req, res) => {
 
     return res.status(httpStatus.OK).json({
         success: true,
-        message: 'Product edited successfully.',
+        message: 'Product Edited Successfully.',
         product
     });
 

@@ -6,11 +6,21 @@ const {checkActive} = require('./activeDay.controller');
 
 
 const allPayments = catchAsync(async (req, res) => {
-    const sales = await Payment.find({}, {activeDay: 0});
+    let payments = await Payment.find({}, {activeDay: 0}).populate('method');
+    payments = payments.map(payment => {
+        return {
+            id: payment.id,
+            customerName: payment.customerName,
+            customerPhone: payment.customerPhone,
+            amount: payment.amount,
+            date: payment.date,
+            method: payment.method.name,
+        };
+    });
 
     return res.status(httpStatus.OK).json({
         success: true,
-        sales
+        payments
     });
 });
 
@@ -23,11 +33,21 @@ const dailyPayments = catchAsync(async (req, res) => {
     if (!activeDay) {
         return res.status(httpStatus.BAD_REQUEST).json({
             success: false,
-            message: 'No active day, plz start new day and try again.'
+            message: 'No Active Day, Plz Start New Day And Try Again.'
         });
     }
 
-    const payments = await Payment.find({activeDay: dayId}, {activeDay: 0});
+    let payments = await Payment.find({activeDay: dayId}, {activeDay: 0}).populate('method');
+    payments = payments.map(payment => {
+        return {
+            id: payment.id,
+            customerName: payment.customerName,
+            customerPhone: payment.customerPhone,
+            amount: payment.amount,
+            date: payment.date,
+            method: payment.method.name,
+        };
+    });
 
     return res.status(httpStatus.OK).json({
         success: true,

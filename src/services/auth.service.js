@@ -14,7 +14,7 @@ const {tokenTypes} = require('../config/tokens');
 const loginWithPhoneAndPassword = async (phone, password) => {
     const user = await userService.getUserByPhone(phone);
     if (!user || !(await user.isPasswordMatch(password))) {
-        throw new ApiError(httpStatus.UNAUTHORIZED, 'Incorrect phone or password');
+        throw new ApiError(httpStatus.UNAUTHORIZED, 'Incorrect Phone Or Password');
     }
     return user;
 };
@@ -27,7 +27,7 @@ const loginWithPhoneAndPassword = async (phone, password) => {
 const logout = async (refreshToken) => {
     const refreshTokenDoc = await Token.findOne({token: refreshToken, type: tokenTypes.REFRESH, blacklisted: false});
     if (!refreshTokenDoc) {
-        throw new ApiError(httpStatus.NOT_FOUND, 'Not found');
+        throw new ApiError(httpStatus.NOT_FOUND, 'Not Found.');
     }
     await refreshTokenDoc.deleteOne();
 };
@@ -47,7 +47,7 @@ const refreshAuth = async (refreshToken) => {
         await Token.findByIdAndDelete(refreshTokenDoc._id);
         return tokenService.generateAuthTokens(user);
     } catch (error) {
-        throw new ApiError(httpStatus.UNAUTHORIZED, 'Please authenticate');
+        throw new ApiError(httpStatus.UNAUTHORIZED, 'Please Authenticate.');
     }
 };
 
@@ -67,7 +67,7 @@ const resetPassword = async (resetPasswordToken, newPassword) => {
         await userService.updateUserById(user.id, {password: newPassword});
         await Token.deleteMany({user: user.id, type: tokenTypes.RESET_PASSWORD});
     } catch (error) {
-        throw new ApiError(httpStatus.UNAUTHORIZED, 'Password reset failed');
+        throw new ApiError(httpStatus.UNAUTHORIZED, 'Password Reset Failed.');
     }
 };
 

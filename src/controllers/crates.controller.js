@@ -20,14 +20,14 @@ const newCratesRender = catchAsync(async (req, res) => {
     if (!crates) {
         return res.status(httpStatus.BAD_REQUEST).json({
             success: false,
-            message: 'Something went wrong, plz try again.'
+            message: 'Something Went Wrong, Plz Try Again.'
         });
     }
 
 
     return res.status(httpStatus.CREATED).json({
         success: true,
-        message: 'Crates recorded successfully.',
+        message: 'Crates Recorded Successfully.',
     });
 });
 
@@ -45,7 +45,7 @@ const returnCrates = catchAsync(async (req, res) => {
     if (!cratesOrder) {
         return res.status(httpStatus.BAD_REQUEST).json({
             success: false,
-            message: 'Crates order not found.',
+            message: 'Crates Order Not Found.',
         });
     }
 
@@ -81,7 +81,7 @@ const returnCrates = catchAsync(async (req, res) => {
 
     return res.status(httpStatus.OK).json({
         success: true,
-        message: 'Crates were returned successfully.'
+        message: 'Crates Were Returned Successfully.'
     });
 });
 

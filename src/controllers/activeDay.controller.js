@@ -140,8 +140,12 @@ const generatePDF = async (activeDay) => {
     for (const m of methods) {
         const payments = await Payment.find({method: m.id});
         let total = 0;
+        doc.fontSize(12).text(`${m.name}\n\n`, {underline: true});
 
         for (let p of payments) {
+            doc.fontSize(10)
+                .text(`${p.customerName} ${p.customerPhone}`, {underline: true})
+                .text(`${formatNumber(p.amount)} Rwf\n`);
             total += parseInt(p.amount);
         }
         doc.fontSize(12).text(`${m.name}: ${formatNumber(total)} Rwf\n`, {underline: true});
@@ -158,8 +162,6 @@ const generatePDF = async (activeDay) => {
     for (let product of iProducts) {
         doc.fontSize(10).text(`${product.name} | ${formatNumber(product.prevDayRemaining)} | ${formatNumber(product.dailyAdded)} | ${formatNumber(product.totalAvailable)}\n`);
     }
-
-
 
     doc.fontSize(10).font('Times-Bold').text(`\n\n\n\n ${config.name}`, {underline: true});
     doc.end();
@@ -194,13 +196,13 @@ const getActiveDay = catchAsync(async (req, res) => {
     if (!activeDay) {
         return res.status(httpStatus.BAD_REQUEST).json({
             success: false,
-            message: 'No active day.'
+            message: 'No Active Day.'
         });
     }
 
     return res.status(httpStatus.OK).json({
         success: true,
-        message: 'Day found successfully.',
+        message: 'Day Found Successfully.',
         day: activeDay
     });
 });
@@ -211,7 +213,7 @@ const getActiveDays = catchAsync(async (req, res) => {
 
     return res.status(httpStatus.OK).json({
         success: true,
-        message: 'Days found successfully.',
+        message: 'Days Found Successfully.',
         activeDays
     });
 });
@@ -223,7 +225,7 @@ const startDay = catchAsync(async (req, res) => {
     if (activeDay) {
         return res.status(httpStatus.BAD_REQUEST).json({
             success: false,
-            message: 'There is another active day, plz end it and try again.'
+            message: 'There Is Another Active Day, Plz End It And Try Again.'
         });
     }
 
@@ -231,7 +233,7 @@ const startDay = catchAsync(async (req, res) => {
 
     return res.status(httpStatus.CREATED).json({
         success: true,
-        message: 'Day activated successfully.',
+        message: 'Day Started Successfully.',
         day
     });
 });
@@ -243,7 +245,7 @@ const endDay = catchAsync(async (req, res) => {
     if (!activeDay) {
         return res.status(httpStatus.BAD_REQUEST).json({
             success: false,
-            message: 'Active day not found.'
+            message: 'Active Day Not Found.'
         });
     }
 
@@ -264,7 +266,7 @@ const endDay = catchAsync(async (req, res) => {
 
     return res.status(httpStatus.OK).json({
         success: true,
-        message: 'Day ended successfully.',
+        message: 'Day Ended Successfully.',
         url
     });
 });

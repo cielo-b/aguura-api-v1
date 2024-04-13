@@ -46,10 +46,10 @@ const getUserByPhone = async (phone) => {
 const updateUserById = async (userId, updateBody) => {
     const user = await getUserById(userId);
     if (!user) {
-        throw new ApiError(httpStatus.NOT_FOUND, 'User not found');
+        throw new ApiError(httpStatus.NOT_FOUND, 'User Not Found');
     }
     if (updateBody.username && (updateBody.username.toString() !== user.username.toString() && await User.isUsernameTaken(updateBody.username, userId))) {
-        throw new ApiError(httpStatus.BAD_REQUEST, 'Email already taken');
+        throw new ApiError(httpStatus.BAD_REQUEST, 'Email Already Taken');
     }
     Object.assign(user, updateBody);
     await user.save();
@@ -64,7 +64,7 @@ const updateUserById = async (userId, updateBody) => {
 const deleteUserById = async (userId) => {
     const user = await getUserById(userId);
     if (!user) {
-        throw new ApiError(httpStatus.NOT_FOUND, 'User not found');
+        throw new ApiError(httpStatus.NOT_FOUND, 'User Not Found');
     }
     await user.remove();
     return user;

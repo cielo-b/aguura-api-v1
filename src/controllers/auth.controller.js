@@ -11,7 +11,7 @@ const register = catchAsync(async (req, res) => {
     if (await User.isPhoneTaken(phone)) {
         return res.status(httpStatus.BAD_REQUEST).json({
             success: false,
-            message: 'Phone already taken.'
+            message: 'Phone Already Taken.'
         });
     }
 
@@ -50,7 +50,7 @@ const getUser = catchAsync(async (req, res) => {
     if (!user) {
         return res.status(httpStatus.BAD_REQUEST).json({
             success: false,
-            message: 'User not found.'
+            message: 'User Not Found.'
         });
     }
 
@@ -64,7 +64,7 @@ const logout = catchAsync(async (req, res) => {
     await authService.logout(req.body.refreshToken);
     res.status(httpStatus.OK).json({
         success: true,
-        message: 'Logged out successfully',
+        message: 'Logged Out Successfully',
     });
 });
 
@@ -81,7 +81,7 @@ const forgotPassword = catchAsync(async (req, res) => {
     await emailService.sendResetPasswordEmail(req.body.email, resetPasswordToken);
     res.status(httpStatus.OK).json({
         success: true,
-        message: 'Password reset email was sent to your email.'
+        message: 'Password Reset Email Was Sent To Your Email.'
     });
 });
 
@@ -89,7 +89,7 @@ const resetPassword = catchAsync(async (req, res) => {
     await authService.resetPassword(req.query.token, req.body.password);
     res.status(httpStatus.OK).json({
         success: true,
-        message: 'Password reset successfully.'
+        message: 'Password Reset Successfully.'
     });
 });
 

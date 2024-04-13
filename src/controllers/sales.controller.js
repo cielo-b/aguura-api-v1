@@ -1,20 +1,20 @@
 const httpStatus = require('http-status');
 
-const {InventoryProduct, SalesProduct, Sales, Credit} = require('../models');
+const {InventoryProduct, SalesProduct, Sales, Credit, PaymentMethod, Payment} = require('../models');
 const catchAsync = require('../utils/catchAsync');
 const {checkActive, checkDay} = require('./activeDay.controller');
 const formatNumber = require('../utils/formatNumber');
 
 const newSales = catchAsync(async (req, res) => {
 
-    const {products: reqProducts, isFullyPaid, customerName, customerPhone, amountPaid} = req.body;
+    const {products: reqProducts, isFullyPaid, customerName, customerPhone, amountPaid, payments} = req.body;
 
     const activeDay = await checkDay();
 
     if (!activeDay) {
         return res.status(httpStatus.BAD_REQUEST).json({
             success: false,
-            message: 'No active day, plz start new day and try again.'
+            message: 'No Active Day, Plz Start New Day And Try Again.'
         });
     }
 
@@ -46,7 +46,7 @@ const newSales = catchAsync(async (req, res) => {
     if (!sales) {
         return res.status(httpStatus.BAD_REQUEST).json({
             success: false,
-            message: 'Something went wrong, plz try again.'
+            message: 'Something Went Wrong, Plz Try Again.'
         });
     }
 
@@ -67,14 +67,22 @@ const newSales = catchAsync(async (req, res) => {
         if (!credit) {
             return res.status(httpStatus.CREATED).json({
                 success: true,
-                message: 'Sales recorded successfully but, credit failed to be recorder.',
+                message: 'Sales Eecorded Successfully But, Credit Failed To Te Recorder.',
             });
+        }
+    }
+
+    // update payments
+    if (payments.length > 0) {
+        for (const payment of payments) {
+            let method = await PaymentMethod.findById(payment.id);
+            const p = await Payment.create({activeDay: activeDay.id, method: method.id, customerName, customerPhone, amount: payment.amount});
         }
     }
 
     return res.status(httpStatus.CREATED).json({
         success: true,
-        message: 'Sales recorded successfully.',
+        message: 'Sales Recorded Successfully.',
     });
 });
 
@@ -96,7 +104,7 @@ const dailySales = catchAsync(async (req, res) => {
     if (!activeDay) {
         return res.status(httpStatus.BAD_REQUEST).json({
             success: false,
-            message: 'No active day, plz start new day and try again.'
+            message: 'No Active Day, Plz Start New Day And Try Again.'
         });
     }
 

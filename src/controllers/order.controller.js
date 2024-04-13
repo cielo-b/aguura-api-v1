@@ -118,7 +118,7 @@ const completeOrder = catchAsync(async (req, res) => {
     if (!order) {
         return res.status(httpStatus.BAD_REQUEST).json({
             success: false,
-            message: 'Order not found.'
+            message: 'Order Not Found.'
         });
     }
 
@@ -134,7 +134,7 @@ const completeOrder = catchAsync(async (req, res) => {
     if (!sales) {
         return res.status(httpStatus.BAD_REQUEST).json({
             success: false,
-            message: 'Something went wrong, plz try again.'
+            message: 'Something Went Wrong, Plz Try Again.'
         });
     }
 
@@ -155,7 +155,7 @@ const completeOrder = catchAsync(async (req, res) => {
         if (!credit) {
             return res.status(httpStatus.CREATED).json({
                 success: true,
-                message: 'Order Completed successfully but, credit failed to be recorder.',
+                message: 'Order Completed Successfully But, Credit Failed To Be Recorder.',
             });
         }
     }
@@ -165,7 +165,7 @@ const completeOrder = catchAsync(async (req, res) => {
 
     return res.status(httpStatus.CREATED).json({
         success: true,
-        message: 'Order completed successfully.',
+        message: 'Order Completed Successfully.',
     });
 });
 
@@ -177,7 +177,7 @@ const myOrders = catchAsync(async (req, res) => {
     if (!user) {
         return res.status(httpStatus.BAD_REQUEST).json({
             success: false,
-            message: 'User not found.'
+            message: 'User Not Found.'
         });
     }
 

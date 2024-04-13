@@ -14,7 +14,7 @@ const payCredit = catchAsync(async (req, res) => {
     if (!credit) {
         return res.status(httpStatus.BAD_REQUEST).json({
             success: false,
-            message: 'Credit not found.',
+            message: 'Credit Not Found.',
         });
     }
 
@@ -33,7 +33,7 @@ const payCredit = catchAsync(async (req, res) => {
 
     return res.status(httpStatus.OK).json({
         success: true,
-        message: 'Credit paid successfully.',
+        message: 'Credit Paid Successfully.',
     });
 
 });
