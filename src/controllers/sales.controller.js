@@ -19,7 +19,7 @@ const newSales = catchAsync(async (req, res) => {
 
     const {products: reqProducts, isFullyPaid, customerName, customerPhone, amountPaid, payments} = req.body;
 
-    const activeDay = await checkDay();
+    const activeDay = await checkDay(stockId);
 
     if (!activeDay) {
         return res.status(httpStatus.BAD_REQUEST).json({

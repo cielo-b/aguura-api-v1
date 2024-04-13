@@ -201,8 +201,8 @@ const checkActive = async (dayId) => {
     }
 };
 
-const checkDay = async () => {
-    const activeDay = await ActiveDay.findOne({isActive: true});
+const checkDay = async (stockId) => {
+    const activeDay = await ActiveDay.findOne({isActive: true, stock: stockId});
 
     if (!activeDay) {
         return null;
