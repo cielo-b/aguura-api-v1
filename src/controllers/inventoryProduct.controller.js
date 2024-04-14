@@ -20,7 +20,7 @@ const newProduct = catchAsync(async (req, res) => {
     const {name, price} = req.body;
     const productName = name.replace(/\s/g, '').toLowerCase();
 
-    const product = await InventoryProduct.findOne({productName});
+    const product = await InventoryProduct.findOne({productName, stock: stock.id});
 
     if (product) {
         return res.status(httpStatus.BAD_REQUEST).json({
