@@ -19,7 +19,7 @@ const newMethod = catchAsync(async (req, res) => {
     const {name} = req.body;
     const methodName = name.replace(/\s/g, '').toLowerCase();
 
-    const method = await PaymentMethod.findOne({methodName});
+    const method = await PaymentMethod.findOne({methodName, stock: stock.id});
 
     if (method) {
         return res.status(httpStatus.BAD_REQUEST).json({

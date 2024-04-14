@@ -39,8 +39,8 @@ const newSales = catchAsync(async (req, res) => {
         const salesProduct = {
             name: product.inventoryProduct.name,
             quantity: reqProduct.quantity,
-            unitPrice: product.inventoryProduct.price,
-            totalPrice: product.inventoryProduct.price * reqProduct.quantity
+            unitPrice: product.price,
+            totalPrice: product.price * reqProduct.quantity
         };
 
         products.push(salesProduct);
@@ -66,7 +66,7 @@ const newSales = catchAsync(async (req, res) => {
         let product = await SalesProduct.findById(reqProduct.id);
         let inventoryProduct = await InventoryProduct.findById(product.inventoryProduct);
 
-        inventoryProduct.totalAvailable = (parseInt(product.totalAvailable) - parseInt(reqProduct.quantity));
+        inventoryProduct.totalAvailable = (parseInt(inventoryProduct.totalAvailable) - parseInt(reqProduct.quantity));
         await inventoryProduct.save({validateBeforeSave: false});
     }
 

@@ -65,7 +65,7 @@ const generatePDF = async (stock, activeDay) => {
                 doc.fontSize(10).text(`Unit Price : ${formatNumber(product.unitPrice)} Rwf\n`);
                 doc.fontSize(10).text(`Total Price : ${formatNumber(product.totalPrice)} Rwf\n\n`);
             }
-            doc.fontSize(10).text(`\nPaid : ${formatNumber(sale.amountPaid)}\n`);
+            doc.fontSize(10).text(`\nPaid : ${formatNumber(sale.amountPaid)} Rwf\n`);
             if (!sale.isFullyPaid) {
                 doc.fontSize(10).text(`Remaining : ${formatNumber(sale.totalPrice - sale.amountPaid)} Rwf \n`);
                 remaining += (sale.totalPrice - sale.amountPaid);
@@ -91,7 +91,7 @@ const generatePDF = async (stock, activeDay) => {
             doc.fontSize(10).text(`${sale.customerName} ${sale.customerPhone ? sale.customerPhone : ''}\n\n`);
             doc.fontSize(10).text(`Amount To Be Paid : ${formatNumber(sale.totalPrice)} Rwf\n`);
             doc.fontSize(10).text(`Amount Paid : ${formatNumber(sale.amountPaid)} Rwf\n`);
-            doc.fontSize(10).text(`Amount Remaining : ${formatNumber(sale.totalPrice - sale.amountPaid)} Rwf\n\n`);
+            doc.fontSize(10).text(`Amount Remaining : ${formatNumber(sale.totalPrice - sale.amountPaid)} Rwf\n\n\n`);
 
             totalCredit += parseInt(sale.totalPrice - sale.amountPaid);
         }
@@ -117,10 +117,7 @@ const generatePDF = async (stock, activeDay) => {
             const products = crate.products;
             for (let product of products) {
                 doc.fontSize(10)
-                    .text(`${product.name} => `, {underline: true})
-                    .text(`given: ${formatNumber(product.given)} | `)
-                    .text(`returned: ${formatNumber(product.returned)} | `)
-                    .text(`remaining: ${formatNumber(product.remaining)} \n`);
+                    .text(`${product.name} => given: ${formatNumber(product.given)} | returned: ${formatNumber(product.returned)} | remaining: ${formatNumber(product.remaining)} \n `, {underline: true});
 
                 given += parseInt(product.given);
                 returned += parseInt(product.returned);

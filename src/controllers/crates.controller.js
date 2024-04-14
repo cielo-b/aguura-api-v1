@@ -3,6 +3,7 @@ const httpStatus = require('http-status');
 const {Crates} = require('../models');
 const catchAsync = require('../utils/catchAsync');
 const {checkStock} = require('./stock.controller');
+const {checkDay} = require('./activeDay.controller')
 
 const newCratesRender = catchAsync(async (req, res) => {
 
@@ -16,6 +17,8 @@ const newCratesRender = catchAsync(async (req, res) => {
         });
     }
 
+    const activeDay = await checkDay(stockId);
+
     const {products: reqProducts, customerName, customerPhone} = req.body;
     let products = reqProducts.map(p => {
         return {
@@ -26,7 +29,7 @@ const newCratesRender = catchAsync(async (req, res) => {
         };
     });
 
-    const crates = await Crates.create({products, customerName, customerPhone, stock: stock.id});
+    const crates = await Crates.create({products, customerName, customerPhone, stock: stock.id, activeDay: activeDay.id});
 
     if (!crates) {
         return res.status(httpStatus.BAD_REQUEST).json({
