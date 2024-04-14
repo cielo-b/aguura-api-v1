@@ -74,7 +74,7 @@ const editStock = catchAsync(async (req, res) => {
 
     const _stock = await Stock.findOne({stockName});
 
-    if (_stock) {
+    if (_stock && (stock.id.toString() !== _stock.id.toString())) {
         return res.status(httpStatus.BAD_REQUEST).json({
             success: false,
             message: 'Stock Name Taken.',
@@ -84,7 +84,7 @@ const editStock = catchAsync(async (req, res) => {
     const admin = await User.findById(stock.admin);
     admin.fullName = fullName;
     admin.phone = phone;
-    admin.password = password ? await bcrypt.hash(password, 8) : admin.password;
+    if (password) admin.password = password;
     await admin.save({validateBeforeSave: false});
 
     const sName = name ? name : stock.name;
@@ -98,7 +98,6 @@ const editStock = catchAsync(async (req, res) => {
         message: 'Stock Edited Successfully.',
         stock
     });
-
 });
 
 const allStocks = catchAsync(async (req, res) => {
