@@ -139,7 +139,7 @@ const completeOrder = catchAsync(async (req, res) => {
         });
     }
 
-    const activeDay = await checkDay();
+    const activeDay = await checkDay(stock.id);
 
     const {amountPaid} = req.body;
 

@@ -17,7 +17,7 @@ const newInventory = catchAsync(async (req, res) => {
         });
     }
 
-    const activeDay = await checkDay();
+    const activeDay = await checkDay(stock.id);
 
     if (!activeDay) {
         return res.status(httpStatus.BAD_REQUEST).json({
