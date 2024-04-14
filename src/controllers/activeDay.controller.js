@@ -252,7 +252,7 @@ const startDay = catchAsync(async (req, res) => {
         });
     }
 
-    const activeDay = await ActiveDay.findOne({isActive: true});
+    const activeDay = await ActiveDay.findOne({isActive: true, stock: stock.id});
 
     if (activeDay) {
         return res.status(httpStatus.BAD_REQUEST).json({
