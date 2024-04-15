@@ -53,7 +53,7 @@ const orderSchema = mongoose.Schema(
         isFullyPaid: {
             type: Boolean,
             required: true,
-            default: true
+            default: false
         },
 
         isCompleted: {

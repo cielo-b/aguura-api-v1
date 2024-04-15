@@ -1,12 +1,12 @@
 const httpStatus = require('http-status');
 
-const {Credit, Sales} = require('../models');
+const {Credit, Sales, PaymentMethod, Payment} = require('../models');
 const catchAsync = require('../utils/catchAsync');
 
 
 const payCredit = catchAsync(async (req, res) => {
 
-    const {creditId, amount} = req.body;
+    const {creditId, amount, payments} = req.body;
 
     const credit = await Credit.findById(creditId);
     const sales = await Sales.findById(credit.sales);
@@ -16,6 +16,26 @@ const payCredit = catchAsync(async (req, res) => {
             success: false,
             message: 'Credit Not Found.',
         });
+    }
+
+    if (amount > 0) {
+        if (payments.length === 0) {
+            return res.status(httpStatus.BAD_REQUEST).json({
+                success: false,
+                message: 'Plz Add How User Paid.'
+            });
+        } else {
+            let total = 0;
+            for (const p of payments) {
+                total += parseInt(p.amount);
+            }
+            if (parseInt(total) !== parseInt(amount)) {
+                return res.status(httpStatus.BAD_REQUEST).json({
+                    success: false,
+                    message: 'Amount From All Methods Has To Be Equal To Total Amount Paid.'
+                });
+            }
+        }
     }
 
     credit.amountPaid = parseInt(credit.amountPaid) + parseInt(amount);
@@ -30,6 +50,13 @@ const payCredit = catchAsync(async (req, res) => {
 
     await credit.save({validateBeforeSave: false});
     await sales.save({validateBeforeSave: false});
+
+    if (payments.length > 0) {
+        for (const payment of payments) {
+            let method = await PaymentMethod.findById(payment.id);
+            const p = await Payment.create({activeDay: credit.activeDay, method: method.id, customerName: credit.customerName, customerPhone: credit.customerPhone, amount: payment.amount, stock: credit.stock});
+        }
+    }
 
     return res.status(httpStatus.OK).json({
         success: true,

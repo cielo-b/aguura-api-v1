@@ -17,8 +17,6 @@ const newSales = catchAsync(async (req, res) => {
         });
     }
 
-    const {products: reqProducts, isFullyPaid, customerName, customerPhone, amountPaid, payments} = req.body;
-
     const activeDay = await checkDay(stockId);
 
     if (!activeDay) {
@@ -27,6 +25,36 @@ const newSales = catchAsync(async (req, res) => {
             message: 'No Active Day, Plz Start New Day And Try Again.'
         });
     }
+
+    const {products: reqProducts, isFullyPaid, customerName, customerPhone, amountPaid, payments} = req.body;
+
+    if (!isFullyPaid && !amountPaid) {
+        return res.status(httpStatus.BAD_REQUEST).json({
+            success: false,
+            message: 'Plz Add How Much User Paid.'
+        });
+    }
+
+    if (amountPaid) {
+        if (payments.length === 0) {
+            return res.status(httpStatus.BAD_REQUEST).json({
+                success: false,
+                message: 'Plz Add How User Paid.'
+            });
+        } else {
+            let total = 0;
+            for (const p of payments) {
+                total += parseInt(p.amount);
+            }
+            if (parseInt(total) !== parseInt(amountPaid)) {
+                return res.status(httpStatus.BAD_REQUEST).json({
+                    success: false,
+                    message: 'Amount From All Methods Has To Be Equal To Total Amount Paid.'
+                });
+            }
+        }
+    }
+
 
     let products = [];
     let totalPrice = 0;
@@ -72,7 +100,7 @@ const newSales = catchAsync(async (req, res) => {
 
     // if not fully paid, create new credit
     if (!isFullyPaid) {
-        const credit = await Credit.create({stock: stock.id, sales: sales.id, totalAmount: totalPrice - amountPaid, description, customerName, customerPhone});
+        const credit = await Credit.create({activeDay: activeDay.id, stock: stock.id, sales: sales.id, totalAmount: totalPrice - amountPaid, description, customerName, customerPhone});
 
         if (!credit) {
             return res.status(httpStatus.CREATED).json({
@@ -82,7 +110,6 @@ const newSales = catchAsync(async (req, res) => {
         }
     }
 
-    // update payments
     if (payments.length > 0) {
         for (const payment of payments) {
             let method = await PaymentMethod.findById(payment.id);

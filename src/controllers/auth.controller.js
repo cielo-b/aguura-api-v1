@@ -1,7 +1,8 @@
 const httpStatus = require('http-status');
 const catchAsync = require('../utils/catchAsync');
 const {authService, userService, tokenService} = require('../services');
-const {Token, User} = require('../models');
+const {Token, User, Order} = require('../models');
+const {checkStock} = require('./stock.controller');
 
 
 const register = catchAsync(async (req, res) => {
@@ -96,7 +97,17 @@ const resetPassword = catchAsync(async (req, res) => {
 
 const addUser = catchAsync(async (req, res) => {
 
-    let {fullName, phone, stockId} = req.body;
+    const stockId = req.query.stockId;
+    const stock = await checkStock(stockId);
+
+    if (!stock) {
+        return res.status(httpStatus.BAD_REQUEST).json({
+            success: false,
+            message: 'Stock Not Found.'
+        });
+    }
+
+    let {fullName, phone} = req.body;
 
     if (await User.isPhoneTaken(phone)) {
         return res.status(httpStatus.BAD_REQUEST).json({
@@ -104,10 +115,11 @@ const addUser = catchAsync(async (req, res) => {
             message: 'Phone Already Taken.'
         });
     }
-    const password = fullName.split(" ")[0].toString().toLowerCase() + phone.substring(phone.length - 3);
+    const password = 'abc@' + phone.substring(phone.length - 5);
     const role = 'user';
 
-    const user = await userService.createUser({fullName, phone, password, role});
+    const user = await userService.createUser({fullName, phone, password, role, stock: stock.id});
+
     res.status(httpStatus.CREATED).json({
         success: true,
         user,
@@ -117,12 +129,40 @@ const addUser = catchAsync(async (req, res) => {
 
 const allCutomers = catchAsync(async (req, res) => {
 
-    const users = await User.find({stock: req.query.stockId});
+    const stockId = req.query.stockId;
+    const stock = await checkStock(stockId);
 
-    const user = await userService.createUser({fullName, phone, password, role});
+    if (!stock) {
+        return res.status(httpStatus.BAD_REQUEST).json({
+            success: false,
+            message: 'Stock Not Found.'
+        });
+    }
+
+    let customers = [];
+
+    const users = await User.find({stock: stockId});
+
+    for (let i = 0; i < users.length; i++) {
+        const u = users[i];
+        const orders = await Order.find({customer: u.id});
+        let totalOrdersAmount = 0;
+        for (const order of orders) {
+            totalOrdersAmount += order.totalPrice;
+        }
+        customers.push({
+            name: u.fullName,
+            phone: u.phone ? u.phone : '',
+            totalOrders: orders.length,
+            totalOrdersAmount: totalOrdersAmount,
+            id: u.id
+        });
+    }
+
+
     res.status(httpStatus.CREATED).json({
         success: true,
-        users,
+        customers
     });
 });
 

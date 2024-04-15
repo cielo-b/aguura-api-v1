@@ -136,6 +136,25 @@ const getStockByAdmin = catchAsync(async (req, res) => {
     });
 });
 
+const getStockByCustomer = catchAsync(async (req, res) => {
+
+    const user = await User.findById(req.user._id);
+
+    if (!user) {
+        return res.status(httpStatus.BAD_REQUEST).json({
+            success: false,
+            message: 'User Not Found.'
+        });
+    }
+
+    const stock = await Stock.findById(user.stock);
+
+    return res.status(httpStatus.OK).json({
+        success: true,
+        stock
+    });
+});
+
 const checkStock = async (id) => {
     const stock = await Stock.findById(id);
     if (!stock) {
@@ -168,6 +187,7 @@ module.exports = {
     editStock,
     allStocks,
     getStockByAdmin,
+    getStockByCustomer,
     getStock,
     checkStock
 };

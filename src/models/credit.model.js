@@ -8,6 +8,12 @@ const creditSchema = mongoose.Schema(
             ref: 'Stock',
             required: true,
         },
+        
+        activeDay: {
+            type: mongoose.SchemaTypes.ObjectId,
+            ref: 'ActiveDay',
+            required: true,
+        },
 
         sales: {
             type: mongoose.SchemaTypes.ObjectId,

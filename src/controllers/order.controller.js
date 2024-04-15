@@ -1,6 +1,6 @@
 const httpStatus = require('http-status');
 
-const {InventoryProduct, SalesProduct, Sales, Credit, User, Order} = require('../models');
+const {InventoryProduct, SalesProduct, Sales, Credit, User, Order, Payment, PaymentMethod} = require('../models');
 const catchAsync = require('../utils/catchAsync');
 const formatNumber = require('../utils/formatNumber');
 const {checkDay} = require('./activeDay.controller');
@@ -40,8 +40,8 @@ const newOrder = catchAsync(async (req, res) => {
             id: product.id,
             name: product.inventoryProduct.name,
             quantity: reqProduct.quantity,
-            unitPrice: product.inventoryProduct.price,
-            totalPrice: product.inventoryProduct.price * reqProduct.quantity
+            unitPrice: product.price,
+            totalPrice: product.price * reqProduct.quantity
         };
 
         products.push(salesProduct);
@@ -98,8 +98,8 @@ const editOrder = catchAsync(async (req, res) => {
             id: product.id,
             name: product.inventoryProduct.name,
             quantity: reqProduct.quantity,
-            unitPrice: product.inventoryProduct.price,
-            totalPrice: product.inventoryProduct.price * reqProduct.quantity
+            unitPrice: product.price,
+            totalPrice: product.price * reqProduct.quantity
         };
 
         products.push(salesProduct);
@@ -141,7 +141,41 @@ const completeOrder = catchAsync(async (req, res) => {
 
     const activeDay = await checkDay(stock.id);
 
-    const {amountPaid} = req.body;
+    const {amountPaid, payments, isFullyPaying} = req.body;
+
+    if (!isFullyPaying && !amountPaid) {
+        return res.status(httpStatus.BAD_REQUEST).json({
+            success: false,
+            message: 'Plz Add How Much User Paid.'
+        });
+    }
+
+    if (amountPaid > 0) {
+        if (payments.length === 0) {
+            return res.status(httpStatus.BAD_REQUEST).json({
+                success: false,
+                message: 'Plz Add How User Paid.'
+            });
+        } else {
+            let total = 0;
+            for (const p of payments) {
+                total += parseInt(p.amount);
+            }
+            if (parseInt(total) !== parseInt(amountPaid)) {
+                return res.status(httpStatus.BAD_REQUEST).json({
+                    success: false,
+                    message: 'Amount From All Methods Has To Be Equal To Total Amount Paid.'
+                });
+            }
+        }
+    }
+
+    if (isFullyPaying && (amountPaid !== order.totalPrice)) {
+        return res.status(httpStatus.BAD_REQUEST).json({
+            success: false,
+            message: `Amount Has To Be ${formatNumber(order.totalPrice)} Rwf`
+        });
+    }
 
     // handle amount
     let paid = order.totalPrice === amountPaid;
@@ -161,19 +195,26 @@ const completeOrder = catchAsync(async (req, res) => {
         let product = await SalesProduct.findById(reqProduct.id);
         let inventoryProduct = await InventoryProduct.findById(product.inventoryProduct);
 
-        inventoryProduct.totalAvailable = product.totalAvailable - reqProduct.quantity;
+        inventoryProduct.totalAvailable = (parseInt(inventoryProduct.totalAvailable) - parseInt(reqProduct.quantity));
         await inventoryProduct.save({validateBeforeSave: false});
     }
 
     // if not fully paid, create new credit
     if (!paid) {
-        const credit = await Credit.create({sales: sales.id, totalAmount: order.totalPrice - amountPaid, customerName: order.customer.fullName, description: order.description, stock: stock.id});
+        const credit = await Credit.create({activeDay: activeDay.id, sales: sales.id, totalAmount: order.totalPrice - amountPaid, customerName: order.customer.fullName, description: order.description, stock: stock.id});
 
         if (!credit) {
             return res.status(httpStatus.CREATED).json({
                 success: true,
                 message: 'Order Completed Successfully But, Credit Failed To Be Recorder.',
             });
+        }
+    }
+
+    if(payments.length > 0) {
+        for (const payment of payments) {
+            let method = await PaymentMethod.findById(payment.id);
+            const p = await Payment.create({activeDay: activeDay.id, method: method.id, customerName, customerPhone, amount: payment.amount, stock: stock.id});
         }
     }
 
@@ -195,6 +236,16 @@ const myOrders = catchAsync(async (req, res) => {
         return res.status(httpStatus.BAD_REQUEST).json({
             success: false,
             message: 'User Not Found.'
+        });
+    }
+
+    const stockId = req.query.stockId;
+    const stock = await checkStock(stockId);
+
+    if (!stock) {
+        return res.status(httpStatus.BAD_REQUEST).json({
+            success: false,
+            message: 'Stock Not Found.'
         });
     }
 

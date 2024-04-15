@@ -9,5 +9,6 @@ router.patch('/edit-stock/:stockId', auth('superAdmin'), stockController.editSto
 router.get('/all-stocks', auth('superAdmin'), stockController.allStocks);
 router.get('/get', auth([]), stockController.getStock);
 router.get('/by-admin', auth('admin'), stockController.getStockByAdmin);
+router.get('/by-user', auth('user'), stockController.getStockByCustomer);
 
 module.exports = router;
