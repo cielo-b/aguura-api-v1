@@ -211,10 +211,10 @@ const completeOrder = catchAsync(async (req, res) => {
         }
     }
 
-    if(payments.length > 0) {
+    if (payments.length > 0) {
         for (const payment of payments) {
             let method = await PaymentMethod.findById(payment.id);
-            const p = await Payment.create({activeDay: activeDay.id, method: method.id, customerName, customerPhone, amount: payment.amount, stock: stock.id});
+            const p = await Payment.create({activeDay: activeDay.id, method: method.id, customerName: order.customer.fullName, customerPhone: order.customer.phone, amount: payment.amount, stock: stock.id});
         }
     }
 

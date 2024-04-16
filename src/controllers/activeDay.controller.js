@@ -317,6 +317,41 @@ const endDay = catchAsync(async (req, res) => {
 });
 
 
+const downloadReport = catchAsync(async (req, res) => {
+
+    const stockId = req.query.stockId;
+    const stock = await checkStock(stockId);
+
+    if (!stock) {
+        return res.status(httpStatus.BAD_REQUEST).json({
+            success: false,
+            message: 'Stock Not Found.'
+        });
+    }
+
+    const activeDay = await ActiveDay.findById(req.query.activeDayId);
+    const {crates} = req.body;
+
+    if (!activeDay) {
+        return res.status(httpStatus.BAD_REQUEST).json({
+            success: false,
+            message: 'Active Day Not Found.'
+        });
+    }
+
+    // generate pdf
+    const pdfFileName = await generatePDF(stock.name, activeDay);
+    const url = config.url + '/public/reports/' + pdfFileName;
+
+
+    return res.status(httpStatus.OK).json({
+        success: true,
+        url,
+        message: 'Report Downloaded Successfully.'
+    });
+});
+
+
 
 module.exports = {
     checkActive,
@@ -325,5 +360,6 @@ module.exports = {
     getActiveDays,
     startDay,
     endDay,
-    generatePDF
+    generatePDF,
+    downloadReport
 };
