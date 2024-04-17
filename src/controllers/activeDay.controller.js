@@ -188,6 +188,90 @@ const generatePDF = async (stock, activeDay) => {
 
 };
 
+
+const generateSimplePDF = async (stock, activeDay) => {
+
+    const doc = new PDFDocument();
+    const fileName = `${activeDay.name}-daily-report.pdf`;
+    const filePath = path.join(__dirname, '..', '..', 'public', 'reports', fileName);
+    const writeStream = fs.createWriteStream(filePath);
+
+    doc.pipe(writeStream);
+
+    // Header
+    doc.fontSize(18).text(`${config.name}  ${activeDay.name} Daily Report. \n\n\n\n`, 30, 30, {underline: true});
+
+
+    // Sales Section
+    doc.fontSize(12).text('Sales \n\n', 30, 60, {underline: true});
+    const sales = await Sales.find({activeDay: activeDay.id});
+
+    if (sales.length > 0) {
+        let totalSalesPrice = 0;
+        let remaining = 0;
+
+        // Set up table headers
+        const headers = ['Customer', 'Products', 'Total Amt', 'Paid Amt', 'Remaining Amt'];
+
+        // Add headers to the PDF
+        doc.font('Helvetica-Bold').fontSize(10);
+        headers.forEach((header, index) => {
+            doc.text(header, index * 100 + 30, 100);
+        });
+
+        doc.moveTo(30, 110)
+            .lineTo(505, 110)
+            .stroke();
+
+        let startY = 120;
+
+        sales.forEach((sale, index) => {
+
+
+            let l = sale.products.length;
+            const rowHeight = Math.max((l + 2) * 10, 20);
+
+            doc.text(`\n${sale.customerName}`, 30, startY);
+            const productsY = startY;
+            sale.products.forEach((product, index) => {
+                doc.text(`${index === l ?
+                    product.name + ' ' + formatNumber(product.quantity) + '\n' :
+                    '\n' + product.name + ' ' + formatNumber(product.quantity)}`, 130, productsY + index * 10); // Display each product on a new line
+            });
+            doc.text(`\n${formatNumber(sale.totalPrice)} Rwf`, 230, startY);
+            doc.text(`\n${formatNumber(sale.amountPaid)} Rwf`, 330, startY);
+            doc.text(`\n${formatNumber(sale.totalPrice - sale.amountPaid)} Rwf`, 430, startY);
+            // Add line below each data item
+            doc.moveTo(30, startY + rowHeight)
+                .lineTo(505, startY + rowHeight)
+                .stroke();
+            startY += rowHeight;
+
+            if (!sale.isFullyPaid) {
+                remaining += (sale.totalPrice - sale.amountPaid);
+            }
+            totalSalesPrice += sale.totalPrice;
+
+            if (index === (sales.length - 1)) {
+                doc.text(`\nTotal`, 30);
+                doc.text(`\n${formatNumber(totalSalesPrice)} Rwf`, 230, startY);
+                doc.text(`\n${formatNumber(totalSalesPrice - remaining)} Rwf`, 330, startY);
+                doc.text(`\n${formatNumber(remaining)} Rwf`, 430, startY);
+            }
+        });
+
+    } else {
+        doc.fontSize(13).text(`No Sales Were Made On ${activeDay.name}.\n\n\n\n`);
+    }
+
+
+    doc.fontSize(10).font('Times-Bold').text(`\n\n\n\n ${stock}`, 30, undefined, {underline: true});
+    doc.end();
+    return fileName;
+
+};
+
+
 const checkActive = async (dayId) => {
     const activeDay = await ActiveDay.findById(dayId);
 
@@ -340,9 +424,8 @@ const downloadReport = catchAsync(async (req, res) => {
     }
 
     // generate pdf
-    const pdfFileName = await generatePDF(stock.name, activeDay);
+    const pdfFileName = await generateSimplePDF(stock.name, activeDay);
     const url = config.url + '/public/reports/' + pdfFileName;
-
 
     return res.status(httpStatus.OK).json({
         success: true,
