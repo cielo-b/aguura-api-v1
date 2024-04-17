@@ -598,7 +598,7 @@ const endDay = catchAsync(async (req, res) => {
     }
 
     // generate pdf
-    const pdfFileName = await generateSimplePDF(stock, activeDay);
+    const pdfFileName = await generatePDF(stock.name, activeDay);
     const url = config.url + '/public/reports/' + pdfFileName;
 
     // update remaining products in inventory
