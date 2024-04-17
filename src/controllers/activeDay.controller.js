@@ -203,8 +203,10 @@ const generateSimplePDF = async (stock, activeDay) => {
 
 
     // Sales Section
-    doc.fontSize(12).text('Sales \n\n', 30, 60, {underline: true});
+    doc.fontSize(13).text('Sales \n', 30, 60, {underline: true});
     const sales = await Sales.find({activeDay: activeDay.id});
+
+    let startY = 120;
 
     if (sales.length > 0) {
         let totalSalesPrice = 0;
@@ -223,11 +225,8 @@ const generateSimplePDF = async (stock, activeDay) => {
             .lineTo(505, 110)
             .stroke();
 
-        let startY = 120;
 
         sales.forEach((sale, index) => {
-
-
             let l = sale.products.length;
             const rowHeight = Math.max((l + 2) * 10, 20);
 
@@ -261,11 +260,231 @@ const generateSimplePDF = async (stock, activeDay) => {
         });
 
     } else {
-        doc.fontSize(13).text(`No Sales Were Made On ${activeDay.name}.\n\n\n\n`);
+        doc.fontSize(13).text(`No Sales Were Made On ${activeDay.name}`, 30, undefined);
     }
 
+    // credit Section
+    doc.fontSize(12).text('\n\n\n\nCredits \n', 30, undefined, {underline: true});
+    startY = doc.y + 30;
+    const creditSales = await Sales.find({activeDay: activeDay.id, isFullyPaid: false});
+    if (creditSales.length > 0) {
+        // Set up table headers
+        const headers = ['Customer', 'Paid Amt', 'Remaining Amt', 'Total Amt'];
 
-    doc.fontSize(10).font('Times-Bold').text(`\n\n\n\n ${stock}`, 30, undefined, {underline: true});
+        // Add headers to the PDF
+        doc.font('Helvetica-Bold').fontSize(10);
+        headers.forEach((header, index) => {
+            doc.text(header, index * 120 + 30, startY);
+        });
+
+        doc.moveTo(30, startY + 10)
+            .lineTo(480, startY + 10)
+            .stroke();
+
+
+        let totalCredit = 0;
+        let paid = 0;
+
+        creditSales.forEach((sale, index) => {
+
+            doc.text(`\n${sale.customerName}`, 30, startY);
+            doc.text(`\n${formatNumber(sale.amountPaid)} Rwf`, 150, startY);
+            doc.text(`\n${formatNumber(sale.totalPrice - sale.amountPaid)} Rwf`, 270, startY);
+            doc.text(`\n${formatNumber(sale.totalPrice)} Rwf`, 390, startY);
+
+            doc.moveTo(30, startY + 10)
+                .lineTo(480, startY + 10)
+                .stroke();
+            startY += 20;
+
+            totalCredit += parseInt(sale.totalPrice - sale.amountPaid);
+            paid += parseInt(sale.amountPaid);
+
+            if (index === (creditSales.length - 1)) {
+                doc.text(`\nTotal`, 30);
+                doc.text(`\n${formatNumber(paid)} Rwf`, 150, startY);
+                doc.text(`\n${formatNumber(totalCredit)} Rwf`, 270, startY);
+                doc.text(`\n${formatNumber(totalCredit + paid)} Rwf`, 390, startY);
+            }
+        });
+    } else {
+        doc.fontSize(13).text(`No Credits Were Made On ${activeDay.name}.`, 30, undefined);
+    }
+
+    // Crates Section
+    doc.fontSize(12).text('\n\n\n\nRendered Crates \n', 30, undefined, {underline: true});
+    startY = doc.y + 30;
+    const crates = await Crates.find({activeDay: activeDay.id});
+    if (crates.length > 0) {
+        // Set up table headers
+        const headers = ['Customer', 'Given', 'Returned', 'Remaining'];
+
+        // Add headers to the PDF
+        doc.font('Helvetica-Bold').fontSize(10);
+        headers.forEach((header, index) => {
+            doc.text(header, index * 120 + 30, startY);
+        });
+
+        doc.moveTo(30, startY + 10)
+            .lineTo(480, startY + 10)
+            .stroke();
+
+        let givenC = 0;
+        let returnedC = 0;
+        let remainingC = 0;
+
+        crates.forEach((crate, index) => {
+
+            let given, returned, remaining = 0;
+
+            let l = crate.products.length;
+            const rowHeight = Math.max((l + 2) * 10, 20);
+
+            doc.text(`\n${crate.customerName}`, 30, startY);
+            const productsY = startY;
+            crate.products.forEach((product, index) => {
+                given += parseInt(product.given);
+                doc.text(`${index === l ?
+                    product.name + ' ' + formatNumber(product.given) + '\n' :
+                    '\n' + product.name + ' ' + formatNumber(product.given)}`, 150, productsY + index * 10);
+            });
+            crate.products.forEach((product, index) => {
+                returned += parseInt(product.returned);
+                doc.text(`${index === l ?
+                    product.name + ' ' + formatNumber(product.returned) + '\n' :
+                    '\n' + product.name + ' ' + formatNumber(product.returned)}`, 270, productsY + index * 10);
+            });
+            crate.products.forEach((product, index) => {
+                remaining += parseInt(product.remaining);
+                doc.text(`${index === l ?
+                    product.name + ' ' + formatNumber(product.remaining) + '\n' :
+                    '\n' + product.name + ' ' + formatNumber(product.remaining)}`, 390, productsY + index * 10);
+            });
+
+            // Add line below each data item
+            doc.moveTo(30, startY + rowHeight)
+                .lineTo(480, startY + rowHeight)
+                .stroke();
+            startY += rowHeight;
+
+            givenC += given;
+            returnedC += returned;
+            remainingC += remaining;
+
+            if (index === (crates.length - 1)) {
+                doc.text(`\nTotal`, 30);
+                doc.text(`\n${formatNumber(givenC)}`, 150, startY);
+                doc.text(`\n${formatNumber(returnedC)}`, 270, startY);
+                doc.text(`\n${formatNumber(remainingC)}`, 390, startY);
+            }
+        });
+    } else {
+        doc.fontSize(13).text(`No Crates Were Rendered On ${activeDay.name}.`, 30, undefined);
+    }
+
+    // crates remaining
+    doc.fontSize(12).text('\n\n\n\nEmpty Crates \n\n', 30, undefined, {underline: true});
+    startY = doc.y + 30;
+
+    const emptyCrates = await EmptyCrates.find({activeDay: activeDay.id});
+    if (emptyCrates.length > 0) {
+
+        // Set up table headers
+        const headers = ['Name', 'Total'];
+
+        // Add headers to the PDF
+        doc.font('Helvetica-Bold').fontSize(10);
+        headers.forEach((header, index) => {
+            doc.text(header, index * 220 + 30, startY);
+        });
+
+        doc.moveTo(30, startY + 10)
+            .lineTo(440, startY + 10)
+            .stroke();
+
+        startY += 20;
+
+        let totalECrates = 0;
+        let totalB = 0;
+
+        emptyCrates.forEach((ec, index) => {
+            doc.text(`${ec.name}`, 30, startY);
+            doc.text(`${ec.number}`, 250, startY);
+
+            doc.moveTo(30, startY + 10)
+                .lineTo(440, startY + 10)
+                .stroke();
+            startY += 20;
+
+            totalECrates += parseInt(ec.number);
+            if (ec.isBrarirwa) totalB += parseInt(ec.number);
+            if (index === (emptyCrates.length - 1)) {
+                doc.text(`\nTotal`, 30);
+                doc.text(`\nBrarirwa: ${formatNumber(totalB)}`, 250, startY);
+                doc.text(`\nNon-Brarirwa: ${formatNumber(totalECrates - totalB)}`, 250, startY + 20);
+                doc.text(`\nTotal: ${formatNumber(totalECrates)}`, 250, startY + 40);
+            }
+        });
+    } else {
+        doc.fontSize(13).text(`No Empty Crates Recorded On ${activeDay.name}.`);
+    }
+
+    startY += doc.y;
+
+    // inventory balancing
+    doc.text('\n\n\n\nInventory \n', 30, undefined, {underline: true});
+    const iProducts = await InventoryProduct.find({stock: stock.id});
+
+    if (iProducts > 0) {
+        // Set up table headers
+        const headers = ['Name', 'Initial Stk', 'Added Stk', 'Cost Amt', 'Final Stk'];
+
+        // Add headers to the PDF
+        doc.font('Helvetica-Bold').fontSize(10);
+        headers.forEach((header, index) => {
+            doc.text(header, index * 100 + 30, startY);
+        });
+
+        doc.moveTo(30, startY + 10)
+            .lineTo(505, startY + 10)
+            .stroke();
+
+        let initial = 0;
+        let added = 0;
+        let final = 0;
+        let cost = 0;
+
+        iProducts.forEach((product, index) => {
+
+            doc.text(`${product.name}`, 30, startY);
+            doc.text(`${formatNumber(product.prevDayRemaining)}`, 130, startY);
+            doc.text(`${formatNumber(product.dailyAdded)}`, 230, startY);
+            doc.text(`${formatNumber(product.dailyAdded * product.unitPrice)} Rwf`, 330, startY);
+            doc.text(`${formatNumber(product.totalAvailable)}`, 430, startY);
+
+            doc.moveTo(30, startY + 10)
+                .lineTo(505, startY + 10)
+                .stroke();
+            startY += 20;
+
+            initial += product.prevDayRemaining;
+            added += product.dailyAdded;
+            final += product.totalAvailable;
+            cost += product.dailyAdded * product.unitPrice;
+
+            if (index === (iProducts.length - 1)) {
+                doc.text(`\nTotal`, 30);
+                doc.text(`\n${formatNumber(initial)}`, 230, startY);
+                doc.text(`\n${formatNumber(added)}`, 330, startY);
+                doc.text(`\n${formatNumber(cost)} Rwf`, 430, startY);
+                doc.text(`\n${formatNumber(final)}`, 430, startY);
+            }
+        });
+    } else {
+        doc.fontSize(13).text(`No Inventory ${activeDay.name}.`);
+    }
+
+    doc.fontSize(10).font('Times-Bold').text(`\n\n\n\n ${stock.name}`, 30, undefined, {underline: true});
     doc.end();
     return fileName;
 
@@ -379,7 +598,7 @@ const endDay = catchAsync(async (req, res) => {
     }
 
     // generate pdf
-    const pdfFileName = await generatePDF(stock.name, activeDay);
+    const pdfFileName = await generateSimplePDF(stock, activeDay);
     const url = config.url + '/public/reports/' + pdfFileName;
 
     // update remaining products in inventory
@@ -424,7 +643,7 @@ const downloadReport = catchAsync(async (req, res) => {
     }
 
     // generate pdf
-    const pdfFileName = await generateSimplePDF(stock.name, activeDay);
+    const pdfFileName = await generateSimplePDF(stock, activeDay);
     const url = config.url + '/public/reports/' + pdfFileName;
 
     return res.status(httpStatus.OK).json({
