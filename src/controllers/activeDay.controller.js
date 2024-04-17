@@ -190,7 +190,6 @@ const generatePDF = async (stock, activeDay) => {
 
 
 const generateSimplePDF = async (stock, activeDay) => {
-
     const doc = new PDFDocument();
     const fileName = `${activeDay.name}-daily-report.pdf`;
     const filePath = path.join(__dirname, '..', '..', 'public', 'reports', fileName);
@@ -198,52 +197,51 @@ const generateSimplePDF = async (stock, activeDay) => {
 
     doc.pipe(writeStream);
 
+    const addPageIfNecessary = (requiredHeight) => {
+        if (doc.y + requiredHeight > doc.page.height - 50) {
+            doc.addPage();
+            startY = 50;
+        }
+    };
+
     // Header
     doc.fontSize(18).text(`${config.name}  ${activeDay.name} Daily Report. \n\n\n\n`, 30, 30, {underline: true});
 
-
     // Sales Section
     doc.fontSize(13).text('Sales \n', 30, 60, {underline: true});
-    const sales = await Sales.find({activeDay: activeDay.id});
+    let startY = doc.y + 30;
 
-    let startY = 120;
+    const sales = await Sales.find({activeDay: activeDay.id});
 
     if (sales.length > 0) {
         let totalSalesPrice = 0;
         let remaining = 0;
 
-        // Set up table headers
         const headers = ['Customer', 'Products', 'Total Amt', 'Paid Amt', 'Remaining Amt'];
-
-        // Add headers to the PDF
         doc.font('Helvetica-Bold').fontSize(10);
         headers.forEach((header, index) => {
-            doc.text(header, index * 100 + 30, 100);
+            doc.text(header, index * 100 + 30, startY);
         });
 
-        doc.moveTo(30, 110)
-            .lineTo(505, 110)
-            .stroke();
-
+        doc.moveTo(30, startY + 10).lineTo(505, startY + 10).stroke();
 
         sales.forEach((sale, index) => {
             let l = sale.products.length;
             const rowHeight = Math.max((l + 2) * 10, 20);
+            addPageIfNecessary(rowHeight);
 
             doc.text(`\n${sale.customerName}`, 30, startY);
             const productsY = startY;
             sale.products.forEach((product, index) => {
                 doc.text(`${index === l ?
                     product.name + ' ' + formatNumber(product.quantity) + '\n' :
-                    '\n' + product.name + ' ' + formatNumber(product.quantity)}`, 130, productsY + index * 10); // Display each product on a new line
+                    '\n' + product.name + ' ' + formatNumber(product.quantity)}`, 130, productsY + index * 10);
             });
             doc.text(`\n${formatNumber(sale.totalPrice)} Rwf`, 230, startY);
             doc.text(`\n${formatNumber(sale.amountPaid)} Rwf`, 330, startY);
             doc.text(`\n${formatNumber(sale.totalPrice - sale.amountPaid)} Rwf`, 430, startY);
-            // Add line below each data item
-            doc.moveTo(30, startY + rowHeight)
-                .lineTo(505, startY + rowHeight)
-                .stroke();
+
+            doc.moveTo(30, startY + rowHeight).lineTo(505, startY + rowHeight).stroke();
             startY += rowHeight;
 
             if (!sale.isFullyPaid) {
@@ -263,38 +261,34 @@ const generateSimplePDF = async (stock, activeDay) => {
         doc.fontSize(13).text(`No Sales Were Made On ${activeDay.name}`, 30, undefined);
     }
 
-    // credit Section
+    // Credit Section
     doc.fontSize(12).text('\n\n\n\nCredits \n', 30, undefined, {underline: true});
     startY = doc.y + 30;
-    const creditSales = await Sales.find({activeDay: activeDay.id, isFullyPaid: false});
-    if (creditSales.length > 0) {
-        // Set up table headers
-        const headers = ['Customer', 'Paid Amt', 'Remaining Amt', 'Total Amt'];
 
-        // Add headers to the PDF
+    const creditSales = await Sales.find({activeDay: activeDay.id, isFullyPaid: false});
+
+    if (creditSales.length > 0) {
+        const headers = ['Customer', 'Paid Amt', 'Remaining Amt', 'Total Amt'];
         doc.font('Helvetica-Bold').fontSize(10);
         headers.forEach((header, index) => {
             doc.text(header, index * 120 + 30, startY);
         });
 
-        doc.moveTo(30, startY + 10)
-            .lineTo(480, startY + 10)
-            .stroke();
-
+        doc.moveTo(30, startY + 10).lineTo(480, startY + 10).stroke();
 
         let totalCredit = 0;
         let paid = 0;
 
         creditSales.forEach((sale, index) => {
+            const rowHeight = 20;
+            addPageIfNecessary(rowHeight);
 
             doc.text(`\n${sale.customerName}`, 30, startY);
             doc.text(`\n${formatNumber(sale.amountPaid)} Rwf`, 150, startY);
             doc.text(`\n${formatNumber(sale.totalPrice - sale.amountPaid)} Rwf`, 270, startY);
             doc.text(`\n${formatNumber(sale.totalPrice)} Rwf`, 390, startY);
 
-            doc.moveTo(30, startY + 10)
-                .lineTo(480, startY + 10)
-                .stroke();
+            doc.moveTo(30, startY + 10).lineTo(480, startY + 10).stroke();
             startY += 20;
 
             totalCredit += parseInt(sale.totalPrice - sale.amountPaid);
@@ -315,30 +309,26 @@ const generateSimplePDF = async (stock, activeDay) => {
     doc.fontSize(12).text('\n\n\n\nRendered Crates \n', 30, undefined, {underline: true});
     startY = doc.y + 30;
     const crates = await Crates.find({activeDay: activeDay.id});
-    if (crates.length > 0) {
-        // Set up table headers
-        const headers = ['Customer', 'Given', 'Returned', 'Remaining'];
 
-        // Add headers to the PDF
+    if (crates.length > 0) {
+        const headers = ['Customer', 'Given', 'Returned', 'Remaining'];
         doc.font('Helvetica-Bold').fontSize(10);
         headers.forEach((header, index) => {
             doc.text(header, index * 120 + 30, startY);
         });
 
-        doc.moveTo(30, startY + 10)
-            .lineTo(480, startY + 10)
-            .stroke();
+        doc.moveTo(30, startY + 10).lineTo(480, startY + 10).stroke();
 
         let givenC = 0;
         let returnedC = 0;
         let remainingC = 0;
 
         crates.forEach((crate, index) => {
-
             let given, returned, remaining = 0;
 
             let l = crate.products.length;
             const rowHeight = Math.max((l + 2) * 10, 20);
+            addPageIfNecessary(rowHeight);
 
             doc.text(`\n${crate.customerName}`, 30, startY);
             const productsY = startY;
@@ -361,10 +351,7 @@ const generateSimplePDF = async (stock, activeDay) => {
                     '\n' + product.name + ' ' + formatNumber(product.remaining)}`, 390, productsY + index * 10);
             });
 
-            // Add line below each data item
-            doc.moveTo(30, startY + rowHeight)
-                .lineTo(480, startY + rowHeight)
-                .stroke();
+            doc.moveTo(30, startY + rowHeight).lineTo(480, startY + rowHeight).stroke();
             startY += rowHeight;
 
             givenC += given;
@@ -382,42 +369,38 @@ const generateSimplePDF = async (stock, activeDay) => {
         doc.fontSize(13).text(`No Crates Were Rendered On ${activeDay.name}.`, 30, undefined);
     }
 
-    // crates remaining
+    // Crates remaining
     doc.fontSize(12).text('\n\n\n\nEmpty Crates \n\n', 30, undefined, {underline: true});
     startY = doc.y + 30;
 
     const emptyCrates = await EmptyCrates.find({activeDay: activeDay.id});
+
     if (emptyCrates.length > 0) {
-
-        // Set up table headers
         const headers = ['Name', 'Total'];
-
-        // Add headers to the PDF
         doc.font('Helvetica-Bold').fontSize(10);
         headers.forEach((header, index) => {
             doc.text(header, index * 220 + 30, startY);
         });
 
-        doc.moveTo(30, startY + 10)
-            .lineTo(440, startY + 10)
-            .stroke();
-
+        doc.moveTo(30, startY + 10).lineTo(440, startY + 10).stroke();
         startY += 20;
 
         let totalECrates = 0;
         let totalB = 0;
 
         emptyCrates.forEach((ec, index) => {
+            const rowHeight = 20;
+            addPageIfNecessary(rowHeight);
+
             doc.text(`${ec.name}`, 30, startY);
             doc.text(`${ec.number}`, 250, startY);
 
-            doc.moveTo(30, startY + 10)
-                .lineTo(440, startY + 10)
-                .stroke();
+            doc.moveTo(30, startY + 10).lineTo(440, startY + 10).stroke();
             startY += 20;
 
             totalECrates += parseInt(ec.number);
             if (ec.isBrarirwa) totalB += parseInt(ec.number);
+
             if (index === (emptyCrates.length - 1)) {
                 doc.text(`\nTotal`, 30);
                 doc.text(`\nBrarirwa: ${formatNumber(totalB)}`, 250, startY);
@@ -429,25 +412,20 @@ const generateSimplePDF = async (stock, activeDay) => {
         doc.fontSize(13).text(`No Empty Crates Recorded On ${activeDay.name}.`);
     }
 
-    startY += doc.y;
-
-    // inventory balancing
-    doc.text('\n\n\n\nInventory \n', 30, undefined, {underline: true});
+    // Inventory balancing
+    doc.fontSize(12).text('\n\n\n\nInventory \n', 30, undefined, {underline: true});
+    startY = doc.y + 30;
     const iProducts = await InventoryProduct.find({stock: stock.id});
 
-    if (iProducts > 0) {
-        // Set up table headers
+    if (iProducts.length > 0) {
         const headers = ['Name', 'Initial Stk', 'Added Stk', 'Cost Amt', 'Final Stk'];
-
-        // Add headers to the PDF
         doc.font('Helvetica-Bold').fontSize(10);
         headers.forEach((header, index) => {
             doc.text(header, index * 100 + 30, startY);
         });
 
-        doc.moveTo(30, startY + 10)
-            .lineTo(505, startY + 10)
-            .stroke();
+        doc.moveTo(30, startY + 10).lineTo(505, startY + 10).stroke();
+        startY += 20;
 
         let initial = 0;
         let added = 0;
@@ -455,6 +433,8 @@ const generateSimplePDF = async (stock, activeDay) => {
         let cost = 0;
 
         iProducts.forEach((product, index) => {
+            const rowHeight = 20;
+            addPageIfNecessary(rowHeight);
 
             doc.text(`${product.name}`, 30, startY);
             doc.text(`${formatNumber(product.prevDayRemaining)}`, 130, startY);
@@ -462,9 +442,7 @@ const generateSimplePDF = async (stock, activeDay) => {
             doc.text(`${formatNumber(product.dailyAdded * product.unitPrice)} Rwf`, 330, startY);
             doc.text(`${formatNumber(product.totalAvailable)}`, 430, startY);
 
-            doc.moveTo(30, startY + 10)
-                .lineTo(505, startY + 10)
-                .stroke();
+            doc.moveTo(30, startY + 10).lineTo(505, startY + 10).stroke();
             startY += 20;
 
             initial += product.prevDayRemaining;
@@ -474,21 +452,21 @@ const generateSimplePDF = async (stock, activeDay) => {
 
             if (index === (iProducts.length - 1)) {
                 doc.text(`\nTotal`, 30);
-                doc.text(`\n${formatNumber(initial)}`, 230, startY);
-                doc.text(`\n${formatNumber(added)}`, 330, startY);
-                doc.text(`\n${formatNumber(cost)} Rwf`, 430, startY);
+                doc.text(`\n${formatNumber(initial)}`, 130, startY);
+                doc.text(`\n${formatNumber(added)}`, 230, startY);
+                doc.text(`\n${formatNumber(cost)} Rwf`, 330, startY);
                 doc.text(`\n${formatNumber(final)}`, 430, startY);
             }
         });
     } else {
-        doc.fontSize(13).text(`No Inventory ${activeDay.name}.`);
+        doc.fontSize(13).text(`No Inventory Recorded ${activeDay.name}.`);
     }
 
     doc.fontSize(10).font('Times-Bold').text(`\n\n\n\n ${stock.name}`, 30, undefined, {underline: true});
     doc.end();
     return fileName;
-
 };
+
 
 
 const checkActive = async (dayId) => {
@@ -643,7 +621,7 @@ const downloadReport = catchAsync(async (req, res) => {
     }
 
     // generate pdf
-    const pdfFileName = await generateSimplePDF(stock, activeDay);
+    const pdfFileName = await generatePDF(stock.name, activeDay);
     const url = config.url + '/public/reports/' + pdfFileName;
 
     return res.status(httpStatus.OK).json({
