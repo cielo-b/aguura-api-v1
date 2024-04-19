@@ -10,3 +10,4 @@ module.exports.cratesController = require('./crates.controller');
 module.exports.paymentMethodController = require('./paymentMethod.controller');
 module.exports.paymentController = require('./payment.controller');
 module.exports.stockController = require('./stock.controller');
+module.exports.expenseController = require('./expense.controller');

@@ -12,6 +12,7 @@ const cratesRoute = require('./crates.route');
 const paymentRoute = require('./payment.route');
 const paymentMethodRoute = require('./paymentMethod.route');
 const stockRoute = require('./stock.route');
+const expenseRoute = require('./expense.route');
 
 const docsRoute = require('./docs.route');
 
@@ -65,6 +66,10 @@ const defaultRoutes = [
     {
         path: '/stock',
         route: stockRoute,
+    },
+    {
+        path: '/expense',
+        route: expenseRoute,
     },
 
     {
