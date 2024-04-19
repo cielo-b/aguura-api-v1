@@ -1,7 +1,7 @@
 {
     "apps": [
         {
-            "name": "in",
+            "name": "stock",
             "script": "src/index.js",
             "instances": "max",
             "autorestart": true,
