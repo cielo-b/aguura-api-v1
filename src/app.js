@@ -63,7 +63,7 @@ if (config.env === 'production') {
 app.get('/', (req, res) => {
     return res.status(httpStatus.OK).json({
         success: true,
-        message: 'Welcome To Stock Management Backend.'
+        message: 'Welcome To Stock Backend.'
     });
 });
 
