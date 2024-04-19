@@ -25,5 +25,6 @@ jobs:
       - run: npm ci
       - name: Install pm2
         run: npm install -g pm2
+      - run: npm start
       - run: pm2 list
       - run: pm2 restart all
