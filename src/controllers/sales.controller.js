@@ -35,7 +35,7 @@ const newSales = catchAsync(async (req, res) => {
         });
     }
 
-    if (amountPaid) {
+    if (amountPaid > 0) {
         if (payments.length === 0) {
             return res.status(httpStatus.BAD_REQUEST).json({
                 success: false,
