@@ -68,7 +68,8 @@ const newSales = catchAsync(async (req, res) => {
             name: product.inventoryProduct.name,
             quantity: reqProduct.quantity,
             unitPrice: product.price,
-            totalPrice: product.price * reqProduct.quantity
+            totalPrice: product.price * reqProduct.quantity,
+            id: product.id
         };
 
         products.push(salesProduct);
@@ -123,8 +124,130 @@ const newSales = catchAsync(async (req, res) => {
     });
 });
 
+
+const editSales = catchAsync(async (req, res) => {
+    const saleId = req.query.saleId;
+    const sale = await Sales.findById(saleId);
+
+    if (!sale) {
+        return res.status(httpStatus.BAD_REQUEST).json({
+            success: false,
+            message: 'Sale Not Found.'
+        });
+    }
+
+    const {products: reqProducts, isFullyPaid, customerName, customerPhone, amountPaid, payments} = req.body;
+
+    if (!isFullyPaid && !amountPaid) {
+        return res.status(httpStatus.BAD_REQUEST).json({
+            success: false,
+            message: 'Plz Add How Much User Paid.'
+        });
+    }
+
+    if (amountPaid > 0) {
+        if (payments.length === 0) {
+            return res.status(httpStatus.BAD_REQUEST).json({
+                success: false,
+                message: 'Plz Add How User Paid.'
+            });
+        } else {
+            let total = 0;
+            for (const p of payments) {
+                total += parseInt(p.amount);
+            }
+            if (parseInt(total) !== parseInt(amountPaid)) {
+                return res.status(httpStatus.BAD_REQUEST).json({
+                    success: false,
+                    message: 'Amount From All Methods Has To Be Equal To Total Amount Paid.'
+                });
+            }
+        }
+    }
+
+
+    let products = [];
+    let totalPrice = 0;
+    let description = ``;
+    let initials = [];
+
+    const salesProducts = sale.products;
+    for (let p of salesProducts) {
+        initials.push({
+            id: p.id,
+            quantity: p.quantity
+        });
+    }
+
+    for (let i = 0; i < reqProducts.length; i++) {
+        let reqProduct = reqProducts[i];
+        let product = await SalesProduct.findById(reqProduct.id).populate('inventoryProduct');
+
+        const salesProduct = {
+            name: product.inventoryProduct.name,
+            quantity: reqProduct.quantity,
+            unitPrice: product.price,
+            totalPrice: product.price * reqProduct.quantity,
+            id: product.id
+        };
+
+        products.push(salesProduct);
+        totalPrice += salesProduct.totalPrice;
+        description = description + `${salesProduct.name}: ${formatNumber(salesProduct.quantity)} x ${formatNumber(salesProduct.unitPrice)} = ${formatNumber(salesProduct.totalPrice)} \n`;
+    }
+
+    // handle amount
+    let amount = isFullyPaid ? totalPrice : amountPaid;
+
+    sale.products = products;
+    sale.totalPrice = totalPrice;
+    sale.isFullyPaid = isFullyPaid;
+    sale.customerName = customerName;
+    sale.customerPhone = customerPhone;
+    sale.amountPaid = amount;
+    sale.description = description;
+
+    await sale.save({validateBeforeSave: false});
+
+
+    // update inventory products availability
+    for (let i = 0; i < reqProducts.length; i++) {
+
+        let iProduct = initials[i];
+        let sIProduct = await SalesProduct.findById(iProduct.id);
+        let inP = await InventoryProduct.findById(sIProduct.inventoryProduct);
+        inP.totalAvailable = (parseInt(inP.totalAvailable) + parseInt(iProduct.quantity));
+        await inP.save({validateBeforeSave: false});
+
+        let reqProduct = reqProducts[i];
+        let product = await SalesProduct.findById(reqProduct.id);
+        let inventoryProduct = await InventoryProduct.findById(product.inventoryProduct);
+        inventoryProduct.totalAvailable = (parseInt(inventoryProduct.totalAvailable) - parseInt(reqProduct.quantity));
+        await inventoryProduct.save({validateBeforeSave: false});
+    }
+
+    // if not fully paid, create new credit
+    if (!isFullyPaid) {
+        const credit = await Credit.findOne({sales: sale.id});
+        credit.totalAmount = totalPrice - amountPaid;
+        credit.description = description;
+        credit.customerName = customerName;
+        credit.customerPhone = customerPhone;
+
+        await credit.save({validateBeforeSave: false});
+    }
+
+    // edit payments
+
+    return res.status(httpStatus.CREATED).json({
+        success: true,
+        message: 'Sales Edited Successfully.',
+    });
+});
+
+
 const allSales = catchAsync(async (req, res) => {
-    const sales = await Sales.find({stock: req.query.stockId}, {activeDay: 0, products: 0});
+    const sales = await Sales.find({stock: req.query.stockId}, {activeDay: 0});
 
     return res.status(httpStatus.OK).json({
         success: true,
@@ -145,7 +268,7 @@ const dailySales = catchAsync(async (req, res) => {
         });
     }
 
-    const sales = await Sales.find({activeDay: dayId}, {activeDay: 0, products: 0});
+    const sales = await Sales.find({activeDay: dayId}, {activeDay: 0});
 
     return res.status(httpStatus.OK).json({
         success: true,
@@ -177,6 +300,7 @@ const salesStats = catchAsync(async (req, res) => {
 
 module.exports = {
     newSales,
+    editSales,
     allSales,
     dailySales,
     salesStats

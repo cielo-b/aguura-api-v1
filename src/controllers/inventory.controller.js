@@ -37,9 +37,10 @@ const newInventory = catchAsync(async (req, res) => {
 
         const inventoryProduct = {
             name: product.name,
-            quantity: reqProduct.quantity,
+            quantity: parseFloat(reqProduct.quantity).toFixed(2),
             unitPrice: product.price,
-            totalPrice: product.price * reqProduct.quantity
+            totalPrice: product.price * parseFloat(reqProduct.quantity).toFixed(2),
+            id: product.id
         };
 
         products.push(inventoryProduct);
@@ -60,8 +61,8 @@ const newInventory = catchAsync(async (req, res) => {
         let reqProduct = reqProducts[i];
         let product = await InventoryProduct.findById(reqProduct.id);
 
-        product.totalAvailable += parseInt(reqProduct.quantity);
-        product.dailyAdded += parseInt(reqProduct.quantity);
+        product.totalAvailable += parseFloat(reqProduct.quantity);
+        product.dailyAdded += parseFloat(reqProduct.quantity);
         await product.save({validateBeforeSave: false});
     }
 
@@ -69,6 +70,83 @@ const newInventory = catchAsync(async (req, res) => {
     return res.status(httpStatus.CREATED).json({
         success: true,
         message: 'Inventory Recorded Successfully.',
+        inventory
+    });
+});
+
+
+const editInventory = catchAsync(async (req, res) => {
+
+    const inventoryId = req.query.inventoryId;
+    const inventory = await Inventory.findById(inventoryId);
+
+    if (!inventory) {
+        return res.status(httpStatus.BAD_REQUEST).json({
+            success: false,
+            message: 'Stock Not Found.'
+        });
+    }
+
+    let products = [];
+    let totalPrice = 0;
+    let initials = [];
+
+    const iProducts = inventory.products;
+    for (let p of iProducts) {
+        initials.push({
+            id: p.id,
+            quantity: p.quantity
+        });
+    }
+
+    const reqProducts = req.body.products;
+
+    for (let i = 0; i < reqProducts.length; i++) {
+        let reqProduct = reqProducts[i];
+        let product = await InventoryProduct.findById(reqProduct.id);
+
+        const inventoryProduct = {
+            name: product.name,
+            quantity: parseFloat(reqProduct.quantity).toFixed(2),
+            unitPrice: product.price,
+            totalPrice: product.price * parseFloat(reqProduct.quantity).toFixed(2),
+            id: product.id
+        };
+
+        products.push(inventoryProduct);
+        totalPrice += inventoryProduct.totalPrice;
+    }
+
+    inventory.products = products;
+    inventory.totalPrice = totalPrice;
+    await inventory.save({validateBeforeSave: false});
+
+    if (!inventory) {
+        return res.status(httpStatus.BAD_REQUEST).json({
+            success: false,
+            message: 'Something Went Wrong, Plz Try Again.'
+        });
+    }
+
+    // update inventory products availability
+    for (let i = 0; i < reqProducts.length; i++) {
+
+        let iP = initials[i];
+        let p = await Inventory.findById(iP.id);
+        p.totalAvailable -= parseFloat(iP.quantity);
+        await p.save({validateBeforeSave: false});
+
+        let reqProduct = reqProducts[i];
+        let product = await InventoryProduct.findById(reqProduct.id);
+
+        product.totalAvailable += parseFloat(reqProduct.quantity);
+        product.dailyAdded += parseFloat(reqProduct.quantity);
+        await product.save({validateBeforeSave: false});
+    }
+
+    return res.status(httpStatus.CREATED).json({
+        success: true,
+        message: 'Inventory Edited Successfully.',
         inventory
     });
 });
@@ -138,6 +216,7 @@ const inventoryStats = catchAsync(async (req, res) => {
 
 module.exports = {
     newInventory,
+    editInventory,
     allInventory,
     dailyInventory,
     inventoryStats

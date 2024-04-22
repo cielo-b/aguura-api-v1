@@ -20,6 +20,7 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
           cache: "npm"
+      - run: cd /home/ubuntu/actions-runner/_work/stock-backend/stock-backend && mkdir public && cd public/ && mkdir reports
       - run: npm install -g pm2
       - run: npm ci
       - run: |

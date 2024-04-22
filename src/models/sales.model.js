@@ -17,6 +17,11 @@ const salesSchema = mongoose.Schema(
 
         products: [
             {
+                id: {
+                    type: mongoose.SchemaTypes.ObjectId,
+                    ref: 'SalesProduct',
+                    required: true,
+                },
                 name: {
                     type: String,
                     required: true,

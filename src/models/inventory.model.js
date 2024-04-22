@@ -17,6 +17,11 @@ const inventorySchema = mongoose.Schema(
 
         products: [
             {
+                id: {
+                    type: mongoose.SchemaTypes.ObjectId,
+                    ref: 'InventoryProduct',
+                    required: true,
+                },
                 name: {
                     type: String,
                     required: true,
