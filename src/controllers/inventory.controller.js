@@ -4,6 +4,7 @@ const {Inventory, InventoryProduct} = require('../models');
 const catchAsync = require('../utils/catchAsync');
 const {checkActive, checkDay} = require('./activeDay.controller');
 const {checkStock} = require('./stock.controller');
+const formatNumber = require('../utils/formatNumber');
 
 const newInventory = catchAsync(async (req, res) => {
 
@@ -28,6 +29,7 @@ const newInventory = catchAsync(async (req, res) => {
 
     let products = [];
     let totalPrice = 0;
+    let description = ``;
 
     const reqProducts = req.body.products;
 
@@ -45,9 +47,10 @@ const newInventory = catchAsync(async (req, res) => {
 
         products.push(inventoryProduct);
         totalPrice += inventoryProduct.totalPrice;
+        description = description + `${inventoryProduct.name}: ${formatNumber(inventoryProduct.quantity)} x ${formatNumber(inventoryProduct.unitPrice)} = ${formatNumber(inventoryProduct.totalPrice)} \n`;
     }
 
-    const inventory = await Inventory.create({activeDay: activeDay.id, products, totalPrice, stock: stock.id});
+    const inventory = await Inventory.create({activeDay: activeDay.id, products, totalPrice, stock: stock.id, description});
 
     if (!inventory) {
         return res.status(httpStatus.BAD_REQUEST).json({
@@ -61,8 +64,8 @@ const newInventory = catchAsync(async (req, res) => {
         let reqProduct = reqProducts[i];
         let product = await InventoryProduct.findById(reqProduct.id);
 
-        product.totalAvailable += parseFloat(reqProduct.quantity);
-        product.dailyAdded += parseFloat(reqProduct.quantity);
+        product.totalAvailable += parseFloat(reqProduct.quantity).toFixed(2);
+        product.dailyAdded += parseFloat(reqProduct.quantity).toFixed(2);
         await product.save({validateBeforeSave: false});
     }
 
@@ -89,6 +92,7 @@ const editInventory = catchAsync(async (req, res) => {
 
     let products = [];
     let totalPrice = 0;
+    let description = ``;
     let initials = [];
 
     const iProducts = inventory.products;
@@ -115,10 +119,12 @@ const editInventory = catchAsync(async (req, res) => {
 
         products.push(inventoryProduct);
         totalPrice += inventoryProduct.totalPrice;
+        description = description + `${inventoryProduct.name}: ${formatNumber(inventoryProduct.quantity)} x ${formatNumber(inventoryProduct.unitPrice)} = ${formatNumber(inventoryProduct.totalPrice)} \n`;
     }
 
     inventory.products = products;
     inventory.totalPrice = totalPrice;
+    inventory.description = description;
     await inventory.save({validateBeforeSave: false});
 
     if (!inventory) {
@@ -132,15 +138,17 @@ const editInventory = catchAsync(async (req, res) => {
     for (let i = 0; i < reqProducts.length; i++) {
 
         let iP = initials[i];
-        let p = await Inventory.findById(iP.id);
-        p.totalAvailable -= parseFloat(iP.quantity);
-        await p.save({validateBeforeSave: false});
+        if (iP) {
+            let p = await InventoryProduct.findById(iP.id);
+            p.totalAvailable = parseFloat(p.totalAvailable) - parseFloat(iP.quantity);
+            await p.save({validateBeforeSave: false});
+        }
 
         let reqProduct = reqProducts[i];
         let product = await InventoryProduct.findById(reqProduct.id);
 
-        product.totalAvailable += parseFloat(reqProduct.quantity);
-        product.dailyAdded += parseFloat(reqProduct.quantity);
+        product.totalAvailable += parseFloat(reqProduct.quantity).toFixed(2);
+        product.dailyAdded += parseFloat(reqProduct.quantity).toFixed(2);
         await product.save({validateBeforeSave: false});
     }
 
@@ -155,15 +163,9 @@ const allInventory = catchAsync(async (req, res) => {
 
     const inventories = await Inventory.find({stock: req.query.stockId});
 
-    let products = [];
-
-    for (let i = 0; i < inventories.length; i++) {
-        products.push(inventories[i].products);
-    }
-
     return res.status(httpStatus.OK).json({
         success: true,
-        inventories: products.flat()
+        inventories
     });
 });
 
@@ -182,15 +184,9 @@ const dailyInventory = catchAsync(async (req, res) => {
 
     const inventories = await Inventory.find({activeDay: dayId});
 
-    let products = [];
-
-    for (let i = 0; i < inventories.length; i++) {
-        products.push(inventories[i].products);
-    }
-
     return res.status(httpStatus.OK).json({
         success: true,
-        inventories: products.flat()
+        inventories
     });
 });
 

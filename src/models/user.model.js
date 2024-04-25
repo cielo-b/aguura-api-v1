@@ -5,10 +5,13 @@ const {toJSON} = require('./plugins');
 
 const userSchema = mongoose.Schema(
     {
-        stock: {
-            type: mongoose.SchemaTypes.ObjectId,
-            ref: 'Stock',
-        },
+        stocks: [
+            {
+                type: mongoose.SchemaTypes.ObjectId,
+                ref: 'Stock',
+                required: true
+            }
+        ],
 
         fullName: {
             type: String,

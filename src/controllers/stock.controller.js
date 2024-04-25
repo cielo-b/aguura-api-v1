@@ -17,7 +17,7 @@ const newStock = catchAsync(async (req, res) => {
         });
     }
 
-    const {name, fullName, phone, password, role} = req.body;
+    const {name, fullName, phone, password, type} = req.body;
     const stockName = name.replace(/\s/g, '').toLowerCase();
 
     const stock = await Stock.findOne({stockName});
@@ -45,7 +45,7 @@ const newStock = catchAsync(async (req, res) => {
         });
     }
 
-    const newStock = await Stock.create({superAdmin: user.id, admin: admin.id, name, stockName});
+    const newStock = await Stock.create({superAdmin: user.id, admin: admin.id, name, stockName, type});
 
     return res.status(httpStatus.CREATED).json({
         success: true,
@@ -68,7 +68,7 @@ const editStock = catchAsync(async (req, res) => {
     }
 
 
-    const {name, fullName, phone, password} = req.body;
+    const {name, fullName, phone, password, type} = req.body;
 
     const stockName = name.replace(/\s/g, '').toLowerCase();
 
@@ -90,6 +90,7 @@ const editStock = catchAsync(async (req, res) => {
     const sName = name ? name : stock.name;
     stock.name = sName;
     stock.stockName = stockName;
+    stock.type = type ? type : stock.type;
 
     await stock.save({validateBeforeSave: false});
 
@@ -117,6 +118,7 @@ const allStocks = catchAsync(async (req, res) => {
             managerPhone: stock.admin.phone,
             id: stock.id,
             name: stock.name,
+            type: stock.type
         };
     });
 

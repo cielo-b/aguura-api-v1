@@ -35,6 +35,13 @@ const newSales = catchAsync(async (req, res) => {
         });
     }
 
+    if (isFullyPaid && payments.length === 0) {
+        return res.status(httpStatus.BAD_REQUEST).json({
+            success: false,
+            message: 'Plz Add How User Paid.'
+        });
+    }
+
     if (amountPaid > 0) {
         if (payments.length === 0) {
             return res.status(httpStatus.BAD_REQUEST).json({
@@ -57,8 +64,21 @@ const newSales = catchAsync(async (req, res) => {
 
 
     let products = [];
+    let _payments = [];
     let totalPrice = 0;
     let description = ``;
+    let paymentDescription = ``;
+
+    for (let payment of payments) {
+        let method = await PaymentMethod.findById(payment.id);
+        const _payment = {
+            id: method.id,
+            name: method.name,
+            amount: payment.amount
+        };
+        _payments.push(_payment);
+        paymentDescription = paymentDescription + `${_payment.name}: ${formatNumber(_payment.amount)} Rwf \n`;
+    }
 
     for (let i = 0; i < reqProducts.length; i++) {
         let reqProduct = reqProducts[i];
@@ -74,14 +94,28 @@ const newSales = catchAsync(async (req, res) => {
 
         products.push(salesProduct);
         totalPrice += salesProduct.totalPrice;
-        description = description + `${salesProduct.name}: ${formatNumber(salesProduct.quantity)} x ${formatNumber(salesProduct.unitPrice)} = ${formatNumber(salesProduct.totalPrice)} \n`;
+        description = description + `${salesProduct.name}: ${formatNumber(salesProduct.quantity)} x ${formatNumber(salesProduct.unitPrice)} = ${formatNumber(salesProduct.totalPrice)} Rwf \n`;
     }
 
     // handle amount
     let amount = isFullyPaid ? totalPrice : amountPaid;
 
-    const sales = await Sales.create({stock: stock.id, activeDay: activeDay.id, products, totalPrice, isFullyPaid, customerName, customerPhone, amountPaid: amount, description});
+    if (isFullyPaid) {
+        {
+            let total = 0;
+            for (const p of payments) {
+                total += parseFloat(p.amount);
+            }
+            if (parseFloat(total) !== parseFloat(amount)) {
+                return res.status(httpStatus.BAD_REQUEST).json({
+                    success: false,
+                    message: 'Amount From All Methods Has To Be Equal To Total Amount Paid.'
+                });
+            }
+        }
+    }
 
+    const sales = await Sales.create({stock: stock.id, activeDay: activeDay.id, products, totalPrice, isFullyPaid, customerName, customerPhone, amountPaid: amount, description, paymentDescription, payments: _payments});
     if (!sales) {
         return res.status(httpStatus.BAD_REQUEST).json({
             success: false,
@@ -95,7 +129,7 @@ const newSales = catchAsync(async (req, res) => {
         let product = await SalesProduct.findById(reqProduct.id);
         let inventoryProduct = await InventoryProduct.findById(product.inventoryProduct);
 
-        inventoryProduct.totalAvailable = (parseInt(inventoryProduct.totalAvailable) - parseInt(reqProduct.quantity));
+        inventoryProduct.totalAvailable = (parseFloat(inventoryProduct.totalAvailable) - parseFloat(reqProduct.quantity));
         await inventoryProduct.save({validateBeforeSave: false});
     }
 
@@ -145,6 +179,13 @@ const editSales = catchAsync(async (req, res) => {
         });
     }
 
+    if (isFullyPaid && payments.length === 0) {
+        return res.status(httpStatus.BAD_REQUEST).json({
+            success: false,
+            message: 'Plz Add How User Paid.'
+        });
+    }
+
     if (amountPaid > 0) {
         if (payments.length === 0) {
             return res.status(httpStatus.BAD_REQUEST).json({
@@ -167,9 +208,22 @@ const editSales = catchAsync(async (req, res) => {
 
 
     let products = [];
+    let _payments = [];
     let totalPrice = 0;
     let description = ``;
     let initials = [];
+    let paymentDescription = ``;
+
+    for (let payment of payments) {
+        let method = await PaymentMethod.findById(payment.id);
+        const _payment = {
+            id: method.id,
+            name: method.name,
+            amount: payment.amount
+        };
+        _payments.push(_payment);
+        paymentDescription = paymentDescription + `${_payment.name}: ${formatNumber(_payment.amount)} Rwf\n`;
+    }
 
     const salesProducts = sale.products;
     for (let p of salesProducts) {
@@ -193,11 +247,25 @@ const editSales = catchAsync(async (req, res) => {
 
         products.push(salesProduct);
         totalPrice += salesProduct.totalPrice;
-        description = description + `${salesProduct.name}: ${formatNumber(salesProduct.quantity)} x ${formatNumber(salesProduct.unitPrice)} = ${formatNumber(salesProduct.totalPrice)} \n`;
+        description = description + `${salesProduct.name}: ${formatNumber(salesProduct.quantity)} x ${formatNumber(salesProduct.unitPrice)} = ${formatNumber(salesProduct.totalPrice)} Rwf\n`;
     }
 
     // handle amount
     let amount = isFullyPaid ? totalPrice : amountPaid;
+    if (isFullyPaid) {
+        {
+            let total = 0;
+            for (const p of payments) {
+                total += parseFloat(p.amount);
+            }
+            if (parseFloat(total) !== parseFloat(amount)) {
+                return res.status(httpStatus.BAD_REQUEST).json({
+                    success: false,
+                    message: 'Amount From All Methods Has To Be Equal To Total Amount Paid.'
+                });
+            }
+        }
+    }
 
     sale.products = products;
     sale.totalPrice = totalPrice;
@@ -206,6 +274,8 @@ const editSales = catchAsync(async (req, res) => {
     sale.customerPhone = customerPhone;
     sale.amountPaid = amount;
     sale.description = description;
+    sale.paymentDescription = paymentDescription;
+    sale.payments = _payments;
 
     await sale.save({validateBeforeSave: false});
 
@@ -229,12 +299,22 @@ const editSales = catchAsync(async (req, res) => {
     // if not fully paid, create new credit
     if (!isFullyPaid) {
         const credit = await Credit.findOne({sales: sale.id});
-        credit.totalAmount = totalPrice - amountPaid;
-        credit.description = description;
-        credit.customerName = customerName;
-        credit.customerPhone = customerPhone;
+        if (credit) {
+            credit.totalAmount = totalPrice - amountPaid;
+            credit.description = description;
+            credit.customerName = customerName;
+            credit.customerPhone = customerPhone;
 
-        await credit.save({validateBeforeSave: false});
+            await credit.save({validateBeforeSave: false});
+        }else{
+            const credit = await Credit.create({activeDay: sale.activeDay, stock: sale.stock, sales: sale.id, totalAmount: totalPrice - amountPaid, description, customerName, customerPhone});
+            if (!credit) {
+                return res.status(httpStatus.CREATED).json({
+                    success: true,
+                    message: 'Sales Eecorded Successfully But, Credit Failed To Te Recorder.',
+                });
+            }
+        }
     }
 
     // edit payments

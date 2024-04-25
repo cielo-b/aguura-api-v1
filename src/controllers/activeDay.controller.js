@@ -572,7 +572,7 @@ const endDay = catchAsync(async (req, res) => {
 
     // register crates
     for (let crate of crates) {
-        const emptyC = await EmptyCrates.create({stock: stock.id, activeDay: activeDay.id, name: crate.name, number: crate.number, isBrarirwa: crate.isBrarirwa});
+        await EmptyCrates.create({stock: stock.id, activeDay: activeDay.id, name: crate.name, number: crate.number, isBrarirwa: crate.isBrarirwa});
     }
 
     // generate pdf

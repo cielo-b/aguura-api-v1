@@ -41,7 +41,30 @@ const salesSchema = mongoose.Schema(
             }
         ],
 
+        payments: [
+            {
+                id: {
+                    type: mongoose.SchemaTypes.ObjectId,
+                    ref: 'PaymentMethod',
+                    required: true,
+                },
+                name: {
+                    type: String,
+                    required: true,
+                },
+                amount: {
+                    type: Number,
+                    required: true,
+                }
+            }
+        ],
+
         description: {
+            type: String,
+            required: true,
+        },
+
+        paymentDescription: {
             type: String,
             required: true,
         },
@@ -50,7 +73,7 @@ const salesSchema = mongoose.Schema(
             type: Number,
             required: true,
         },
-        
+
         amountPaid: {
             type: Number,
             required: true,

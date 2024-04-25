@@ -23,7 +23,19 @@ const stockShema = mongoose.Schema(
         stockName: {
             type: String,
             required: true,
-        }
+        },
+
+        type: {
+            type: String,
+            required: true,
+            enum: [
+                'pharmacy',
+                'beer',
+                'fashion',
+                'electronics',
+                'others'
+            ]
+        },
     },
     {
         timestamps: true,

@@ -2,7 +2,7 @@ const httpStatus = require('http-status');
 
 const {Credit, Sales, PaymentMethod, Payment} = require('../models');
 const catchAsync = require('../utils/catchAsync');
-
+const formatNumber = require('../utils/formatNumber');
 
 const payCredit = catchAsync(async (req, res) => {
 
@@ -38,6 +38,8 @@ const payCredit = catchAsync(async (req, res) => {
         }
     }
 
+    let desc = ``;
+
     credit.amountPaid = parseInt(credit.amountPaid) + parseInt(amount);
     sales.amountPaid = parseInt(sales.amountPaid) + parseInt(amount);
 
@@ -53,10 +55,13 @@ const payCredit = catchAsync(async (req, res) => {
 
     if (payments.length > 0) {
         for (const payment of payments) {
+            desc = `${payment.name}: ${formatNumber(payment.amount)} Rwf\n`;
             let method = await PaymentMethod.findById(payment.id);
-            const p = await Payment.create({activeDay: credit.activeDay, method: method.id, customerName: credit.customerName, customerPhone: credit.customerPhone, amount: payment.amount, stock: credit.stock});
+            await Payment.create({activeDay: credit.activeDay, method: method.id, customerName: credit.customerName, customerPhone: credit.customerPhone, amount: payment.amount, stock: credit.stock});
         }
     }
+    sales.paymentDescription = sales.paymentDescription + desc;
+    await sales.save({validateBeforeSave: false});
 
     return res.status(httpStatus.OK).json({
         success: true,
