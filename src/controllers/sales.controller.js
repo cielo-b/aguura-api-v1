@@ -69,15 +69,19 @@ const newSales = catchAsync(async (req, res) => {
     let description = ``;
     let paymentDescription = ``;
 
-    for (let payment of payments) {
-        let method = await PaymentMethod.findById(payment.id);
-        const _payment = {
-            id: method.id,
-            name: method.name,
-            amount: payment.amount
-        };
-        _payments.push(_payment);
-        paymentDescription = paymentDescription + `${_payment.name}: ${formatNumber(_payment.amount)} Rwf \n`;
+    if (payments.length > 0) {
+        for (let payment of payments) {
+            let method = await PaymentMethod.findById(payment.id);
+            const _payment = {
+                id: method.id,
+                name: method.name,
+                amount: payment.amount
+            };
+            _payments.push(_payment);
+            paymentDescription = paymentDescription + `${_payment.name}: ${formatNumber(_payment.amount)} Rwf \n`;
+        }
+    } else {
+        paymentDescription = 'No Payments Yet.';
     }
 
     for (let i = 0; i < reqProducts.length; i++) {
@@ -214,15 +218,19 @@ const editSales = catchAsync(async (req, res) => {
     let initials = [];
     let paymentDescription = ``;
 
-    for (let payment of payments) {
-        let method = await PaymentMethod.findById(payment.id);
-        const _payment = {
-            id: method.id,
-            name: method.name,
-            amount: payment.amount
-        };
-        _payments.push(_payment);
-        paymentDescription = paymentDescription + `${_payment.name}: ${formatNumber(_payment.amount)} Rwf\n`;
+    if (payments.length > 0) {
+        for (let payment of payments) {
+            let method = await PaymentMethod.findById(payment.id);
+            const _payment = {
+                id: method.id,
+                name: method.name,
+                amount: payment.amount
+            };
+            _payments.push(_payment);
+            paymentDescription = paymentDescription + `${_payment.name}: ${formatNumber(_payment.amount)} Rwf\n`;
+        }
+    } else {
+        paymentDescription = 'No Payments Yet.';
     }
 
     const salesProducts = sale.products;
@@ -306,7 +314,7 @@ const editSales = catchAsync(async (req, res) => {
             credit.customerPhone = customerPhone;
 
             await credit.save({validateBeforeSave: false});
-        }else{
+        } else {
             const credit = await Credit.create({activeDay: sale.activeDay, stock: sale.stock, sales: sale.id, totalAmount: totalPrice - amountPaid, description, customerName, customerPhone});
             if (!credit) {
                 return res.status(httpStatus.CREATED).json({
