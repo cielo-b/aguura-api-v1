@@ -1,13 +1,22 @@
 const httpStatus = require('http-status');
 const catchAsync = require('../utils/catchAsync');
 const {authService, userService, tokenService} = require('../services');
-const {Token, User, Order} = require('../models');
+const {Token, User, Order, Stock} = require('../models');
 const {checkStock} = require('./stock.controller');
 
 
 const register = catchAsync(async (req, res) => {
 
     let {fullName, phone, password, role} = req.body;
+
+    const stocks = await Stock.find({});
+
+    if (stocks.length === 0) {
+        return res.status(httpStatus.BAD_REQUEST).json({
+            success: false,
+            message: 'No Stocks Availabel Yet. Plz Try Again Later.'
+        });
+    }
 
     if (await User.isPhoneTaken(phone)) {
         return res.status(httpStatus.BAD_REQUEST).json({
