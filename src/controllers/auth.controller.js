@@ -11,7 +11,7 @@ const register = catchAsync(async (req, res) => {
 
     const stocks = await Stock.find({});
 
-    if (stocks.length === 0) {
+    if (stocks.length === 0 && role !== 'superAdmin') {
         return res.status(httpStatus.BAD_REQUEST).json({
             success: false,
             message: 'No Stocks Availabel Yet. Plz Try Again Later.'
