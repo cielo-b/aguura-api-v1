@@ -197,19 +197,11 @@ const generateSimplePDF = async (stock, activeDay) => {
 
     doc.pipe(writeStream);
 
-    const addPageIfNecessary = (requiredHeight) => {
-        if (doc.y + requiredHeight > doc.page.height - 50) {
-            doc.addPage();
-            startY = 50;
-        }
-    };
-
     // Header
     doc.fontSize(18).text(`${config.name}  ${activeDay.name} Daily Report. \n\n\n\n`, 30, 30, {underline: true});
 
     // Sales Section
-    doc.fontSize(13).text('Sales \n', 30, 60, {underline: true});
-    let startY = doc.y + 30;
+    doc.fontSize(13).text('Sales \n\n', 30, 60, {underline: true});
 
     const sales = await Sales.find({activeDay: activeDay.id});
 
@@ -217,43 +209,15 @@ const generateSimplePDF = async (stock, activeDay) => {
         let totalSalesPrice = 0;
         let remaining = 0;
 
-        const headers = ['Customer', 'Products', 'Total Amt', 'Paid Amt', 'Remaining Amt'];
-        doc.font('Helvetica-Bold').fontSize(10);
-        headers.forEach((header, index) => {
-            doc.text(header, index * 100 + 30, startY);
-        });
-
-        doc.moveTo(30, startY + 10).lineTo(505, startY + 10).stroke();
-
         sales.forEach((sale, index) => {
-            let l = sale.products.length;
-            const rowHeight = Math.max((l + 2) * 10, 20);
-            addPageIfNecessary(rowHeight);
-
-            doc.text(`\n${sale.customerName}`, 30, startY);
-            const productsY = startY;
-            sale.products.forEach((product, index) => {
-                doc.text(`${index === l ?
-                    product.name + ' ' + formatNumber(product.quantity) + '\n' :
-                    '\n' + product.name + ' ' + formatNumber(product.quantity)}`, 130, productsY + index * 10);
-            });
-            doc.text(`\n${formatNumber(sale.totalPrice)} Rwf`, 230, startY);
-            doc.text(`\n${formatNumber(sale.amountPaid)} Rwf`, 330, startY);
-            doc.text(`\n${formatNumber(sale.totalPrice - sale.amountPaid)} Rwf`, 430, startY);
-
-            doc.moveTo(30, startY + rowHeight).lineTo(505, startY + rowHeight).stroke();
-            startY += rowHeight;
-
             if (!sale.isFullyPaid) {
                 remaining += (sale.totalPrice - sale.amountPaid);
             }
             totalSalesPrice += sale.totalPrice;
-
             if (index === (sales.length - 1)) {
-                doc.text(`\nTotal`, 30);
-                doc.text(`\n${formatNumber(totalSalesPrice)} Rwf`, 230, startY);
-                doc.text(`\n${formatNumber(totalSalesPrice - remaining)} Rwf`, 330, startY);
-                doc.text(`\n${formatNumber(remaining)} Rwf`, 430, startY);
+                doc.text(`Total: ${formatNumber(totalSalesPrice)} Rwf\n`, 30, undefined);
+                doc.text(`Paid: ${formatNumber(totalSalesPrice - remaining)} Rwf\n`, 30, undefined);
+                doc.text(`Credit: ${formatNumber(remaining)} Rwf\n`, 30, undefined);
             }
         });
 
@@ -261,151 +225,25 @@ const generateSimplePDF = async (stock, activeDay) => {
         doc.fontSize(13).text(`No Sales Were Made On ${activeDay.name}`, 30, undefined);
     }
 
-    // Credit Section
-    doc.fontSize(12).text('\n\n\n\nCredits \n', 30, undefined, {underline: true});
-    startY = doc.y + 30;
 
-    const creditSales = await Sales.find({activeDay: activeDay.id, isFullyPaid: false});
-
-    if (creditSales.length > 0) {
-        const headers = ['Customer', 'Paid Amt', 'Remaining Amt', 'Total Amt'];
-        doc.font('Helvetica-Bold').fontSize(10);
-        headers.forEach((header, index) => {
-            doc.text(header, index * 120 + 30, startY);
-        });
-
-        doc.moveTo(30, startY + 10).lineTo(480, startY + 10).stroke();
-
-        let totalCredit = 0;
-        let paid = 0;
-
-        creditSales.forEach((sale, index) => {
-            const rowHeight = 20;
-            addPageIfNecessary(rowHeight);
-
-            doc.text(`\n${sale.customerName}`, 30, startY);
-            doc.text(`\n${formatNumber(sale.amountPaid)} Rwf`, 150, startY);
-            doc.text(`\n${formatNumber(sale.totalPrice - sale.amountPaid)} Rwf`, 270, startY);
-            doc.text(`\n${formatNumber(sale.totalPrice)} Rwf`, 390, startY);
-
-            doc.moveTo(30, startY + 10).lineTo(480, startY + 10).stroke();
-            startY += 20;
-
-            totalCredit += parseInt(sale.totalPrice - sale.amountPaid);
-            paid += parseInt(sale.amountPaid);
-
-            if (index === (creditSales.length - 1)) {
-                doc.text(`\nTotal`, 30);
-                doc.text(`\n${formatNumber(paid)} Rwf`, 150, startY);
-                doc.text(`\n${formatNumber(totalCredit)} Rwf`, 270, startY);
-                doc.text(`\n${formatNumber(totalCredit + paid)} Rwf`, 390, startY);
-            }
-        });
-    } else {
-        doc.fontSize(13).text(`No Credits Were Made On ${activeDay.name}.`, 30, undefined);
-    }
-
-    // Crates Section
-    doc.fontSize(12).text('\n\n\n\nRendered Crates \n', 30, undefined, {underline: true});
-    startY = doc.y + 30;
-    const crates = await Crates.find({activeDay: activeDay.id});
-
-    if (crates.length > 0) {
-        const headers = ['Customer', 'Given', 'Returned', 'Remaining'];
-        doc.font('Helvetica-Bold').fontSize(10);
-        headers.forEach((header, index) => {
-            doc.text(header, index * 120 + 30, startY);
-        });
-
-        doc.moveTo(30, startY + 10).lineTo(480, startY + 10).stroke();
-
-        let givenC = 0;
-        let returnedC = 0;
-        let remainingC = 0;
-
-        crates.forEach((crate, index) => {
-            let given, returned, remaining = 0;
-
-            let l = crate.products.length;
-            const rowHeight = Math.max((l + 2) * 10, 20);
-            addPageIfNecessary(rowHeight);
-
-            doc.text(`\n${crate.customerName}`, 30, startY);
-            const productsY = startY;
-            crate.products.forEach((product, index) => {
-                given += parseInt(product.given);
-                doc.text(`${index === l ?
-                    product.name + ' ' + formatNumber(product.given) + '\n' :
-                    '\n' + product.name + ' ' + formatNumber(product.given)}`, 150, productsY + index * 10);
-            });
-            crate.products.forEach((product, index) => {
-                returned += parseInt(product.returned);
-                doc.text(`${index === l ?
-                    product.name + ' ' + formatNumber(product.returned) + '\n' :
-                    '\n' + product.name + ' ' + formatNumber(product.returned)}`, 270, productsY + index * 10);
-            });
-            crate.products.forEach((product, index) => {
-                remaining += parseInt(product.remaining);
-                doc.text(`${index === l ?
-                    product.name + ' ' + formatNumber(product.remaining) + '\n' :
-                    '\n' + product.name + ' ' + formatNumber(product.remaining)}`, 390, productsY + index * 10);
-            });
-
-            doc.moveTo(30, startY + rowHeight).lineTo(480, startY + rowHeight).stroke();
-            startY += rowHeight;
-
-            givenC += given;
-            returnedC += returned;
-            remainingC += remaining;
-
-            if (index === (crates.length - 1)) {
-                doc.text(`\nTotal`, 30);
-                doc.text(`\n${formatNumber(givenC)}`, 150, startY);
-                doc.text(`\n${formatNumber(returnedC)}`, 270, startY);
-                doc.text(`\n${formatNumber(remainingC)}`, 390, startY);
-            }
-        });
-    } else {
-        doc.fontSize(13).text(`No Crates Were Rendered On ${activeDay.name}.`, 30, undefined);
-    }
 
     // Crates remaining
     doc.fontSize(12).text('\n\n\n\nEmpty Crates \n\n', 30, undefined, {underline: true});
-    startY = doc.y + 30;
 
     const emptyCrates = await EmptyCrates.find({activeDay: activeDay.id});
 
     if (emptyCrates.length > 0) {
-        const headers = ['Name', 'Total'];
-        doc.font('Helvetica-Bold').fontSize(10);
-        headers.forEach((header, index) => {
-            doc.text(header, index * 220 + 30, startY);
-        });
-
-        doc.moveTo(30, startY + 10).lineTo(440, startY + 10).stroke();
-        startY += 20;
-
         let totalECrates = 0;
         let totalB = 0;
 
         emptyCrates.forEach((ec, index) => {
-            const rowHeight = 20;
-            addPageIfNecessary(rowHeight);
-
-            doc.text(`${ec.name}`, 30, startY);
-            doc.text(`${ec.number}`, 250, startY);
-
-            doc.moveTo(30, startY + 10).lineTo(440, startY + 10).stroke();
-            startY += 20;
-
             totalECrates += parseInt(ec.number);
             if (ec.isBrarirwa) totalB += parseInt(ec.number);
 
             if (index === (emptyCrates.length - 1)) {
-                doc.text(`\nTotal`, 30);
-                doc.text(`\nBrarirwa: ${formatNumber(totalB)}`, 250, startY);
-                doc.text(`\nNon-Brarirwa: ${formatNumber(totalECrates - totalB)}`, 250, startY + 20);
-                doc.text(`\nTotal: ${formatNumber(totalECrates)}`, 250, startY + 40);
+                doc.text(`Brarirwa: ${formatNumber(totalB)}\n`);
+                doc.text(`Non-Brarirwa: ${formatNumber(totalECrates - totalB)}\n`);
+                doc.text(`Total: ${formatNumber(totalECrates)}\n`,);
             }
         });
     } else {
@@ -413,53 +251,35 @@ const generateSimplePDF = async (stock, activeDay) => {
     }
 
     // Inventory balancing
-    doc.fontSize(12).text('\n\n\n\nInventory \n', 30, undefined, {underline: true});
-    startY = doc.y + 30;
+    doc.fontSize(12).text('\n\n\n\nInventory \n\n', 30, undefined, {underline: true});
     const iProducts = await InventoryProduct.find({stock: stock.id});
 
     if (iProducts.length > 0) {
-        const headers = ['Name', 'Initial Stk', 'Added Stk', 'Cost Amt', 'Final Stk'];
-        doc.font('Helvetica-Bold').fontSize(10);
-        headers.forEach((header, index) => {
-            doc.text(header, index * 100 + 30, startY);
-        });
-
-        doc.moveTo(30, startY + 10).lineTo(505, startY + 10).stroke();
-        startY += 20;
-
         let initial = 0;
         let added = 0;
         let final = 0;
         let cost = 0;
 
         iProducts.forEach((product, index) => {
-            const rowHeight = 20;
-            addPageIfNecessary(rowHeight);
-
-            doc.text(`${product.name}`, 30, startY);
-            doc.text(`${formatNumber(product.prevDayRemaining)}`, 130, startY);
-            doc.text(`${formatNumber(product.dailyAdded)}`, 230, startY);
-            doc.text(`${formatNumber(product.dailyAdded * product.unitPrice)} Rwf`, 330, startY);
-            doc.text(`${formatNumber(product.totalAvailable)}`, 430, startY);
-
-            doc.moveTo(30, startY + 10).lineTo(505, startY + 10).stroke();
-            startY += 20;
-
-            initial += product.prevDayRemaining;
-            added += product.dailyAdded;
-            final += product.totalAvailable;
-            cost += product.dailyAdded * product.unitPrice;
+            doc.text(`${product.name} ==>>  Initial:${formatNumber(product.prevDayRemaining)}  Added: ${formatNumber(product.dailyAdded)}  Cost:${formatNumber(product.dailyAdded * product.unitPrice)} Rwf  Final: ${formatNumber(product.totalAvailable)}  \n\n`,);
 
             if (index === (iProducts.length - 1)) {
-                doc.text(`\nTotal`, 30);
-                doc.text(`\n${formatNumber(initial)}`, 130, startY);
-                doc.text(`\n${formatNumber(added)}`, 230, startY);
-                doc.text(`\n${formatNumber(cost)} Rwf`, 330, startY);
-                doc.text(`\n${formatNumber(final)}`, 430, startY);
+                doc.text(`\nTotal  Initial: ${formatNumber(initial)}  Added: ${formatNumber(added)}  Cost: ${formatNumber(cost)} Rwf  Final: ${formatNumber(final)}  \n`);
             }
         });
     } else {
         doc.fontSize(13).text(`No Inventory Recorded ${activeDay.name}.`);
+    }
+
+
+    // Payment
+    doc.fontSize(12).text('\n\n\n\n Payment \n', 30, undefined, {underline: true});
+    const payments = await Payment.find({stock: stock.id, activeDay: activeDay.id});
+
+    if (payments.length > 0) {
+
+    } else {
+        doc.fontSize(13).text(`No Payments Recorded ${activeDay.name}.`);
     }
 
     doc.fontSize(10).font('Times-Bold').text(`\n\n\n\n ${stock.name}`, 30, undefined, {underline: true});
@@ -576,7 +396,7 @@ const endDay = catchAsync(async (req, res) => {
     }
 
     // generate pdf
-    const pdfFileName = await generatePDF(stock.name, activeDay);
+    const pdfFileName = await generateSimplePDF(stock, activeDay);
     const url = config.url + '/public/reports/' + pdfFileName;
 
     // update remaining products in inventory
