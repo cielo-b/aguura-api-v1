@@ -62,6 +62,7 @@ const salesSchema = mongoose.Schema(
         description: {
             type: String,
             required: true,
+            default: ''
         },
 
         paymentDescription: {
