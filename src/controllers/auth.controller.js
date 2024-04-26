@@ -141,7 +141,7 @@ const allCutomers = catchAsync(async (req, res) => {
 
     let customers = [];
 
-    const users = await User.find({stock: stockId});
+    const users = await User.find({stocks: {$in: [stockId]}});
 
     for (let i = 0; i < users.length; i++) {
         const u = users[i];

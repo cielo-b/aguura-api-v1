@@ -20,10 +20,23 @@ const stockShema = mongoose.Schema(
             required: true,
         },
 
+        description: {
+            type: String,
+            required: true,
+        },
+
         stockName: {
             type: String,
             required: true,
         },
+
+        customers: [
+            {
+                type: mongoose.SchemaTypes.ObjectId,
+                ref: 'User',
+                required: true
+            }
+        ],
 
         type: {
             type: String,

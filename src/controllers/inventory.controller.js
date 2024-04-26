@@ -64,8 +64,8 @@ const newInventory = catchAsync(async (req, res) => {
         let reqProduct = reqProducts[i];
         let product = await InventoryProduct.findById(reqProduct.id);
 
-        product.totalAvailable += parseFloat(reqProduct.quantity).toFixed(2);
-        product.dailyAdded += parseFloat(reqProduct.quantity).toFixed(2);
+        product.totalAvailable = parseFloat(product.totalAvailable) + parseFloat(reqProduct.quantity);
+        product.dailyAdded = parseFloat(product.dailyAdded) + parseFloat(reqProduct.quantity);
         await product.save({validateBeforeSave: false});
     }
 
@@ -141,14 +141,15 @@ const editInventory = catchAsync(async (req, res) => {
         if (iP) {
             let p = await InventoryProduct.findById(iP.id);
             p.totalAvailable = parseFloat(p.totalAvailable) - parseFloat(iP.quantity);
+            p.dailyAdded = parseFloat(p.dailyAdded) - parseFloat(iP.quantity);
             await p.save({validateBeforeSave: false});
         }
 
         let reqProduct = reqProducts[i];
         let product = await InventoryProduct.findById(reqProduct.id);
 
-        product.totalAvailable += parseFloat(reqProduct.quantity).toFixed(2);
-        product.dailyAdded += parseFloat(reqProduct.quantity).toFixed(2);
+        product.totalAvailable = parseFloat(product.totalAvailable) + parseFloat(reqProduct.quantity).toFixed(2);
+        product.dailyAdded = parseFloat(product.dailyAdded) + parseFloat(reqProduct.quantity).toFixed(2);
         await product.save({validateBeforeSave: false});
     }
 

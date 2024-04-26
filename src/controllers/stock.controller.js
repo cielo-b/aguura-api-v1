@@ -17,7 +17,7 @@ const newStock = catchAsync(async (req, res) => {
         });
     }
 
-    const {name, fullName, phone, password, type} = req.body;
+    const {name, fullName, phone, password, type, description} = req.body;
     const stockName = name.replace(/\s/g, '').toLowerCase();
 
     const stock = await Stock.findOne({stockName});
@@ -45,7 +45,7 @@ const newStock = catchAsync(async (req, res) => {
         });
     }
 
-    const newStock = await Stock.create({superAdmin: user.id, admin: admin.id, name, stockName, type});
+    const newStock = await Stock.create({superAdmin: user.id, admin: admin.id, name, stockName, type, description});
 
     return res.status(httpStatus.CREATED).json({
         success: true,
@@ -68,7 +68,7 @@ const editStock = catchAsync(async (req, res) => {
     }
 
 
-    const {name, fullName, phone, password, type} = req.body;
+    const {name, fullName, phone, password, type, description} = req.body;
 
     const stockName = name.replace(/\s/g, '').toLowerCase();
 
@@ -91,6 +91,7 @@ const editStock = catchAsync(async (req, res) => {
     stock.name = sName;
     stock.stockName = stockName;
     stock.type = type ? type : stock.type;
+    stock.description = description ? description : stock.description;
 
     await stock.save({validateBeforeSave: false});
 
@@ -118,7 +119,8 @@ const allStocks = catchAsync(async (req, res) => {
             managerPhone: stock.admin.phone,
             id: stock.id,
             name: stock.name,
-            type: stock.type
+            type: stock.type,
+            description: stock.description
         };
     });
 
@@ -182,7 +184,88 @@ const getStock = catchAsync(async (req, res) => {
     });
 });
 
+const getAllStocks = catchAsync(async (req, res) => {
 
+    let stocks = await Stock.find({type: req.query.type}).populate('admin');
+    stocks = stocks.map(stock => {
+        return {
+            managerName: stock.admin.fullName,
+            managerPhone: stock.admin.phone,
+            id: stock.id,
+            name: stock.name,
+            type: stock.type,
+            description: stock.description
+        };
+    });
+
+    return res.status(httpStatus.OK).json({
+        success: true,
+        stocks
+    });
+});
+
+const addStocks = catchAsync(async (req, res) => {
+
+    const user = await User.findById(req.user._id);
+
+    if (!user) {
+        return res.status(httpStatus.BAD_REQUEST).json({
+            success: false,
+            message: 'User Not Found.'
+        });
+    }
+
+    const {stockIds} = req.body;
+
+    for (let id of stockIds) {
+        const stock = await Stock.findById(id);
+        if (stock) {
+            let userStocks = user.stocks;
+            userStocks.push(stock.id)
+            user.stocks = userStocks;
+            await user.save({validateBeforeSave: false});
+
+            let customers = stock.customers;
+            customers.push(user.id);
+            stock.customers = customers;
+            await stock.save({validateBeforeSave: false});
+        }
+    }
+
+    return res.status(httpStatus.OK).json({
+        success: true,
+        message: 'Successfully Added Stocks.'
+    });
+});
+
+const myStocks = catchAsync(async (req, res) => {
+    const user = await User.findById(req.user._id);
+
+    if (!user) {
+        return res.status(httpStatus.BAD_REQUEST).json({
+            success: false,
+            message: 'User Not Found.'
+        });
+    }
+
+    let stocks = [];
+    for (let stock of user.stocks) {
+        const _stock = await Stock.findById(stock).populate('admin');
+        stocks.push({
+            managerName: _stock.admin.fullName,
+            managerPhone: _stock.admin.phone,
+            id: _stock.id,
+            name: _stock.name,
+            type: _stock.type,
+            description: _stock.description
+        });
+    }
+
+    return res.status(httpStatus.OK).json({
+        success: true,
+        stocks
+    });
+});
 
 module.exports = {
     newStock,
@@ -191,5 +274,8 @@ module.exports = {
     getStockByAdmin,
     getStockByCustomer,
     getStock,
-    checkStock
+    checkStock,
+    getAllStocks,
+    addStocks,
+    myStocks
 };
