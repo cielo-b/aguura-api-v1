@@ -70,6 +70,24 @@ const getUser = catchAsync(async (req, res) => {
     });
 });
 
+const setFCMToken = catchAsync(async (req, res) => {
+    const user = await userService.getUserById(req.user._id);
+
+    if (!user) {
+        return res.status(httpStatus.BAD_REQUEST).json({
+            success: false,
+            message: 'User Not Found.'
+        });
+    }
+
+    user.fcmToken = req.body.fcmToken;
+    await user.save({validateBeforeSave: false});
+
+    res.status(httpStatus.OK).json({
+        success: true,
+    });
+});
+
 const logout = catchAsync(async (req, res) => {
     await authService.logout(req.body.refreshToken);
     res.status(httpStatus.OK).json({
@@ -183,6 +201,7 @@ module.exports = {
     forgotPassword,
     resetPassword,
     getUser,
+    setFCMToken,
 
     addUser,
     allCutomers

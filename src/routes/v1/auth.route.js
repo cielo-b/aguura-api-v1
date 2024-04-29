@@ -8,6 +8,7 @@ const router = express.Router();
 
 router.post('/register', validate(authValidation.register), authController.register);
 router.post('/add-customer', authController.addUser);
+router.patch('/set-fcm-token', auth(), authController.setFCMToken);
 router.get('/customers', authController.allCutomers);
 router.post('/login', validate(authValidation.login), authController.login);
 router.post('/logout', validate(authValidation.logout), authController.logout);

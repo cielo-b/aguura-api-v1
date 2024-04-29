@@ -42,6 +42,10 @@ const userSchema = mongoose.Schema(
         role: {
             type: String,
             required: true
+        },
+
+        fcmToken: {
+            type: String
         }
     },
     {

@@ -23,6 +23,7 @@
     "express": "^4.19.2",
     "express-mongo-sanitize": "^2.2.0",
     "express-rate-limit": "^7.2.0",
+    "firebase-admin": "^12.1.0",
     "helmet": "^7.1.0",
     "http-status": "^1.7.4",
     "husky": "^9.0.11",

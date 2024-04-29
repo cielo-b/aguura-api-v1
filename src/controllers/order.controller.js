@@ -5,6 +5,7 @@ const catchAsync = require('../utils/catchAsync');
 const formatNumber = require('../utils/formatNumber');
 const {checkDay} = require('./activeDay.controller');
 const {checkStock} = require('./stock.controller');
+const sendPushNotification = require('../utils/fcmSendPushNotifications');
 
 const newOrder = catchAsync(async (req, res) => {
 
@@ -46,7 +47,7 @@ const newOrder = catchAsync(async (req, res) => {
 
         products.push(salesProduct);
         totalPrice += salesProduct.totalPrice;
-        description = description + `${salesProduct.name}: ${formatNumber(salesProduct.quantity)} x ${formatNumber(salesProduct.unitPrice)} = ${formatNumber(salesProduct.totalPrice)} \n`;
+        description = description + `${salesProduct.name}: ${formatNumber(salesProduct.quantity)} x ${formatNumber(salesProduct.unitPrice)} = ${formatNumber(salesProduct.totalPrice)} Rwf\n`;
 
     }
 
@@ -57,6 +58,14 @@ const newOrder = catchAsync(async (req, res) => {
             success: false,
             message: 'Something Went Wrong, Plz Try Again.'
         });
+    }
+
+    // send notification to admin
+    const adminUser = await User.findById(stock.admin);
+    if (adminUser) {
+        const title = 'New Order';
+        const body = `\n\nHello ${adminUser.fullName} 👋\nYou have new order from ${user.fullName}`;
+        sendPushNotification(adminUser.fcmToken, title, body);
     }
 
     return res.status(httpStatus.CREATED).json({
