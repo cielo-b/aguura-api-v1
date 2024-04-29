@@ -43,8 +43,9 @@ app.use(compression());
 app.use(cors({
     origin: [
         'http://localhost:5173',
-        'https://stock-frontend-mocha.vercel.app',
         'http://18.216.236.226',
+        'https://3.145.193.71',
+        'https://aguura.com'
     ]
 }));
 
