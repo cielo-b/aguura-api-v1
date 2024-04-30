@@ -45,7 +45,9 @@ app.use(cors({
         'http://localhost:5173',
         'http://18.216.236.226',
         'https://3.145.193.71',
-        'https://aguura.com'
+        'https://aguura.com',
+        'http://165.227.113.254',
+        'https://165.227.113.254'
     ]
 }));
 
