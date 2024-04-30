@@ -16,7 +16,7 @@ const swaggerDef = {
             url: `http://localhost:${config.port}/api/v1`,
         },
         {
-            url: `https://stock-backend-9qub.onrender.com/api/v1`,
+            url: `https://apis.aguura.com/api/v1`,
         },
     ],
 };
