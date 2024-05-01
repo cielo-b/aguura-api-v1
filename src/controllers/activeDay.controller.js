@@ -292,7 +292,7 @@ const generateSimplePDF = async (stock, activeDay) => {
 const checkActive = async (dayId) => {
     const activeDay = await ActiveDay.findById(dayId);
 
-    if (!activeDay || activeDay.isActive === false) {
+    if (!activeDay) {
         return false;
     } else {
         return true;
