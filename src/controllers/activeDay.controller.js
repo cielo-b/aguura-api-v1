@@ -14,8 +14,17 @@ const generatePDF = async (stock, activeDay) => {
     const doc = new PDFDocument();
     const fileName = `${activeDay.name}-report.pdf`;
     const filePath = path.join(__dirname, '..', '..', 'public', 'reports', fileName);
+    // Check if the file exists
+    if (fs.existsSync(filePath)) {
+        // If it exists, delete it
+        fs.unlink(filePath, (err) => {
+            if (err) {
+                console.error('Error deleting existing file:', err);
+                return;
+            }
+        })
+    }
     const writeStream = fs.createWriteStream(filePath);
-
     doc.pipe(writeStream);
 
     // Header
@@ -193,8 +202,17 @@ const generateSimplePDF = async (stock, activeDay) => {
     const doc = new PDFDocument();
     const fileName = `${activeDay.name}-daily-report.pdf`;
     const filePath = path.join(__dirname, '..', '..', 'public', 'reports', fileName);
+    // Check if the file exists
+    if (fs.existsSync(filePath)) {
+        // If it exists, delete it
+        fs.unlink(filePath, (err) => {
+            if (err) {
+                console.error('Error deleting existing file:', err);
+                return;
+            }
+        });
+    }
     const writeStream = fs.createWriteStream(filePath);
-
     doc.pipe(writeStream);
 
     // Header
