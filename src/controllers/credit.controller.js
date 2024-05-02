@@ -60,7 +60,8 @@ const payCredit = catchAsync(async (req, res) => {
             await Payment.create({activeDay: credit.activeDay, method: method.id, customerName: credit.customerName, customerPhone: credit.customerPhone, amount: payment.amount, stock: credit.stock, customer: credit.customer, sale: credit.sale});
         }
     }
-    sales.paymentDescription = sales.paymentDescription + desc;
+    const spd = sales.paymentDescription.replace(/\s/g, '').toLowerCase();
+    sales.paymentDescription = spd !== 'nopaymentsyet.' ? sales.paymentDescription + desc : desc;
     await sales.save({validateBeforeSave: false});
 
     return res.status(httpStatus.OK).json({
