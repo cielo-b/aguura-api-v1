@@ -136,22 +136,22 @@ const editInventory = catchAsync(async (req, res) => {
 
     // update inventory products availability
     for (let i = 0; i < reqProducts.length; i++) {
-
         let iP = initials[i];
         if (iP) {
             let p = await InventoryProduct.findById(iP.id);
-            p.totalAvailable = parseFloat(p.totalAvailable) - parseFloat(iP.quantity);
-            p.dailyAdded = parseFloat(p.dailyAdded) - parseFloat(iP.quantity);
+            p.totalAvailable -= parseFloat(iP.quantity); // Subtract without converting to strings
+            p.dailyAdded -= parseFloat(iP.quantity); // Subtract without converting to strings
             await p.save({validateBeforeSave: false});
         }
 
         let reqProduct = reqProducts[i];
         let product = await InventoryProduct.findById(reqProduct.id);
 
-        product.totalAvailable = parseFloat(product.totalAvailable) + parseFloat(reqProduct.quantity).toFixed(2);
-        product.dailyAdded = parseFloat(product.dailyAdded) + parseFloat(reqProduct.quantity).toFixed(2);
+        product.totalAvailable += parseFloat(reqProduct.quantity); // Add without converting to strings
+        product.dailyAdded += parseFloat(reqProduct.quantity); // Add without converting to strings
         await product.save({validateBeforeSave: false});
     }
+
 
     return res.status(httpStatus.CREATED).json({
         success: true,
