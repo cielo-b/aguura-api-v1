@@ -8,7 +8,13 @@ const inventoryProductSchema = mongoose.Schema(
             ref: 'Stock',
             required: true,
         },
-        
+
+        company: {
+            type: mongoose.SchemaTypes.ObjectId,
+            ref: 'Company',
+            required: true,
+        },
+
         name: {
             type: String,
             required: true,
@@ -38,7 +44,7 @@ const inventoryProductSchema = mongoose.Schema(
             required: true,
             default: 0
         },
-        
+
         dailyAdded: {
             type: Number,
             required: true,

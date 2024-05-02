@@ -1,7 +1,7 @@
 const httpStatus = require('http-status');
 const bcrypt = require('bcryptjs');
 
-const {Stock, User} = require('../models');
+const {Stock, User, Company} = require('../models');
 const catchAsync = require('../utils/catchAsync');
 const {userService} = require('../services');
 
@@ -17,7 +17,7 @@ const newStock = catchAsync(async (req, res) => {
         });
     }
 
-    const {name, fullName, phone, password, type, description} = req.body;
+    const {name, fullName, phone, password, type, description, companies} = req.body;
     const stockName = name.replace(/\s/g, '').toLowerCase();
 
     const stock = await Stock.findOne({stockName});
@@ -47,6 +47,11 @@ const newStock = catchAsync(async (req, res) => {
 
     const newStock = await Stock.create({superAdmin: user.id, admin: admin.id, name, stockName, type, description});
 
+    // create associate companies
+    for (let c of companies) {
+        await Company.create({name: c.name, stock: newStock.id});
+    }
+
     return res.status(httpStatus.CREATED).json({
         success: true,
         message: 'Stock Added Successfully.',
@@ -68,7 +73,7 @@ const editStock = catchAsync(async (req, res) => {
     }
 
 
-    const {name, fullName, phone, password, type, description} = req.body;
+    const {name, fullName, phone, password, type, description, companies} = req.body;
 
     const stockName = name.replace(/\s/g, '').toLowerCase();
 
@@ -95,6 +100,17 @@ const editStock = catchAsync(async (req, res) => {
 
     await stock.save({validateBeforeSave: false});
 
+    // update associate companies
+    for (let c of companies) {
+        const company = await Company.findById(c.id);
+        if (company) {
+            company.name = c.name;
+            await company.save({validateBeforeSave: false});
+        } else {
+            await Company.create({name: c.name, stock: stock.id});
+        }
+    }
+
     return res.status(httpStatus.OK).json({
         success: true,
         message: 'Stock Edited Successfully.',
@@ -113,16 +129,25 @@ const allStocks = catchAsync(async (req, res) => {
     }
 
     let stocks = await Stock.find({superAdmin: user.id}).populate('admin');
-    stocks = stocks.map(stock => {
+    stocks = await Promise.all(stocks.map(async (stock) => {
+        let companies = await Company.find({stock: stock.id});
+        companies = companies.map(c => {
+            return {
+                name: c.name,
+                id: c._id
+            };
+        });
         return {
             managerName: stock.admin.fullName,
             managerPhone: stock.admin.phone,
             id: stock.id,
             name: stock.name,
             type: stock.type,
-            description: stock.description
+            description: stock.description,
+            companies
         };
-    });
+    }));
+
 
     return res.status(httpStatus.OK).json({
         success: true,
@@ -132,11 +157,22 @@ const allStocks = catchAsync(async (req, res) => {
 
 const getStockByAdmin = catchAsync(async (req, res) => {
 
-    const stock = await Stock.findOne({admin: req.query.adminId});
+    let stock = await Stock.findOne({admin: req.query.adminId});
+    let companies = await Company.find({stock: stock.id});
+
+    companies = companies.map(c => {
+        return {
+            name: c.name,
+            id: c._id
+        };
+    });
 
     return res.status(httpStatus.OK).json({
         success: true,
-        stock
+        stock: {
+            ...stock.toObject(),
+            companies
+        }
     });
 });
 
@@ -152,10 +188,20 @@ const getStockByCustomer = catchAsync(async (req, res) => {
     }
 
     const stock = await Stock.findById(user.stock);
+    let companies = await Company.find({stock: stock.id});
+    companies = companies.map(c => {
+        return {
+            name: c.name,
+            id: c._id
+        };
+    });
 
     return res.status(httpStatus.OK).json({
         success: true,
-        stock
+        stock: {
+            ...stock.toObject(),
+            companies
+        }
     });
 });
 
@@ -177,26 +223,44 @@ const getStock = catchAsync(async (req, res) => {
             message: 'Stock Not Found.'
         });
     }
+    let companies = await Company.find({stock: stock.id});
+    companies = companies.map(c => {
+        return {
+            name: c.name,
+            id: c._id
+        };
+    });
 
     return res.status(httpStatus.OK).json({
         success: true,
-        stock
+        stock: {
+            ...stock.toObject(),
+            companies
+        }
     });
 });
 
 const getAllStocks = catchAsync(async (req, res) => {
 
     let stocks = await Stock.find({type: req.query.type}).populate('admin');
-    stocks = stocks.map(stock => {
+    stocks = await Promise.all(stocks.map(async (stock) => {
+        let companies = await Company.find({stock: stock.id});
+        companies = companies.map(c => {
+            return {
+                name: c.name,
+                id: c._id
+            };
+        });
         return {
             managerName: stock.admin.fullName,
             managerPhone: stock.admin.phone,
             id: stock.id,
             name: stock.name,
             type: stock.type,
-            description: stock.description
+            description: stock.description,
+            companies
         };
-    });
+    }));
 
     return res.status(httpStatus.OK).json({
         success: true,
@@ -221,7 +285,7 @@ const addStocks = catchAsync(async (req, res) => {
         const stock = await Stock.findById(id);
         if (stock) {
             let userStocks = user.stocks;
-            userStocks.push(stock.id)
+            userStocks.push(stock.id);
             user.stocks = userStocks;
             await user.save({validateBeforeSave: false});
 
@@ -251,13 +315,21 @@ const myStocks = catchAsync(async (req, res) => {
     let stocks = [];
     for (let stock of user.stocks) {
         const _stock = await Stock.findById(stock).populate('admin');
+        let companies = await Company.find({stock: _stock.id});
+        stock.companies = companies.map(c => {
+            return {
+                name: c.name,
+                id: c._id
+            };
+        });
         stocks.push({
             managerName: _stock.admin.fullName,
             managerPhone: _stock.admin.phone,
             id: _stock.id,
             name: _stock.name,
             type: _stock.type,
-            description: _stock.description
+            description: _stock.description,
+            companies
         });
     }
 

@@ -1,6 +1,6 @@
 const httpStatus = require('http-status');
 
-const {InventoryProduct, SalesProduct} = require('../models');
+const {InventoryProduct, SalesProduct, Company} = require('../models');
 const catchAsync = require('../utils/catchAsync');
 const {checkStock} = require('./stock.controller');
 
@@ -76,10 +76,12 @@ const allProducts = catchAsync(async (req, res) => {
     let resProducts = [];
 
     for (let i = 0; i < products.length; i++) {
+        const company = await Company.findById(products[i].inventoryProduct.company);
         resProducts.push({
             name: products[i].inventoryProduct.name,
             price: products[i].price,
-            id: products[i]._id
+            id: products[i]._id,
+            company: company.name
         });
     }
 
@@ -96,11 +98,13 @@ const availableProducts = catchAsync(async (req, res) => {
 
     for (let i = 0; i < products.length; i++) {
         if (parseInt(products[i].inventoryProduct.totalAvailable) > 0) {
+            const company = await Company.findById(products[i].inventoryProduct.company);
             resProducts.push({
                 name: products[i].inventoryProduct.name,
                 price: products[i].price,
                 id: products[i]._id,
-                number: products[i].inventoryProduct.totalAvailable
+                number: products[i].inventoryProduct.totalAvailable,
+                company: company.name
             });
         }
     }

@@ -17,7 +17,7 @@ const newProduct = catchAsync(async (req, res) => {
         });
     }
 
-    const {name, price} = req.body;
+    const {name, price, company} = req.body;
     const productName = name.replace(/\s/g, '').toLowerCase();
 
     const product = await InventoryProduct.findOne({productName, stock: stock.id});
@@ -29,7 +29,7 @@ const newProduct = catchAsync(async (req, res) => {
         });
     }
 
-    const newProduct = await InventoryProduct.create({name, price, productName, stock: stock.id});
+    const newProduct = await InventoryProduct.create({name, price, productName, company, stock: stock.id});
 
     return res.status(httpStatus.CREATED).json({
         success: true,
@@ -52,15 +52,17 @@ const editProduct = catchAsync(async (req, res) => {
     }
 
 
-    const {name, price} = req.body;
+    const {name, price, company} = req.body;
     const productName = name.replace(/\s/g, '').toLowerCase();
 
     const pName = name ? name : product.name;
     const pPrice = price ? price : product.price;
+    const pCompany = company ? company : product.company;
 
     product.name = pName;
     product.price = pPrice;
-    product.productName = productName
+    product.productName = productName;
+    product.company = pCompany;
 
     await product.save({validateBeforeSave: false});
 
@@ -73,7 +75,7 @@ const editProduct = catchAsync(async (req, res) => {
 });
 
 const allProducts = catchAsync(async (req, res) => {
-    const products = await InventoryProduct.find({stock: req.query.stockId}, {productName: 0});
+    const products = await InventoryProduct.find({stock: req.query.stockId}, {productName: 0}).populate('company');
 
     return res.status(httpStatus.OK).json({
         success: true,

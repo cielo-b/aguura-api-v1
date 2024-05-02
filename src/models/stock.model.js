@@ -48,7 +48,7 @@ const stockShema = mongoose.Schema(
                 'electronics',
                 'others'
             ]
-        },
+        }
     },
     {
         timestamps: true,

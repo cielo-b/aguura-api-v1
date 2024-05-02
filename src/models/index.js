@@ -13,3 +13,4 @@ module.exports.PaymentMethod = require('./paymentMethod.model');
 module.exports.EmptyCrates = require('./emptyCrates.model');
 module.exports.Stock = require('./stock.model');
 module.exports.Expense = require('./expense.model');
+module.exports.Company = require('./company.model');
