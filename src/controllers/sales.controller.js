@@ -54,9 +54,9 @@ const newSales = catchAsync(async (req, res) => {
         } else {
             let total = 0;
             for (const p of payments) {
-                total += parseInt(p.amount);
+                total += parseFloat(p.amount);
             }
-            if (parseInt(total) !== parseInt(amountPaid)) {
+            if (parseFloat(total) !== parseFloat(amountPaid)) {
                 return res.status(httpStatus.BAD_REQUEST).json({
                     success: false,
                     message: 'Amount From All Methods Has To Be Equal To Total Amount Paid.'
@@ -204,9 +204,9 @@ const editSales = catchAsync(async (req, res) => {
         } else {
             let total = 0;
             for (const p of payments) {
-                total += parseInt(p.amount);
+                total += parseFloat(p.amount);
             }
-            if (parseInt(total) !== parseInt(amountPaid)) {
+            if (parseFloat(total) !== parseFloat(amountPaid)) {
                 return res.status(httpStatus.BAD_REQUEST).json({
                     success: false,
                     message: 'Amount From All Methods Has To Be Equal To Total Amount Paid.'
@@ -299,13 +299,13 @@ const editSales = catchAsync(async (req, res) => {
         let iProduct = initials[i];
         let sIProduct = await SalesProduct.findById(iProduct.id);
         let inP = await InventoryProduct.findById(sIProduct.inventoryProduct);
-        inP.totalAvailable = (parseInt(inP.totalAvailable) + parseInt(iProduct.quantity));
+        inP.totalAvailable = (parseFloat(inP.totalAvailable) + parseFloat(iProduct.quantity));
         await inP.save({validateBeforeSave: false});
 
         let reqProduct = reqProducts[i];
         let product = await SalesProduct.findById(reqProduct.id);
         let inventoryProduct = await InventoryProduct.findById(product.inventoryProduct);
-        inventoryProduct.totalAvailable = (parseInt(inventoryProduct.totalAvailable) - parseInt(reqProduct.quantity));
+        inventoryProduct.totalAvailable = (parseFloat(inventoryProduct.totalAvailable) - parseFloat(reqProduct.quantity));
         await inventoryProduct.save({validateBeforeSave: false});
     }
 
