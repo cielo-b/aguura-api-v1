@@ -1,9 +1,9 @@
 const httpStatus = require('http-status');
 
-const {Crates} = require('../models');
+const {Crates, User} = require('../models');
 const catchAsync = require('../utils/catchAsync');
 const {checkStock} = require('./stock.controller');
-const {checkDay} = require('./activeDay.controller')
+const {checkDay} = require('./activeDay.controller');
 
 const newCratesRender = catchAsync(async (req, res) => {
 
@@ -19,7 +19,11 @@ const newCratesRender = catchAsync(async (req, res) => {
 
     const activeDay = await checkDay(stockId);
 
-    const {products: reqProducts, customerName, customerPhone} = req.body;
+    const {products: reqProducts, customerId} = req.body;
+    let user = await User.findById(customerId);
+    const customerName = user ? user.fullName : req.body.customerName;
+    const customerPhone = user ? user.phone : req.body.customerPhone;
+
     let products = reqProducts.map(p => {
         return {
             id: p.id,
@@ -29,7 +33,7 @@ const newCratesRender = catchAsync(async (req, res) => {
         };
     });
 
-    const crates = await Crates.create({products, customerName, customerPhone, stock: stock.id, activeDay: activeDay.id});
+    const crates = await Crates.create({products, customerName, customerPhone, stock: stock.id, activeDay: activeDay.id, customer: user && user.id});
 
     if (!crates) {
         return res.status(httpStatus.BAD_REQUEST).json({
@@ -100,10 +104,19 @@ const returnCrates = catchAsync(async (req, res) => {
     });
 });
 
+const myCrates = catchAsync(async (req, res) => {
+    const crates = await Crates.find({allReturned: false, customer: req.user._id});
 
+    return res.status(httpStatus.OK).json({
+        success: true,
+        crates
+    });
+
+});
 
 module.exports = {
     newCratesRender,
     allCrates,
-    returnCrates
+    returnCrates,
+    myCrates
 };

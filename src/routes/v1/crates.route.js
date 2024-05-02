@@ -7,5 +7,6 @@ const router = express.Router();
 router.post('/new-order', auth('admin'), cratesController.newCratesRender);
 router.patch('/return/:id', auth('admin'), cratesController.returnCrates);
 router.get('/all-crates', auth('admin'), cratesController.allCrates);
+router.get('/my-crates', auth('user'), cratesController.myCrates);
 
 module.exports = router;

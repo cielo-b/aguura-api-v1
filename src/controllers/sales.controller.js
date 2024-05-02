@@ -1,6 +1,6 @@
 const httpStatus = require('http-status');
 
-const {InventoryProduct, SalesProduct, Sales, Credit, PaymentMethod, Payment} = require('../models');
+const {InventoryProduct, SalesProduct, Sales, Credit, PaymentMethod, Payment, User} = require('../models');
 const catchAsync = require('../utils/catchAsync');
 const {checkActive, checkDay} = require('./activeDay.controller');
 const formatNumber = require('../utils/formatNumber');
@@ -26,7 +26,10 @@ const newSales = catchAsync(async (req, res) => {
         });
     }
 
-    const {products: reqProducts, isFullyPaid, customerName, customerPhone, amountPaid, payments} = req.body;
+    const {products: reqProducts, isFullyPaid, amountPaid, payments, customerId} = req.body;
+    let user = await User.findById(customerId);
+    const customerName = user ? user.fullName : req.body.customerName;
+    const customerPhone = user ? user.phone : req.body.customerPhone;
 
     if (!isFullyPaid && !amountPaid) {
         return res.status(httpStatus.BAD_REQUEST).json({
@@ -119,7 +122,7 @@ const newSales = catchAsync(async (req, res) => {
         }
     }
 
-    const sales = await Sales.create({stock: stock.id, activeDay: activeDay.id, products, totalPrice, isFullyPaid, customerName, customerPhone, amountPaid: amount, description, paymentDescription, payments: _payments});
+    const sales = await Sales.create({stock: stock.id, activeDay: activeDay.id, products, totalPrice, isFullyPaid, amountPaid: amount, description, paymentDescription, payments: _payments, customer: user && user.id, customerName, customerPhone});
     if (!sales) {
         return res.status(httpStatus.BAD_REQUEST).json({
             success: false,
@@ -139,8 +142,7 @@ const newSales = catchAsync(async (req, res) => {
 
     // if not fully paid, create new credit
     if (!isFullyPaid) {
-        const credit = await Credit.create({activeDay: activeDay.id, stock: stock.id, sales: sales.id, totalAmount: totalPrice - amountPaid, description, customerName, customerPhone});
-
+        const credit = await Credit.create({activeDay: activeDay.id, stock: stock.id, sales: sales.id, totalAmount: totalPrice - amountPaid, description, customer: user && user.id, customerName: user ? user.fullName : customerName, customerPhone: user ? user.phone : customerPhone});
         if (!credit) {
             return res.status(httpStatus.CREATED).json({
                 success: true,
@@ -152,7 +154,7 @@ const newSales = catchAsync(async (req, res) => {
     if (payments.length > 0) {
         for (const payment of payments) {
             let method = await PaymentMethod.findById(payment.id);
-            const p = await Payment.create({activeDay: activeDay.id, method: method.id, customerName, customerPhone, amount: payment.amount, stock: stock.id});
+            await Payment.create({activeDay: activeDay.id, method: method.id, amount: payment.amount, stock: stock.id, customer: user && user.id, customerName, customerPhone, sale: sales.id});
         }
     }
 
@@ -174,7 +176,10 @@ const editSales = catchAsync(async (req, res) => {
         });
     }
 
-    const {products: reqProducts, isFullyPaid, customerName, customerPhone, amountPaid, payments} = req.body;
+    const {products: reqProducts, isFullyPaid, amountPaid, payments} = req.body;
+    let user = await User.findById(sale.customer);
+    const customerName = user ? user.fullName : req.body.customerName;
+    const customerPhone = user ? user.phone : req.body.customerPhone;
 
     if (!isFullyPaid && !amountPaid) {
         return res.status(httpStatus.BAD_REQUEST).json({
@@ -326,6 +331,16 @@ const editSales = catchAsync(async (req, res) => {
     }
 
     // edit payments
+    let prevPayments = await Payment.find({sale: sale.id});
+    for (let p of prevPayments) {
+        await p.deleteOne();
+    }
+    if (payments.length > 0) {
+        for (const payment of payments) {
+            let method = await PaymentMethod.findById(payment.id);
+            await Payment.create({sale: sale.id, activeDay: sale.activeDay, method: method.id, amount: payment.amount, stock: sale.stock, customer: user && user.id, customerName, customerPhone});
+        }
+    }
 
     return res.status(httpStatus.CREATED).json({
         success: true,

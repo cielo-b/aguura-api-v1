@@ -287,7 +287,7 @@ const generateSimplePDF = async (stock, activeDay) => {
     return fileName;
 };
 
-
+const monthlReport = async (stock, activeDay) => { };
 
 const checkActive = async (dayId) => {
     const activeDay = await ActiveDay.findById(dayId);
@@ -339,7 +339,6 @@ const getActiveDays = catchAsync(async (req, res) => {
 });
 
 const startDay = catchAsync(async (req, res) => {
-
     const stockId = req.query.stockId;
     const stock = await checkStock(stockId);
 
@@ -359,14 +358,38 @@ const startDay = catchAsync(async (req, res) => {
         });
     }
 
-    const day = await ActiveDay.create({stock: stock.id});
+    const today = new Date();
+    const lastDayOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
+
+    let daysToCreate = [];
+
+    // Create active day for today
+    daysToCreate.push({
+        stock: stock.id,
+        name: `${today.getDate()}-${today.getMonth() + 1}-${today.getFullYear()}`,
+        type: 'day'
+    });
+
+    // If today is the last day of the month, create active day for the entire month
+    if (today.getDate() === lastDayOfMonth) {
+        daysToCreate.push({
+            stock: stock.id,
+            name: `${today.toLocaleString('default', {month: 'long'})}-${today.getFullYear()}`,
+            type: 'month',
+            isActive: false
+        });
+    }
+
+    // Create active days in the database
+    const createdDays = await ActiveDay.create(daysToCreate);
 
     return res.status(httpStatus.CREATED).json({
         success: true,
         message: 'Day Started Successfully.',
-        day
     });
 });
+
+
 
 const endDay = catchAsync(async (req, res) => {
 
@@ -431,7 +454,6 @@ const downloadReport = catchAsync(async (req, res) => {
     }
 
     const activeDay = await ActiveDay.findById(req.query.activeDayId);
-    const {crates} = req.body;
 
     if (!activeDay) {
         return res.status(httpStatus.BAD_REQUEST).json({
@@ -441,7 +463,7 @@ const downloadReport = catchAsync(async (req, res) => {
     }
 
     // generate pdf
-    const pdfFileName = await generatePDF(stock.name, activeDay);
+    const pdfFileName = activeDay.type === 'day' ? await generatePDF(stock.name, activeDay) : await monthlReport(stock.name, activeDay);
     const url = config.url + '/public/reports/' + pdfFileName;
 
     return res.status(httpStatus.OK).json({

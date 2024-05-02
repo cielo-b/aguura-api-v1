@@ -8,7 +8,12 @@ const paymentSchema = mongoose.Schema(
             ref: 'Stock',
             required: true,
         },
-        
+
+        customer: {
+            type: mongoose.SchemaTypes.ObjectId,
+            ref: 'User',
+        },
+
         activeDay: {
             type: mongoose.SchemaTypes.ObjectId,
             ref: 'ActiveDay',
@@ -19,6 +24,11 @@ const paymentSchema = mongoose.Schema(
             type: mongoose.SchemaTypes.ObjectId,
             ref: 'PaymentMethod',
             required: true,
+        },
+
+        sale: {
+            type: mongoose.SchemaTypes.ObjectId,
+            ref: 'Sales',
         },
 
         amount: {

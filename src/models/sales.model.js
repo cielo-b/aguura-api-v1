@@ -14,6 +14,11 @@ const salesSchema = mongoose.Schema(
             ref: 'Stock',
             required: true,
         },
+        
+        customer: {
+            type: mongoose.SchemaTypes.ObjectId,
+            ref: 'User',
+        },
 
         products: [
             {

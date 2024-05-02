@@ -15,6 +15,11 @@ const creditSchema = mongoose.Schema(
             required: true,
         },
 
+        customer: {
+            type: mongoose.SchemaTypes.ObjectId,
+            ref: 'User',
+        },
+
         sales: {
             type: mongoose.SchemaTypes.ObjectId,
             ref: 'Sales',

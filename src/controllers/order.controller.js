@@ -64,7 +64,7 @@ const newOrder = catchAsync(async (req, res) => {
     const adminUser = await User.findById(stock.admin);
     if (adminUser) {
         const title = 'New Order';
-        const body = `\n\nHello ${adminUser.fullName} 👋\nYou have new order from ${user.fullName}`;
+        const body = `\n\n\nHello ${adminUser.fullName} 👋\nYou have new order from ${user.fullName}`;
         sendPushNotification(adminUser.fcmToken, title, body);
     }
 

@@ -8,11 +8,16 @@ const cratesSchema = mongoose.Schema(
             ref: 'Stock',
             required: true,
         },
-        
+
         activeDay: {
             type: mongoose.SchemaTypes.ObjectId,
             ref: 'ActiveDay',
             required: true,
+        },
+
+        customer: {
+            type: mongoose.SchemaTypes.ObjectId,
+            ref: 'User',
         },
 
         products: [

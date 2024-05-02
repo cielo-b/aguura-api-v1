@@ -47,7 +47,7 @@ const newInventory = catchAsync(async (req, res) => {
 
         products.push(inventoryProduct);
         totalPrice += inventoryProduct.totalPrice;
-        description = description + `${inventoryProduct.name}: ${formatNumber(inventoryProduct.quantity)} x ${formatNumber(inventoryProduct.unitPrice)} = ${formatNumber(inventoryProduct.totalPrice)} \n`;
+        description = description + `${inventoryProduct.name}: ${formatNumber(inventoryProduct.quantity)} x ${formatNumber(inventoryProduct.unitPrice)} = ${formatNumber(inventoryProduct.totalPrice)} Rwf\n`;
     }
 
     const inventory = await Inventory.create({activeDay: activeDay.id, products, totalPrice, stock: stock.id, description});
@@ -119,7 +119,7 @@ const editInventory = catchAsync(async (req, res) => {
 
         products.push(inventoryProduct);
         totalPrice += inventoryProduct.totalPrice;
-        description = description + `${inventoryProduct.name}: ${formatNumber(inventoryProduct.quantity)} x ${formatNumber(inventoryProduct.unitPrice)} = ${formatNumber(inventoryProduct.totalPrice)} \n`;
+        description = description + `${inventoryProduct.name}: ${formatNumber(inventoryProduct.quantity)} x ${formatNumber(inventoryProduct.unitPrice)} = ${formatNumber(inventoryProduct.totalPrice)} Rwf\n`;
     }
 
     inventory.products = products;

@@ -57,7 +57,7 @@ const payCredit = catchAsync(async (req, res) => {
         for (const payment of payments) {
             desc = `${payment.name}: ${formatNumber(payment.amount)} Rwf\n`;
             let method = await PaymentMethod.findById(payment.id);
-            await Payment.create({activeDay: credit.activeDay, method: method.id, customerName: credit.customerName, customerPhone: credit.customerPhone, amount: payment.amount, stock: credit.stock});
+            await Payment.create({activeDay: credit.activeDay, method: method.id, customerName: credit.customerName, customerPhone: credit.customerPhone, amount: payment.amount, stock: credit.stock, customer: credit.customer, sale: credit.sale});
         }
     }
     sales.paymentDescription = sales.paymentDescription + desc;
@@ -81,7 +81,19 @@ const adminCredits = catchAsync(async (req, res) => {
 
 });
 
+
+const myCredits = catchAsync(async (req, res) => {
+    const credits = await Credit.find({isFullyPaid: false, customer: req.user._id, stock: req.query.stockId}).populate('sales');
+
+    return res.status(httpStatus.OK).json({
+        success: true,
+        credits
+    });
+
+});
+
 module.exports = {
     payCredit,
-    adminCredits
+    adminCredits,
+    myCredits
 };
