@@ -43,11 +43,8 @@ app.use(compression());
 app.use(cors({
     origin: [
         'http://localhost:5173',
-        'http://18.216.236.226',
-        'https://3.145.193.71',
         'https://aguura.com',
-        'http://165.227.113.254',
-        'https://165.227.113.254'
+        'https://146.190.157.141'
     ]
 }));
 
