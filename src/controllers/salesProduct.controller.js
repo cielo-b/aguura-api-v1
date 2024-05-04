@@ -105,7 +105,8 @@ const availableProducts = catchAsync(async (req, res) => {
                 price: products[i].price,
                 id: products[i]._id,
                 number: products[i].inventoryProduct.totalAvailable,
-                company: company?.name
+                company: company?.name,
+                companyId: company?.id
             });
         }
     }
