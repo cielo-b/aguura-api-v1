@@ -339,6 +339,25 @@ const myStocks = catchAsync(async (req, res) => {
     });
 });
 
+
+const stockCompanies = catchAsync(async (req, res) => {
+    const stock = await Stock.findById(req.query.stockId);
+
+    if (!stock) {
+        return res.status(httpStatus.BAD_REQUEST).json({
+            success: false,
+            message: 'Stock Not Found.'
+        });
+    }
+
+    const companies = await Company.find({stock: stock.id});
+
+    return res.status(httpStatus.OK).json({
+        success: true,
+        companies
+    });
+});
+
 module.exports = {
     newStock,
     editStock,
@@ -349,5 +368,6 @@ module.exports = {
     checkStock,
     getAllStocks,
     addStocks,
-    myStocks
+    myStocks,
+    stockCompanies
 };

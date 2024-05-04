@@ -13,5 +13,6 @@ router.get('/by-admin', auth('admin'), stockController.getStockByAdmin);
 router.get('/by-user', auth('user'), stockController.getStockByCustomer);
 router.get('/my-stocks', auth('user'), stockController.myStocks);
 router.get('/all-available-stocks', auth('user'), stockController.getAllStocks);
+router.get('/companies', auth(), stockController.stockCompanies);
 
 module.exports = router;

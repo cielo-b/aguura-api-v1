@@ -81,7 +81,8 @@ const allProducts = catchAsync(async (req, res) => {
             name: products[i].inventoryProduct.name,
             price: products[i].price,
             id: products[i]._id,
-            company: company?.name
+            company: company?.id,
+            inventoryProduct: products[i].inventoryProduct.id
         });
     }
 
