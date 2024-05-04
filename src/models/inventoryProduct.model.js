@@ -12,7 +12,6 @@ const inventoryProductSchema = mongoose.Schema(
         company: {
             type: mongoose.SchemaTypes.ObjectId,
             ref: 'Company',
-            required: true,
         },
 
         name: {
