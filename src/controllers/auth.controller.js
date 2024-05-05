@@ -1,8 +1,11 @@
 const httpStatus = require('http-status');
+const jwt = require('jsonwebtoken');
+const moment = require('moment');
 const catchAsync = require('../utils/catchAsync');
 const {authService, userService, tokenService} = require('../services');
 const {Token, User, Order, Stock} = require('../models');
 const {checkStock} = require('./stock.controller');
+const config = require('../config/config');
 
 
 const register = catchAsync(async (req, res) => {
@@ -39,12 +42,13 @@ const login = catchAsync(async (req, res) => {
     const {phone, password} = req.body;
     const user = await authService.loginWithPhoneAndPassword(phone, password);
 
-    const token = await Token.findOne({user: user.id});
+    const _tokens = await Token.find({user: user.id});
 
-    if (token) {
-        await token.deleteOne();
+    for (let token of _tokens) {
+        if (token) {
+            await token.deleteOne();
+        }
     }
-
     const tokens = await tokenService.generateAuthTokens(user);
 
     res.status(httpStatus.OK).json({
@@ -90,14 +94,42 @@ const setFCMToken = catchAsync(async (req, res) => {
 
 const logout = catchAsync(async (req, res) => {
     await authService.logout(req.body.refreshToken);
-    res.status(httpStatus.OK).json({
+    return res.status(httpStatus.OK).json({
         success: true,
         message: 'Logged Out Successfully',
     });
 });
 
 const refreshTokens = catchAsync(async (req, res) => {
-    const tokens = await authService.refreshAuth(req.body.refreshToken);
+    const token = req.body.refreshToken;
+    const type = 'refresh';
+    const payload = jwt.verify(token, config.jwt.secret);
+    const tokenDoc = await Token.findOne({token, type, user: payload.sub, blacklisted: false}).lean(false);
+    if (!tokenDoc) {
+        return res.status(httpStatus.BAD_REQUEST).json({
+            success: false,
+            message: 'Plz Authenticate.'
+        });
+    }
+
+    const user = await userService.getUserById(tokenDoc.user);
+    if (!user) {
+        return res.status(httpStatus.BAD_REQUEST).json({
+            success: false,
+            message: 'Plz Authenticate.'
+        });
+    }
+    await tokenDoc.deleteOne();
+    const tokens = await tokenService.generateAuthTokens(user);
+    const current = tokens.refresh.token;
+
+    const prevTokens = await Token.find({user: user.id});
+    for (let token of prevTokens) {
+        if (token.token.toString() !== current.toString()) {
+            await token.deleteOne();
+        }
+    }
+
     return res.status(httpStatus.OK).json({
         success: true,
         tokens
