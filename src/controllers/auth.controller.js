@@ -121,14 +121,14 @@ const refreshTokens = catchAsync(async (req, res) => {
     }
     await tokenDoc.deleteOne();
     const tokens = await tokenService.generateAuthTokens(user);
-    const current = tokens.refresh.token;
-
-    const prevTokens = await Token.find({user: user.id});
-    for (let token of prevTokens) {
-        if (token.token.toString() !== current.toString()) {
-            await token.deleteOne();
-        }
-    }
+    
+    // const current = tokens.refresh.token;
+    // const prevTokens = await Token.find({user: user.id});
+    // for (let token of prevTokens) {
+    //     if (token.token.toString() !== current.toString()) {
+    //         await token.deleteOne();
+    //     }
+    // }
 
     return res.status(httpStatus.OK).json({
         success: true,
