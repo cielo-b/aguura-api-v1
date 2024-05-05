@@ -179,6 +179,8 @@ const completeOrder = catchAsync(async (req, res) => {
         }
     }
 
+    console.log(amountPaid, order.totalPrice);
+
     if (isFullyPaying && (amountPaid !== order.totalPrice)) {
         return res.status(httpStatus.BAD_REQUEST).json({
             success: false,
