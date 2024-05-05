@@ -151,14 +151,14 @@ const completeOrder = catchAsync(async (req, res) => {
     const activeDay = await checkDay(stock.id);
 
     const {amountPaid, payments, isFullyPaying} = req.body;
-
+    
     if (!isFullyPaying && !amountPaid) {
         return res.status(httpStatus.BAD_REQUEST).json({
             success: false,
             message: 'Plz Add How Much User Paid.'
         });
     }
-
+    
     if (amountPaid > 0) {
         if (payments.length === 0) {
             return res.status(httpStatus.BAD_REQUEST).json({
@@ -178,6 +178,24 @@ const completeOrder = catchAsync(async (req, res) => {
             }
         }
     }
+    
+    let _payments = [];
+    let paymentDescription = ``;
+
+    if (payments.length > 0) {
+        for (let payment of payments) {
+            let method = await PaymentMethod.findById(payment.id);
+            const _payment = {
+                id: method.id,
+                name: method.name,
+                amount: payment.amount
+            };
+            _payments.push(_payment);
+            paymentDescription = paymentDescription + `${_payment.name}: ${formatNumber(_payment.amount)} Rwf \n`;
+        }
+    } else {
+        paymentDescription = 'No Payments Yet.';
+    }
 
     if (isFullyPaying && (parseFloat(amountPaid) !== parseFloat(order.totalPrice))) {
         return res.status(httpStatus.BAD_REQUEST).json({
@@ -189,7 +207,7 @@ const completeOrder = catchAsync(async (req, res) => {
     // handle amount
     let paid = order.totalPrice === amountPaid;
 
-    const sales = await Sales.create({activeDay: activeDay.id, products: order.products, totalPrice: order.totalPrice, isFullyPaid: paid, customerName: order.customer.fullName, customerPhone: order.customer.phone, amountPaid, description: order.description, stock: req.query.stockId});
+    const sales = await Sales.create({activeDay: activeDay.id, products: order.products, totalPrice: order.totalPrice, isFullyPaid: paid, customerName: order.customer.fullName, customerPhone: order.customer.phone, amountPaid, description: order.description, stock: req.query.stockId, payments: _payments, paymentDescription});
 
     if (!sales) {
         return res.status(httpStatus.BAD_REQUEST).json({
@@ -210,7 +228,7 @@ const completeOrder = catchAsync(async (req, res) => {
 
     // if not fully paid, create new credit
     if (!paid) {
-        const credit = await Credit.create({activeDay: activeDay.id, sales: sales.id, totalAmount: order.totalPrice - amountPaid, customerName: order.customer.fullName, description: order.description, stock: stock.id});
+        const credit = await Credit.create({activeDay: activeDay.id, sales: sales.id, totalAmount: order.totalPrice - amountPaid, customerName: order.customer.fullName, description: order.description, stock: stock.id, customer: order.customer});
 
         if (!credit) {
             return res.status(httpStatus.CREATED).json({
@@ -223,7 +241,7 @@ const completeOrder = catchAsync(async (req, res) => {
     if (payments.length > 0) {
         for (const payment of payments) {
             let method = await PaymentMethod.findById(payment.id);
-            const p = await Payment.create({activeDay: activeDay.id, method: method.id, customerName: order.customer.fullName, customerPhone: order.customer.phone, amount: payment.amount, stock: stock.id});
+            await Payment.create({activeDay: activeDay.id, method: method.id, customerName: order.customer.fullName, customerPhone: order.customer.phone, amount: payment.amount, stock: stock.id, customer: order.customer});
         }
     }
 
