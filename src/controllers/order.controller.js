@@ -179,13 +179,7 @@ const completeOrder = catchAsync(async (req, res) => {
         }
     }
 
-    console.log(amountPaid, order.totalPrice);
-    console.log(amountPaid === order.totalPrice);
-    console.log(isFullyPaying);
-    console.log(isFullyPaying && (amountPaid === order.totalPrice));
-    console.log(isFullyPaying && (amountPaid !== order.totalPrice));
-
-    if (isFullyPaying && (amountPaid !== order.totalPrice)) {
+    if (isFullyPaying && (parseFloat(amountPaid) !== parseFloat(order.totalPrice))) {
         return res.status(httpStatus.BAD_REQUEST).json({
             success: false,
             message: `Amount Has To Be ${formatNumber(order.totalPrice)} Rwf`
