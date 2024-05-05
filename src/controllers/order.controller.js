@@ -181,6 +181,7 @@ const completeOrder = catchAsync(async (req, res) => {
 
     console.log(amountPaid, order.totalPrice);
     console.log(amountPaid === order.totalPrice);
+    console.log(isFullyPaying);
     console.log(isFullyPaying && (amountPaid === order.totalPrice));
     console.log(isFullyPaying && (amountPaid !== order.totalPrice));
 
