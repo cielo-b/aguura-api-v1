@@ -1,6 +1,6 @@
 const httpStatus = require('http-status');
 const fs = require('fs');
-const PDFDocument = require('pdfkit');
+const PDFDocument = require('pdfkit-table');
 const path = require('path');
 
 const {ActiveDay, Inventory, Sales, InventoryProduct, Crates, PaymentMethod, Payment, EmptyCrates} = require('../models');
@@ -22,7 +22,7 @@ const generatePDF = async (stock, activeDay) => {
                 console.error('Error deleting existing file:', err);
                 return;
             }
-        })
+        });
     }
     const writeStream = fs.createWriteStream(filePath);
     doc.pipe(writeStream);
