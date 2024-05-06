@@ -8,6 +8,7 @@ const catchAsync = require('../utils/catchAsync');
 const config = require('../config/config');
 const formatNumber = require('../utils/formatNumber');
 const {checkStock} = require('../controllers/stock.controller');
+const exportData = require('../utils/exportData');
 
 const generatePDF = async (stock, activeDay) => {
 
@@ -196,7 +197,6 @@ const generatePDF = async (stock, activeDay) => {
     return fileName;
 
 };
-
 
 const generateSimplePDF = async (stock, activeDay) => {
     const doc = new PDFDocument();
@@ -430,6 +430,12 @@ const endDay = catchAsync(async (req, res) => {
             message: 'Active Day Not Found.'
         });
     }
+    if (crates.length === 0) {
+        return res.status(httpStatus.BAD_REQUEST).json({
+            success: false,
+            message: 'Please Register Empty Crates.'
+        });
+    }
 
     // register crates
     for (let crate of crates) {
@@ -437,7 +443,7 @@ const endDay = catchAsync(async (req, res) => {
     }
 
     // generate pdf
-    const pdfFileName = await generateSimplePDF(stock, activeDay);
+    const pdfFileName = await exportData(stock, activeDay);
     const url = config.url + '/public/reports/' + pdfFileName;
 
     // update remaining products in inventory
