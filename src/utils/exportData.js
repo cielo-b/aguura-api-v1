@@ -2,13 +2,12 @@ const PDFDocument = require('pdfkit-table');
 const fs = require('fs');
 const path = require('path');
 
-const {Company, Sales, SalesProduct, InventoryProduct, Credit, PaymentMethod, Payment, Crates, EmptyCrates} = require('../models');
-const catchAsync = require('../utils/catchAsync');
-const config = require('../config/config');
+const {Company, Sales, InventoryProduct, Credit, PaymentMethod, Payment, Crates, EmptyCrates} = require('../models');
 const formatNumber = require('../utils/formatNumber');
-const {checkStock} = require('../controllers/stock.controller');
 
 const reportsDirectory = path.join(__dirname, '../../public/reports');
+const jaini = '/usr/share/fonts/JainiPurva-Regular.ttf';
+const poppins = '/usr/share/fonts/Poppins-Regular.ttf';
 
 const exportData = async (stock, activeDay) => {
 
@@ -19,9 +18,9 @@ const exportData = async (stock, activeDay) => {
     const pdfStream = fs.createWriteStream(pdfFilePath);
 
     const title = `${stock.name} ${activeDay.name} Daily Report.\n`;
-    pdfDoc.fontSize(16).font('/usr/share/fonts/JainiPurva-Regular.ttf').text(`${title}`);
+    pdfDoc.fontSize(16).font(jaini).text(`${title}`);
     pdfDoc.moveDown();
-    pdfDoc.font('/usr/share/fonts/Poppins-Regular.ttf');
+    pdfDoc.font(poppins);
     pdfDoc.fontSize(8);
 
     // companies
@@ -113,7 +112,7 @@ const exportData = async (stock, activeDay) => {
         y: 0,
         columnSpacing: 5,
         prepareHeader: () => pdfDoc.fontSize(8).font('Poppins-Bold.ttf'),
-        prepareRow: (row, indexColumn, indexRow, rectRow) => pdfDoc.fontSize(8).font('/usr/share/fonts/Poppins-Regular.ttf'),
+        prepareRow: (row, indexColumn, indexRow, rectRow) => pdfDoc.fontSize(8).font(poppins),
     };
     // Sales Table
     pdfDoc.table({
@@ -152,7 +151,7 @@ const exportData = async (stock, activeDay) => {
         y: 0,
         columnSpacing: 5,
         prepareHeader: () => pdfDoc.fontSize(8).font('Poppins-Bold.ttf'),
-        prepareRow: (row, indexColumn, indexRow, rectRow) => pdfDoc.fontSize(8).font('/usr/share/fonts/Poppins-Regular.ttf'),
+        prepareRow: (row, indexColumn, indexRow, rectRow) => pdfDoc.fontSize(8).font(poppins),
     };
     // Credits Table
     pdfDoc.table({
@@ -197,7 +196,7 @@ const exportData = async (stock, activeDay) => {
         y: 0,
         columnSpacing: 5,
         prepareHeader: () => pdfDoc.fontSize(8).font('Poppins-Bold.ttf'),
-        prepareRow: (row, indexColumn, indexRow, rectRow) => pdfDoc.fontSize(8).font('/usr/share/fonts/Poppins-Regular.ttf'),
+        prepareRow: (row, indexColumn, indexRow, rectRow) => pdfDoc.fontSize(8).font(poppins),
     };
     // Credits Table
     pdfDoc.table({
@@ -244,7 +243,7 @@ const exportData = async (stock, activeDay) => {
         y: 0,
         columnSpacing: 5,
         prepareHeader: () => pdfDoc.fontSize(8).font('Poppins-Bold.ttf'),
-        prepareRow: (row, indexColumn, indexRow, rectRow) => pdfDoc.fontSize(8).font('/usr/share/fonts/Poppins-Regular.ttf'),
+        prepareRow: (row, indexColumn, indexRow, rectRow) => pdfDoc.fontSize(8).font(poppins),
     };
     // Credits Table
     pdfDoc.table({
@@ -288,7 +287,7 @@ const exportData = async (stock, activeDay) => {
         y: 0,
         columnSpacing: 5,
         prepareHeader: () => pdfDoc.fontSize(8).font('Poppins-Bold.ttf'),
-        prepareRow: (row, indexColumn, indexRow, rectRow) => pdfDoc.fontSize(8).font('/usr/share/fonts/Poppins-Regular.ttf'),
+        prepareRow: (row, indexColumn, indexRow, rectRow) => pdfDoc.fontSize(8).font(poppins),
     };
     // Credits Table
     pdfDoc.table({
@@ -324,7 +323,7 @@ const exportData = async (stock, activeDay) => {
         y: 0,
         columnSpacing: 5,
         prepareHeader: () => pdfDoc.fontSize(8).font('Poppins-Bold.ttf'),
-        prepareRow: (row, indexColumn, indexRow, rectRow) => pdfDoc.fontSize(8).font('/usr/share/fonts/Poppins-Regular.ttf'),
+        prepareRow: (row, indexColumn, indexRow, rectRow) => pdfDoc.fontSize(8).font(poppins),
     };
     // Credits Table
     pdfDoc.table({
@@ -345,7 +344,7 @@ const exportData = async (stock, activeDay) => {
     const textWidth = pdfDoc.widthOfString(text); // Get the width of the text
     const textX = pdfDoc.page.width - 40 - pdfDoc.page.margins.right - textWidth; // Calculate the X position
     const textY = pdfDoc.page.height - pdfDoc.page.margins.bottom - 50; // Calculate the Y position
-    pdfDoc.font('/usr/share/fonts/JainiPurva-Regular.ttf').fontSize(12).text(text, textX, textY);
+    pdfDoc.font(jaini).fontSize(12).text(text, textX, textY);
 
     // Save the PDF
     pdfDoc.pipe(pdfStream);
