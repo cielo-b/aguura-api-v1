@@ -134,8 +134,7 @@ const editInventory = catchAsync(async (req, res) => {
         });
     }
 
-    // update inventory products availability
-    for (let i = 0; i < reqProducts.length; i++) {
+    for (let i = 0; i < initials.length; i++) {
         let iP = initials[i];
         if (iP) {
             let p = await InventoryProduct.findById(iP.id);
@@ -143,7 +142,10 @@ const editInventory = catchAsync(async (req, res) => {
             p.dailyAdded -= parseFloat(iP.quantity); // Subtract without converting to strings
             await p.save({validateBeforeSave: false});
         }
+    }
 
+    // update inventory products availability
+    for (let i = 0; i < reqProducts.length; i++) {
         let reqProduct = reqProducts[i];
         let product = await InventoryProduct.findById(reqProduct.id);
 
@@ -152,11 +154,13 @@ const editInventory = catchAsync(async (req, res) => {
         await product.save({validateBeforeSave: false});
     }
 
+    if (inventory.products.length === 0) {
+        await inventory.deleteOne();
+    }
 
     return res.status(httpStatus.CREATED).json({
         success: true,
         message: 'Inventory Edited Successfully.',
-        inventory
     });
 });
 
