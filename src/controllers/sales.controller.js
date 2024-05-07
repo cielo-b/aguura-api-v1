@@ -292,16 +292,16 @@ const editSales = catchAsync(async (req, res) => {
 
     await sale.save({validateBeforeSave: false});
 
-
     // update inventory products availability
-    for (let i = 0; i < reqProducts.length; i++) {
-
+    for (let i = 0; i < initials.length; i++) {
         let iProduct = initials[i];
         let sIProduct = await SalesProduct.findById(iProduct.id);
         let inP = await InventoryProduct.findById(sIProduct.inventoryProduct);
         inP.totalAvailable = (parseFloat(inP.totalAvailable) + parseFloat(iProduct.quantity));
         await inP.save({validateBeforeSave: false});
+    }
 
+    for (let i = 0; i < reqProducts.length; i++) {
         let reqProduct = reqProducts[i];
         let product = await SalesProduct.findById(reqProduct.id);
         let inventoryProduct = await InventoryProduct.findById(product.inventoryProduct);
@@ -340,6 +340,10 @@ const editSales = catchAsync(async (req, res) => {
             let method = await PaymentMethod.findById(payment.id);
             await Payment.create({sale: sale.id, activeDay: sale.activeDay, method: method.id, amount: payment.amount, stock: sale.stock, customer: user && user.id, customerName, customerPhone});
         }
+    }
+    //
+    if (sale.products.length === 0) {
+        await sale.deleteOne();
     }
 
     return res.status(httpStatus.CREATED).json({
