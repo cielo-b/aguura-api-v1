@@ -1,6 +1,6 @@
 const httpStatus = require('http-status');
 
-const {InventoryProduct, SalesProduct, Sales, Credit, PaymentMethod, Payment, User} = require('../models');
+const {InventoryProduct, SalesProduct, Sales, Credit, PaymentMethod, Payment, User, Order} = require('../models');
 const catchAsync = require('../utils/catchAsync');
 const {checkActive, checkDay} = require('./activeDay.controller');
 const formatNumber = require('../utils/formatNumber');
@@ -215,12 +215,47 @@ const editSales = catchAsync(async (req, res) => {
         }
     }
 
+    let initials = [];
+    const salesProducts = sale.products;
+    for (let p of salesProducts) {
+        initials.push({
+            id: p.id,
+            quantity: p.quantity
+        });
+    }
+    // update inventory products availability
+    for (let i = 0; i < initials.length; i++) {
+        let iProduct = initials[i];
+        let sIProduct = await SalesProduct.findById(iProduct.id);
+        let inP = await InventoryProduct.findById(sIProduct.inventoryProduct);
+        inP.totalAvailable = (parseFloat(inP.totalAvailable) + parseFloat(iProduct.quantity));
+        await inP.save({validateBeforeSave: false});
+    }
+
+    if (reqProducts.length === 0) {
+        if (sale.fromOrder) {
+            const order = await Order.find({sale: sale.id});
+            if (order) {
+                await order.deleteOne();
+            }
+        }
+        // edit payments
+        let prevPayments = await Payment.find({sale: sale.id});
+        for (let p of prevPayments) {
+            await p.deleteOne();
+        }
+
+        await sale.deleteOne();
+        return res.status(httpStatus.OK).json({
+            success: true,
+            message: 'Sales Edited Successfully.',
+        });
+    }
 
     let products = [];
     let _payments = [];
     let totalPrice = 0;
     let description = ``;
-    let initials = [];
     let paymentDescription = ``;
 
     if (payments.length > 0) {
@@ -236,14 +271,6 @@ const editSales = catchAsync(async (req, res) => {
         }
     } else {
         paymentDescription = 'No Payments Yet.';
-    }
-
-    const salesProducts = sale.products;
-    for (let p of salesProducts) {
-        initials.push({
-            id: p.id,
-            quantity: p.quantity
-        });
     }
 
     for (let i = 0; i < reqProducts.length; i++) {
@@ -280,26 +307,19 @@ const editSales = catchAsync(async (req, res) => {
         }
     }
 
-    sale.products = products;
-    sale.totalPrice = totalPrice;
-    sale.isFullyPaid = isFullyPaid;
-    sale.customerName = customerName;
-    sale.customerPhone = customerPhone;
-    sale.amountPaid = amount;
-    sale.description = description;
-    sale.paymentDescription = paymentDescription;
-    sale.payments = _payments;
+    if (!sale.fromOrder) {
+        sale.products = products;
+        sale.totalPrice = totalPrice;
+        sale.isFullyPaid = isFullyPaid;
+        sale.customerName = customerName;
+        sale.customerPhone = customerPhone;
+        sale.amountPaid = amount;
+        sale.description = description;
+        sale.paymentDescription = paymentDescription;
+        sale.payments = _payments;
+    }
 
     await sale.save({validateBeforeSave: false});
-
-    // update inventory products availability
-    for (let i = 0; i < initials.length; i++) {
-        let iProduct = initials[i];
-        let sIProduct = await SalesProduct.findById(iProduct.id);
-        let inP = await InventoryProduct.findById(sIProduct.inventoryProduct);
-        inP.totalAvailable = (parseFloat(inP.totalAvailable) + parseFloat(iProduct.quantity));
-        await inP.save({validateBeforeSave: false});
-    }
 
     for (let i = 0; i < reqProducts.length; i++) {
         let reqProduct = reqProducts[i];
@@ -322,7 +342,7 @@ const editSales = catchAsync(async (req, res) => {
         } else {
             const credit = await Credit.create({activeDay: sale.activeDay, stock: sale.stock, sales: sale.id, totalAmount: totalPrice - amountPaid, description, customerName, customerPhone});
             if (!credit) {
-                return res.status(httpStatus.CREATED).json({
+                return res.status(httpStatus.OK).json({
                     success: true,
                     message: 'Sales Eecorded Successfully But, Credit Failed To Te Recorder.',
                 });
@@ -346,7 +366,7 @@ const editSales = catchAsync(async (req, res) => {
         await sale.deleteOne();
     }
 
-    return res.status(httpStatus.CREATED).json({
+    return res.status(httpStatus.OK).json({
         success: true,
         message: 'Sales Edited Successfully.',
     });

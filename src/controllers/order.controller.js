@@ -151,14 +151,14 @@ const completeOrder = catchAsync(async (req, res) => {
     const activeDay = await checkDay(stock.id);
 
     const {amountPaid, payments, isFullyPaying} = req.body;
-    
+
     if (!isFullyPaying && !amountPaid) {
         return res.status(httpStatus.BAD_REQUEST).json({
             success: false,
             message: 'Plz Add How Much User Paid.'
         });
     }
-    
+
     if (amountPaid > 0) {
         if (payments.length === 0) {
             return res.status(httpStatus.BAD_REQUEST).json({
@@ -178,7 +178,7 @@ const completeOrder = catchAsync(async (req, res) => {
             }
         }
     }
-    
+
     let _payments = [];
     let paymentDescription = ``;
 
@@ -207,7 +207,7 @@ const completeOrder = catchAsync(async (req, res) => {
     // handle amount
     let paid = order.totalPrice === amountPaid;
 
-    const sales = await Sales.create({activeDay: activeDay.id, products: order.products, totalPrice: order.totalPrice, isFullyPaid: paid, customerName: order.customer.fullName, customerPhone: order.customer.phone, amountPaid, description: order.description, stock: req.query.stockId, payments: _payments, paymentDescription});
+    const sales = await Sales.create({activeDay: activeDay.id, products: order.products, totalPrice: order.totalPrice, isFullyPaid: paid, customerName: order.customer.fullName, customerPhone: order.customer.phone, amountPaid, description: order.description, stock: req.query.stockId, payments: _payments, paymentDescription, fromOrder: true});
 
     if (!sales) {
         return res.status(httpStatus.BAD_REQUEST).json({
@@ -246,6 +246,7 @@ const completeOrder = catchAsync(async (req, res) => {
     }
 
     order.isCompleted = true;
+    order.sale = sales.id;
     await order.save({validateBeforeSave: false});
 
     return res.status(httpStatus.CREATED).json({

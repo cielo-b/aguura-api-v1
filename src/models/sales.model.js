@@ -89,6 +89,12 @@ const salesSchema = mongoose.Schema(
             required: true,
             default: true
         },
+        
+        fromOrder: {
+            type: Boolean,
+            required: true,
+            default: true
+        },
 
         customerName: {
             type: String,

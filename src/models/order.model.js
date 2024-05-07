@@ -9,6 +9,11 @@ const orderSchema = mongoose.Schema(
             required: true,
         },
         
+        sale: {
+            type: mongoose.SchemaTypes.ObjectId,
+            ref: 'Sales',
+        },
+        
         customer: {
             type: mongoose.SchemaTypes.ObjectId,
             ref: 'User',
