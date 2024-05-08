@@ -6,21 +6,19 @@ const {Company, Sales, InventoryProduct, Credit, PaymentMethod, Payment, Crates,
 const formatNumber = require('../utils/formatNumber');
 
 const reportsDirectory = path.join(__dirname, '../../public/reports');
-const jaini = '/usr/share/fonts/JainiPurva-Regular.ttf';
-const poppins = '/usr/share/fonts/Poppins-Regular.ttf';
 
 const exportData = async (stock, activeDay) => {
 
-    const fileName = `${activeDay.name}-daily-report.pdf`;
+    const fileName = `${stock.id}-${activeDay.name}-daily-report.pdf`;
     const pdfFilePath = path.join(reportsDirectory, `/${fileName}`);
 
     const pdfDoc = new PDFDocument({margin: 40});
     const pdfStream = fs.createWriteStream(pdfFilePath);
 
     const title = `${stock.name} ${activeDay.name} Daily Report.\n`;
-    pdfDoc.fontSize(16).font(jaini).text(`${title}`);
+    pdfDoc.fontSize(16).font('/usr/share/fonts/JainiPurva-Regular.ttf').text(`${title}`);
     pdfDoc.moveDown();
-    pdfDoc.font(poppins);
+    pdfDoc.font('/usr/share/fonts/Poppins-Regular.ttf');
     pdfDoc.fontSize(8);
 
     // companies
@@ -111,8 +109,8 @@ const exportData = async (stock, activeDay) => {
         x: 0,
         y: 0,
         columnSpacing: 5,
-        prepareHeader: () => pdfDoc.fontSize(8).font(poppins),
-        prepareRow: (row, indexColumn, indexRow, rectRow) => pdfDoc.fontSize(8).font(poppins),
+        prepareHeader: () => pdfDoc.fontSize(8).font('/usr/share/fonts/Poppins-Regular.ttf'),
+        prepareRow: (row, indexColumn, indexRow, rectRow) => pdfDoc.fontSize(8).font('/usr/share/fonts/Poppins-Regular.ttf'),
     };
     // Sales Table
     pdfDoc.table({
@@ -155,8 +153,8 @@ const exportData = async (stock, activeDay) => {
         x: 0,
         y: 0,
         columnSpacing: 5,
-        prepareHeader: () => pdfDoc.fontSize(8).font(poppins),
-        prepareRow: (row, indexColumn, indexRow, rectRow) => pdfDoc.fontSize(8).font(poppins),
+        prepareHeader: () => pdfDoc.fontSize(8).font('/usr/share/fonts/Poppins-Regular.ttf'),
+        prepareRow: (row, indexColumn, indexRow, rectRow) => pdfDoc.fontSize(8).font('/usr/share/fonts/Poppins-Regular.ttf'),
     };
     // Paid Credits Table
     pdfDoc.table({
@@ -195,8 +193,8 @@ const exportData = async (stock, activeDay) => {
         x: 0,
         y: 0,
         columnSpacing: 5,
-        prepareHeader: () => pdfDoc.fontSize(8).font(poppins),
-        prepareRow: (row, indexColumn, indexRow, rectRow) => pdfDoc.fontSize(8).font(poppins),
+        prepareHeader: () => pdfDoc.fontSize(8).font('/usr/share/fonts/Poppins-Regular.ttf'),
+        prepareRow: (row, indexColumn, indexRow, rectRow) => pdfDoc.fontSize(8).font('/usr/share/fonts/Poppins-Regular.ttf'),
     };
     // Credits Table
     pdfDoc.table({
@@ -210,8 +208,6 @@ const exportData = async (stock, activeDay) => {
 
 
     // =================================================================================
-
-
 
     // payments
     const methods = await PaymentMethod.find({stock: stock.id});
@@ -240,8 +236,8 @@ const exportData = async (stock, activeDay) => {
         x: 0,
         y: 0,
         columnSpacing: 5,
-        prepareHeader: () => pdfDoc.fontSize(8).font(poppins),
-        prepareRow: (row, indexColumn, indexRow, rectRow) => pdfDoc.fontSize(8).font(poppins),
+        prepareHeader: () => pdfDoc.fontSize(8).font('/usr/share/fonts/Poppins-Regular.ttf'),
+        prepareRow: (row, indexColumn, indexRow, rectRow) => pdfDoc.fontSize(8).font('/usr/share/fonts/Poppins-Regular.ttf'),
     };
     // Credits Table
     pdfDoc.table({
@@ -287,8 +283,8 @@ const exportData = async (stock, activeDay) => {
         x: 0,
         y: 0,
         columnSpacing: 5,
-        prepareHeader: () => pdfDoc.fontSize(8).font(poppins),
-        prepareRow: (row, indexColumn, indexRow, rectRow) => pdfDoc.fontSize(8).font(poppins),
+        prepareHeader: () => pdfDoc.fontSize(8).font('/usr/share/fonts/Poppins-Regular.ttf'),
+        prepareRow: (row, indexColumn, indexRow, rectRow) => pdfDoc.fontSize(8).font('/usr/share/fonts/Poppins-Regular.ttf'),
     };
     // Credits Table
     pdfDoc.table({
@@ -331,8 +327,8 @@ const exportData = async (stock, activeDay) => {
         x: 0,
         y: 0,
         columnSpacing: 5,
-        prepareHeader: () => pdfDoc.fontSize(8).font(poppins),
-        prepareRow: (row, indexColumn, indexRow, rectRow) => pdfDoc.fontSize(8).font(poppins),
+        prepareHeader: () => pdfDoc.fontSize(8).font('/usr/share/fonts/Poppins-Regular.ttf'),
+        prepareRow: (row, indexColumn, indexRow, rectRow) => pdfDoc.fontSize(8).font('/usr/share/fonts/Poppins-Regular.ttf'),
     };
     // Credits Table
     pdfDoc.table({
@@ -367,8 +363,8 @@ const exportData = async (stock, activeDay) => {
         x: 0,
         y: 0,
         columnSpacing: 5,
-        prepareHeader: () => pdfDoc.fontSize(8).font(poppins),
-        prepareRow: (row, indexColumn, indexRow, rectRow) => pdfDoc.fontSize(8).font(poppins),
+        prepareHeader: () => pdfDoc.fontSize(8).font('/usr/share/fonts/Poppins-Regular.ttf'),
+        prepareRow: (row, indexColumn, indexRow, rectRow) => pdfDoc.fontSize(8).font('/usr/share/fonts/Poppins-Regular.ttf'),
     };
     // Credits Table
     pdfDoc.table({
@@ -383,13 +379,12 @@ const exportData = async (stock, activeDay) => {
 
     // =================================================================================
 
-
     // Add copyright
     const text = "\n\nAguura@2024";
     const textWidth = pdfDoc.widthOfString(text); // Get the width of the text
     const textX = pdfDoc.page.width - 40 - pdfDoc.page.margins.right - textWidth; // Calculate the X position
     const textY = pdfDoc.page.height - pdfDoc.page.margins.bottom - 50; // Calculate the Y position
-    pdfDoc.font(jaini).fontSize(12).text(text, textX, textY);
+    pdfDoc.font('/usr/share/fonts/JainiPurva-Regular.ttf').fontSize(12).text(text, textX, textY);
 
     // Save the PDF
     pdfDoc.pipe(pdfStream);
