@@ -2,7 +2,7 @@ const PDFDocument = require('pdfkit-table');
 const fs = require('fs');
 const path = require('path');
 
-const {Company, Sales, InventoryProduct, Credit, PaymentMethod, Payment, Crates, EmptyCrates} = require('../models');
+const {Company, Sales, InventoryProduct, Credit, PaymentMethod, Payment, Crates, EmptyCrates, User} = require('../models');
 const formatNumber = require('../utils/formatNumber');
 
 const reportsDirectory = path.join(__dirname, '../../public/reports');
