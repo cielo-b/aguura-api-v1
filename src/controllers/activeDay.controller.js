@@ -447,15 +447,15 @@ const endDay = catchAsync(async (req, res) => {
     const url = config.url + '/public/reports/' + pdfFileName;
 
     // update remaining products in inventory
-    // const products = await InventoryProduct.find({});
-    // for (const product of products) {
-    //     product.prevDayRemaining = product.totalAvailable;
-    //     product.dailyAdded = 0;
-    //     await product.save({validateBeforeSave: false});
-    // }
+    const products = await InventoryProduct.find({});
+    for (const product of products) {
+        product.prevDayRemaining = product.totalAvailable;
+        product.dailyAdded = 0;
+        await product.save({validateBeforeSave: false});
+    }
 
-    // activeDay.isActive = false;
-    // await activeDay.save({validateBeforeSave: false});
+    activeDay.isActive = false;
+    await activeDay.save({validateBeforeSave: false});
 
     return res.status(httpStatus.OK).json({
         success: true,
