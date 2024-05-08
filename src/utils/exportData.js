@@ -120,7 +120,6 @@ const exportData = async (stock, activeDay) => {
         headerBackgroundColor: 'gray',
         stripe: true
     }, salesOptions);
-    pdfDoc.text('\n\n\n');
 
     // =================================================================================
 
@@ -164,7 +163,6 @@ const exportData = async (stock, activeDay) => {
         headerBackgroundColor: 'gray',
         stripe: true
     }, paidCreditsOptions);
-    pdfDoc.text('\n\n\n');
 
 
     // =================================================================================
@@ -204,7 +202,6 @@ const exportData = async (stock, activeDay) => {
         headerBackgroundColor: 'gray',
         stripe: true
     }, creditsOptions);
-    pdfDoc.text('\n\n\n');
 
 
     // =================================================================================
@@ -247,7 +244,6 @@ const exportData = async (stock, activeDay) => {
         headerBackgroundColor: 'gray',
         stripe: true
     }, paymentsOptions);
-    pdfDoc.text('\n\n\n');
 
 
     // =================================================================================
@@ -294,7 +290,6 @@ const exportData = async (stock, activeDay) => {
         headerBackgroundColor: 'gray',
         stripe: true
     }, inventoryOptions);
-    pdfDoc.text('\n\n\n');
 
 
 
@@ -338,7 +333,6 @@ const exportData = async (stock, activeDay) => {
         headerBackgroundColor: 'gray',
         stripe: true
     }, cratesOptions);
-    pdfDoc.text('\n\n\n');
 
 
     // =================================================================================
@@ -374,7 +368,6 @@ const exportData = async (stock, activeDay) => {
         headerBackgroundColor: 'gray',
         stripe: true
     }, eCratesOptions);
-    pdfDoc.text('\n\n\n');
 
 
     // =================================================================================
