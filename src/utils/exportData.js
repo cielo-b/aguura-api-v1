@@ -15,8 +15,10 @@ const exportData = async (stock, activeDay) => {
     const pdfDoc = new PDFDocument({margin: 40});
     const pdfStream = fs.createWriteStream(pdfFilePath);
 
-    const title = `${stock.name} ${activeDay.name} Daily Report.\n`;
-    pdfDoc.fontSize(16).font('/usr/share/fonts/JainiPurva-Regular.ttf').text(`${title}`);
+    const title = `${stock.name} ${activeDay.name} Daily Report.`;
+    const admin = await User.findById(stock.admin);
+    const adminTitle = `Mngr: ${admin?.fullName.split('')[0].charAt(0)}. ${admin?.fullName.split(' ')[1]} ${admin?.phone}`;
+    pdfDoc.fontSize(16).font('/usr/share/fonts/JainiPurva-Regular.ttf').text(`${title}          ${adminTitle}`);
     pdfDoc.moveDown();
     pdfDoc.font('/usr/share/fonts/Poppins-Regular.ttf');
     pdfDoc.fontSize(8);
