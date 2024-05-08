@@ -57,7 +57,7 @@ const payCredit = catchAsync(async (req, res) => {
         for (const payment of payments) {
             desc = `${payment.name}: ${formatNumber(payment.amount)} Rwf\n`;
             let method = await PaymentMethod.findById(payment.id);
-            await Payment.create({activeDay: credit.activeDay, method: method.id, customerName: credit.customerName, customerPhone: credit.customerPhone, amount: payment.amount, stock: credit.stock, customer: credit.customer, sale: credit.sale});
+            await Payment.create({activeDay: credit.activeDay, method: method.id, customerName: credit.customerName, customerPhone: credit.customerPhone, amount: payment.amount, stock: credit.stock, customer: credit.customer, sale: credit.sale, credit: credit.id, isCreditPayment: true});
         }
     }
     const spd = sales.paymentDescription.replace(/\s/g, '').toLowerCase();

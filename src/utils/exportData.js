@@ -111,7 +111,7 @@ const exportData = async (stock, activeDay) => {
         x: 0,
         y: 0,
         columnSpacing: 5,
-        prepareHeader: () => pdfDoc.fontSize(8).font('Poppins-Bold.ttf'),
+        prepareHeader: () => pdfDoc.fontSize(8).font(poppins),
         prepareRow: (row, indexColumn, indexRow, rectRow) => pdfDoc.fontSize(8).font(poppins),
     };
     // Sales Table
@@ -123,6 +123,51 @@ const exportData = async (stock, activeDay) => {
         stripe: true
     }, salesOptions);
     pdfDoc.text('\n\n\n');
+
+    // =================================================================================
+
+    // paid credit section
+    const payments = await Payment.find({
+        activeDay: activeDay.id,
+        stock: stock.id,
+        isCreditPayment: true
+    }).populate({
+        path: 'credit',
+        match: {activeDay: {$ne: activeDay.id}}
+    });
+    let totalPaidCredit = 0;
+    let paidCreditsData = [
+        ['Customer', 'Amount']
+    ];
+
+    for (let payment of payments) {
+        let data = [];
+        data.push(payment.customerName);
+        data.push(`${formatNumber(payment.amount)} Rwf`);
+        paidCreditsData.push(data);
+        totalPaidCredit = totalPaidCredit + parseFloat(payment.amount);
+    }
+    paidCreditsData.push(['Total', `${formatNumber(totalPaidCredit)} Rwf`]);
+    const paidCreditsOptions = {
+        title: "Paid Credits",
+        subtitle: "Previous Days Credits Paid Today.",
+        width: 500,
+        x: 0,
+        y: 0,
+        columnSpacing: 5,
+        prepareHeader: () => pdfDoc.fontSize(8).font(poppins),
+        prepareRow: (row, indexColumn, indexRow, rectRow) => pdfDoc.fontSize(8).font(poppins),
+    };
+    // Paid Credits Table
+    pdfDoc.table({
+        headers: paidCreditsData[0],
+        rows: paidCreditsData.slice(1),
+        widths: [null, null, null],
+        headerBackgroundColor: 'gray',
+        stripe: true
+    }, paidCreditsOptions);
+    pdfDoc.text('\n\n\n');
+
 
     // =================================================================================
 
@@ -150,7 +195,7 @@ const exportData = async (stock, activeDay) => {
         x: 0,
         y: 0,
         columnSpacing: 5,
-        prepareHeader: () => pdfDoc.fontSize(8).font('Poppins-Bold.ttf'),
+        prepareHeader: () => pdfDoc.fontSize(8).font(poppins),
         prepareRow: (row, indexColumn, indexRow, rectRow) => pdfDoc.fontSize(8).font(poppins),
     };
     // Credits Table
@@ -195,7 +240,7 @@ const exportData = async (stock, activeDay) => {
         x: 0,
         y: 0,
         columnSpacing: 5,
-        prepareHeader: () => pdfDoc.fontSize(8).font('Poppins-Bold.ttf'),
+        prepareHeader: () => pdfDoc.fontSize(8).font(poppins),
         prepareRow: (row, indexColumn, indexRow, rectRow) => pdfDoc.fontSize(8).font(poppins),
     };
     // Credits Table
@@ -242,7 +287,7 @@ const exportData = async (stock, activeDay) => {
         x: 0,
         y: 0,
         columnSpacing: 5,
-        prepareHeader: () => pdfDoc.fontSize(8).font('Poppins-Bold.ttf'),
+        prepareHeader: () => pdfDoc.fontSize(8).font(poppins),
         prepareRow: (row, indexColumn, indexRow, rectRow) => pdfDoc.fontSize(8).font(poppins),
     };
     // Credits Table
@@ -286,7 +331,7 @@ const exportData = async (stock, activeDay) => {
         x: 0,
         y: 0,
         columnSpacing: 5,
-        prepareHeader: () => pdfDoc.fontSize(8).font('Poppins-Bold.ttf'),
+        prepareHeader: () => pdfDoc.fontSize(8).font(poppins),
         prepareRow: (row, indexColumn, indexRow, rectRow) => pdfDoc.fontSize(8).font(poppins),
     };
     // Credits Table
@@ -322,7 +367,7 @@ const exportData = async (stock, activeDay) => {
         x: 0,
         y: 0,
         columnSpacing: 5,
-        prepareHeader: () => pdfDoc.fontSize(8).font('Poppins-Bold.ttf'),
+        prepareHeader: () => pdfDoc.fontSize(8).font(poppins),
         prepareRow: (row, indexColumn, indexRow, rectRow) => pdfDoc.fontSize(8).font(poppins),
     };
     // Credits Table

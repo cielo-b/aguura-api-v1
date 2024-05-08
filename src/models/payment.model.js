@@ -43,6 +43,16 @@ const paymentSchema = mongoose.Schema(
 
         customerPhone: {
             type: String,
+        },
+
+        isCreditPayment :{
+            type: Boolean,
+            default: false
+        },
+
+        credit:{
+            type: mongoose.SchemaTypes.ObjectId,
+            ref: 'Credit',
         }
     },
     {
