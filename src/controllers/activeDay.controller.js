@@ -430,12 +430,12 @@ const endDay = catchAsync(async (req, res) => {
             message: 'Active Day Not Found.'
         });
     }
-    // if (crates.length === 0) {
-    //     return res.status(httpStatus.BAD_REQUEST).json({
-    //         success: false,
-    //         message: 'Please Register Empty Crates.'
-    //     });
-    // }
+    if (crates.length === 0) {
+        return res.status(httpStatus.BAD_REQUEST).json({
+            success: false,
+            message: 'Please Register Empty Crates.'
+        });
+    }
 
     // register crates
     for (let crate of crates) {
