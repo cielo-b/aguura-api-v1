@@ -33,7 +33,7 @@ const exportData = async (stock, activeDay) => {
 
     const adminTitle = `Manager: ${admin?.fullName} / ${admin?.phone}`;
     const adminTitleWidth = pdfDoc.widthOfString(adminTitle);
-    const adminTitleX = (pdfDoc.page.width + 10) - pdfDoc.page.margins.right - adminTitleWidth;
+    const adminTitleX = (pdfDoc.page.width + 15) - pdfDoc.page.margins.right - adminTitleWidth;
     const adminTitleY = 45;
     pdfDoc.fontSize(8).font(PoppinsRegular).text(adminTitle, adminTitleX, adminTitleY);
     pdfDoc.x = normalX;
