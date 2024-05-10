@@ -285,15 +285,22 @@ const addStocks = catchAsync(async (req, res) => {
         const stock = await Stock.findById(id);
         if (stock) {
             let userStocks = user.stocks;
-            userStocks.push(stock.id);
+            let customers = stock.customers;
+
+            if (!userStocks.includes(stock.id)) {
+                userStocks.push(stock.id);
+            }
+
+            if (!customers.includes(user.id)) {
+                customers.push(user.id);
+                stock.customers = customers;
+                await stock.save({validateBeforeSave: false});
+            }
+
             user.stocks = userStocks;
             await user.save({validateBeforeSave: false});
-
-            let customers = stock.customers;
-            customers.push(user.id);
-            stock.customers = customers;
-            await stock.save({validateBeforeSave: false});
         }
+
     }
 
     return res.status(httpStatus.OK).json({
