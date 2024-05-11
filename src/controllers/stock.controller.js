@@ -1,7 +1,7 @@
 const httpStatus = require('http-status');
 const bcrypt = require('bcryptjs');
 
-const {Stock, User, Company} = require('../models');
+const {Stock, User, Company, ActiveDay} = require('../models');
 const catchAsync = require('../utils/catchAsync');
 const {userService} = require('../services');
 
@@ -159,6 +159,7 @@ const getStockByAdmin = catchAsync(async (req, res) => {
 
     let stock = await Stock.findOne({admin: req.query.adminId});
     let companies = await Company.find({stock: stock.id});
+    const activeDay = await ActiveDay.findOne({isActive: true, stock: stock.id});
 
     companies = companies.map(c => {
         return {
@@ -171,8 +172,9 @@ const getStockByAdmin = catchAsync(async (req, res) => {
         success: true,
         stock: {
             ...stock.toObject(),
-            companies
-        }
+            companies,
+        },
+        activeDay
     });
 });
 
