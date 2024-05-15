@@ -95,7 +95,7 @@ const newSales = catchAsync(async (req, res) => {
             name: product.inventoryProduct.name,
             quantity: reqProduct.quantity,
             unitPrice: product.price,
-            totalPrice: product.price * parseFloat(reqProduct.quantity),
+            totalPrice: parseFloat(product.price * parseFloat(reqProduct.quantity)),
             id: product.id
         };
 
@@ -103,6 +103,8 @@ const newSales = catchAsync(async (req, res) => {
         totalPrice += salesProduct.totalPrice;
         description = description + `${salesProduct.name}: ${formatNumber(salesProduct.quantity)} x ${formatNumber(salesProduct.unitPrice)} = ${formatNumber(salesProduct.totalPrice)} Rwf \n`;
     }
+
+    console.log(products)
 
     // handle amount
     let amount = isFullyPaid ? totalPrice : amountPaid;
