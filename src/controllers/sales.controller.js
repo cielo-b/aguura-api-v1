@@ -95,7 +95,7 @@ const newSales = catchAsync(async (req, res) => {
             name: product.inventoryProduct.name,
             quantity: reqProduct.quantity,
             unitPrice: product.price,
-            totalPrice: product.price * reqProduct.quantity,
+            totalPrice: product.price * parseFloat(reqProduct.quantity),
             id: product.id
         };
 
