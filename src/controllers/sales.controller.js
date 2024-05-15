@@ -116,7 +116,7 @@ const newSales = catchAsync(async (req, res) => {
             if (parseFloat(total) !== parseFloat(amount)) {
                 return res.status(httpStatus.BAD_REQUEST).json({
                     success: false,
-                    message: 'Amount Not Matching.'
+                    message: `Amount Not Matching. Payments${total} Price: ${amount}`
                 });
             }
         }
