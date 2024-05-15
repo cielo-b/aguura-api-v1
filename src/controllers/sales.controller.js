@@ -95,7 +95,7 @@ const newSales = catchAsync(async (req, res) => {
             name: product.inventoryProduct.name,
             quantity: reqProduct.quantity,
             unitPrice: product.price,
-            totalPrice: parseFloat(product.price * parseFloat(reqProduct.quantity)),
+            totalPrice: product.price * reqProduct.quantity,
             id: product.id
         };
 
@@ -103,8 +103,6 @@ const newSales = catchAsync(async (req, res) => {
         totalPrice += salesProduct.totalPrice;
         description = description + `${salesProduct.name}: ${formatNumber(salesProduct.quantity)} x ${formatNumber(salesProduct.unitPrice)} = ${formatNumber(salesProduct.totalPrice)} Rwf \n`;
     }
-
-    console.log(products)
 
     // handle amount
     let amount = isFullyPaid ? totalPrice : amountPaid;
@@ -118,7 +116,7 @@ const newSales = catchAsync(async (req, res) => {
             if (parseFloat(total) !== parseFloat(amount)) {
                 return res.status(httpStatus.BAD_REQUEST).json({
                     success: false,
-                    message: `Amount Not Matching. Payments${total} Price: ${amount}`
+                    message: 'Amount From All Methods Has To Be Equal To Total Amount Paid.'
                 });
             }
         }
