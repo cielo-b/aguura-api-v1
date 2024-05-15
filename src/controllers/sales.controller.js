@@ -95,12 +95,12 @@ const newSales = catchAsync(async (req, res) => {
             name: product.inventoryProduct.name,
             quantity: reqProduct.quantity,
             unitPrice: product.price,
-            totalPrice: product.price * reqProduct.quantity,
+            totalPrice: product.price * parseFloat(reqProduct.quantity),
             id: product.id
         };
 
         products.push(salesProduct);
-        totalPrice += salesProduct.totalPrice;
+        totalPrice = totalPrice + parseFloat(salesProduct.totalPrice);
         description = description + `${salesProduct.name}: ${formatNumber(salesProduct.quantity)} x ${formatNumber(salesProduct.unitPrice)} = ${formatNumber(salesProduct.totalPrice)} Rwf \n`;
     }
 
