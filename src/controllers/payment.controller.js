@@ -2,21 +2,30 @@ const httpStatus = require('http-status');
 
 const {Payment} = require('../models');
 const catchAsync = require('../utils/catchAsync');
-const {checkActive} = require('./activeDay.controller');
-const {checkStock} = require('./stock.controller');
+const {getEntityById} = require('./sales.controller');
 
 
 const allPayments = catchAsync(async (req, res) => {
-    const stockId = req.query.stockId;
-    const stock = await checkStock(stockId);
+    const {entityType, entityId} = req.query;
 
-    if (!stock) {
-        return res.status(httpStatus.BAD_REQUEST).json({
+    let entity = await getEntityById(entityType, entityId);
+
+    if (!entity) {
+        return res.status(httpStatus.NOT_FOUND).json({
             success: false,
-            message: 'Stock Not Found.'
+            message: 'Entity Not Found.'
         });
     }
-    let payments = await Payment.find({stock: stock.id}, {activeDay: 0}).populate('method');
+
+    let queryObj = {[entityType]: entityId};
+    if (entityType === 'distributionPoint') {
+        queryObj.producer = null;
+    } else if (entityType === 'stock') {
+        queryObj.distributionPoint = null;
+    }
+
+    let payments = await Payment.find(queryObj, {activeDay: 0}).populate('method');
+
     payments = payments.map(payment => {
         return {
             id: payment.id,
@@ -37,17 +46,23 @@ const allPayments = catchAsync(async (req, res) => {
 
 const dailyPayments = catchAsync(async (req, res) => {
 
-    const dayId = req.params.dayId;
-    const activeDay = await checkActive(dayId);
+    const {entityId, entityType, dayId} = req.query;
+    let entity = await getEntityById(entityType, entityId);
 
-    if (!activeDay) {
-        return res.status(httpStatus.BAD_REQUEST).json({
+    if (!entity) {
+        return res.status(httpStatus.NOT_FOUND).json({
             success: false,
-            message: 'No Active Day, Plz Start New Day And Try Again.'
+            message: 'Entity Not Found.'
         });
     }
+    let queryObj = {[entityType]: entityId, activeDay: dayId};
+    if (entityType === 'distributionPoint') {
+        queryObj.producer = null;
+    } else if (entityType === 'stock') {
+        queryObj.distributionPoint = null;
+    }
+    let payments = await Payment.find(queryObj, {activeDay: 0}).populate('method');
 
-    let payments = await Payment.find({activeDay: dayId}, {activeDay: 0}).populate('method');
     payments = payments.map(payment => {
         return {
             id: payment.id,

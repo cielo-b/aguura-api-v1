@@ -11,7 +11,7 @@ const config = require('./config/config');
 const morgan = require('./config/morgan');
 const {jwtStrategy} = require('./config/passport');
 const {rateLimiter} = require('./middlewares/rateLimiter');
-const routes = require('./routes/v1');
+const routes = require('./routes/v2');
 const {errorConverter, errorHandler} = require('./middlewares/error');
 const ApiError = require('./utils/ApiError');
 
@@ -58,7 +58,7 @@ app.use('/public/reports', express.static(path.join(__dirname, '../public/report
 
 // limit repeated failed requests to auth endpoints
 if (config.env === 'production') {
-    app.use('/api/v1/', rateLimiter);
+    app.use('/api/v2/', rateLimiter);
 }
 
 app.get('/', (req, res) => {

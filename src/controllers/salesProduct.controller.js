@@ -1,8 +1,9 @@
 const httpStatus = require('http-status');
 
-const {InventoryProduct, SalesProduct, Company} = require('../models');
+const {InventoryProduct, SalesProduct, Product} = require('../models');
 const catchAsync = require('../utils/catchAsync');
 const {checkStock} = require('./stock.controller');
+const {getEntityById} = require('./sales.controller');
 
 
 const newProduct = catchAsync(async (req, res) => {
@@ -16,31 +17,24 @@ const newProduct = catchAsync(async (req, res) => {
         });
     }
 
-    const {inventoryProductId, price} = req.body;
+    const {products} = req.body;
 
-    const product = await InventoryProduct.findById(inventoryProductId);
-
-    if (!product) {
-        return res.status(httpStatus.BAD_REQUEST).json({
-            success: false,
-            message: 'Product Not Found.',
-        });
+    for (let p of products) {
+        const product = await InventoryProduct.findById(p.productId);
+        if (!product) {
+            continue;
+        }
+        const existingProduct = await SalesProduct.findOne({inventoryProduct: product.id});
+        if (existingProduct) {
+            continue;
+        }
+        await SalesProduct.create({inventoryProduct: product.id, price: p.price, stock: stock.id});
     }
 
-    const existingProduct = await SalesProduct.findOne({inventoryProduct: inventoryProductId});
-    if (existingProduct) {
-        return res.status(httpStatus.BAD_REQUEST).json({
-            success: false,
-            message: 'Product Already Exist.',
-        });
-    }
-
-    const newProduct = await SalesProduct.create({inventoryProduct: inventoryProductId, price, stock: stock.id});
 
     return res.status(httpStatus.CREATED).json({
         success: true,
-        message: 'Product Added Successfully.',
-        product: newProduct
+        message: `${products.length > 0 ? 'Products Added Successfully.' : 'Product Added Successfully.'}`
     });
 
 });
@@ -72,17 +66,26 @@ const editProduct = catchAsync(async (req, res) => {
 });
 
 const allProducts = catchAsync(async (req, res) => {
-    const products = await SalesProduct.find({stock: req.query.stockId}).populate('inventoryProduct');
+    const entity = await getEntityById(req.query.entityType, req.query.entityId);
+    if (!entity) {
+        return res.status(httpStatus.NOT_FOUND).json({
+            success: false,
+            message: 'Entity Not Found.'
+        });
+    }
+
+    const products = await SalesProduct.find({[req.query.entityType]: req.query.entityId});
     let resProducts = [];
 
     for (let i = 0; i < products.length; i++) {
-        const company = await Company.findById(products[i].inventoryProduct.company);
+        const ip = await InventoryProduct.findById(products[i].inventoryProduct);
+        const product = await Product.findOne({productName: ip.productName})
         resProducts.push({
-            name: products[i].inventoryProduct.name,
+            name: ip.name,
             price: products[i].price,
             id: products[i]._id,
-            company: company?.id,
-            inventoryProduct: products[i].inventoryProduct.id
+            inventoryProduct: ip.id,
+            producer: product?.producer
         });
     }
 
@@ -99,14 +102,11 @@ const availableProducts = catchAsync(async (req, res) => {
 
     for (let i = 0; i < products.length; i++) {
         if (parseInt(products[i].inventoryProduct.totalAvailable) > 0) {
-            const company = await Company.findById(products[i].inventoryProduct.company);
             resProducts.push({
                 name: products[i].inventoryProduct.name,
                 price: products[i].price,
                 id: products[i]._id,
                 number: products[i].inventoryProduct.totalAvailable,
-                company: company?.name,
-                companyId: company?.id
             });
         }
     }

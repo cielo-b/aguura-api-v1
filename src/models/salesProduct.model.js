@@ -6,9 +6,13 @@ const salesProductSchema = mongoose.Schema(
         stock: {
             type: mongoose.SchemaTypes.ObjectId,
             ref: 'Stock',
-            required: true,
         },
-        
+
+        distributionPoint: {
+            type: mongoose.SchemaTypes.ObjectId,
+            ref: 'DistributionPoint',
+        },
+
         inventoryProduct: {
             type: mongoose.SchemaTypes.ObjectId,
             ref: 'InventoryProduct',

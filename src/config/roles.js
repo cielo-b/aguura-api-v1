@@ -1,4 +1,6 @@
 const allRoles = {
+    producer: ['producer'],
+    distributor: ['distributor'],
     superAdmin: ['superAdmin'],
     admin: ['admin'],
     user: ['user']

@@ -6,9 +6,18 @@ const paymentMethodSchema = mongoose.Schema(
         stock: {
             type: mongoose.SchemaTypes.ObjectId,
             ref: 'Stock',
-            required: true,
         },
-        
+
+        producer: {
+            type: mongoose.SchemaTypes.ObjectId,
+            ref: 'Producer',
+        },
+
+        distributionPoint: {
+            type: mongoose.SchemaTypes.ObjectId,
+            ref: 'DistributionPoint',
+        },
+
         name: {
             type: String,
             required: true,

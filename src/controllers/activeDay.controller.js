@@ -3,12 +3,13 @@ const fs = require('fs');
 const PDFDocument = require('pdfkit-table');
 const path = require('path');
 
-const {ActiveDay, Inventory, Sales, InventoryProduct, Crates, PaymentMethod, Payment, EmptyCrates} = require('../models');
+const {ActiveDay, Inventory, Sales, InventoryProduct, Crates, PaymentMethod, Payment, EmptyCrates, Stock, DistributionPoint, Producer} = require('../models');
 const catchAsync = require('../utils/catchAsync');
 const config = require('../config/config');
 const formatNumber = require('../utils/formatNumber');
 const {checkStock} = require('../controllers/stock.controller');
 const exportData = require('../utils/exportData');
+
 
 const generatePDF = async (stock, activeDay) => {
 
@@ -198,114 +199,14 @@ const generatePDF = async (stock, activeDay) => {
 
 };
 
-const generateSimplePDF = async (stock, activeDay) => {
-    const doc = new PDFDocument();
-    const fileName = `${activeDay.name}-daily-report.pdf`;
-    const filePath = path.join(__dirname, '..', '..', 'public', 'reports', fileName);
-    // Check if the file exists
-    if (fs.existsSync(filePath)) {
-        // If it exists, delete it
-        fs.unlink(filePath, (err) => {
-            if (err) {
-                console.error('Error deleting existing file:', err);
-                return;
-            }
-        });
-    }
-    const writeStream = fs.createWriteStream(filePath);
-    doc.pipe(writeStream);
-
-    // Header
-    doc.fontSize(18).text(`${config.name}  ${activeDay.name} Daily Report. \n\n\n\n`, 30, 30, {underline: true});
-
-    // Sales Section
-    doc.fontSize(13).text('Sales \n\n', 30, 60, {underline: true});
-
-    const sales = await Sales.find({activeDay: activeDay.id});
-
-    if (sales.length > 0) {
-        let totalSalesPrice = 0;
-        let remaining = 0;
-
-        sales.forEach((sale, index) => {
-            if (!sale.isFullyPaid) {
-                remaining += (sale.totalPrice - sale.amountPaid);
-            }
-            totalSalesPrice += sale.totalPrice;
-            if (index === (sales.length - 1)) {
-                doc.text(`Total: ${formatNumber(totalSalesPrice)} Rwf\n`, 30, undefined);
-                doc.text(`Paid: ${formatNumber(totalSalesPrice - remaining)} Rwf\n`, 30, undefined);
-                doc.text(`Credit: ${formatNumber(remaining)} Rwf\n`, 30, undefined);
-            }
-        });
-
-    } else {
-        doc.fontSize(13).text(`No Sales Were Made On ${activeDay.name}`, 30, undefined);
-    }
-
-
-
-    // Crates remaining
-    doc.fontSize(12).text('\n\n\n\nEmpty Crates \n\n', 30, undefined, {underline: true});
-
-    const emptyCrates = await EmptyCrates.find({activeDay: activeDay.id});
-
-    if (emptyCrates.length > 0) {
-        let totalECrates = 0;
-        let totalB = 0;
-
-        emptyCrates.forEach((ec, index) => {
-            totalECrates += parseInt(ec.number);
-            if (ec.isBrarirwa) totalB += parseInt(ec.number);
-
-            if (index === (emptyCrates.length - 1)) {
-                doc.text(`Brarirwa: ${formatNumber(totalB)}\n`);
-                doc.text(`Non-Brarirwa: ${formatNumber(totalECrates - totalB)}\n`);
-                doc.text(`Total: ${formatNumber(totalECrates)}\n`,);
-            }
-        });
-    } else {
-        doc.fontSize(13).text(`No Empty Crates Recorded On ${activeDay.name}.`);
-    }
-
-    // Inventory balancing
-    doc.fontSize(12).text('\n\n\n\nInventory \n\n', 30, undefined, {underline: true});
-    const iProducts = await InventoryProduct.find({stock: stock.id});
-
-    if (iProducts.length > 0) {
-        let initial = 0;
-        let added = 0;
-        let final = 0;
-        let cost = 0;
-
-        iProducts.forEach((product, index) => {
-            doc.text(`${product.name} ==>>  Initial:${formatNumber(product.prevDayRemaining)}  Added: ${formatNumber(product.dailyAdded)}  Cost:${formatNumber(product.dailyAdded * product.unitPrice)} Rwf  Final: ${formatNumber(product.totalAvailable)}  \n\n`,);
-
-            if (index === (iProducts.length - 1)) {
-                doc.text(`\nTotal  Initial: ${formatNumber(initial)}  Added: ${formatNumber(added)}  Cost: ${formatNumber(cost)} Rwf  Final: ${formatNumber(final)}  \n`);
-            }
-        });
-    } else {
-        doc.fontSize(13).text(`No Inventory Recorded ${activeDay.name}.`);
-    }
-
-
-    // Payment
-    doc.fontSize(12).text('\n\n\n\n Payment \n', 30, undefined, {underline: true});
-    const payments = await Payment.find({stock: stock.id, activeDay: activeDay.id});
-
-    if (payments.length > 0) {
-
-    } else {
-        doc.fontSize(13).text(`No Payments Recorded ${activeDay.name}.`);
-    }
-
-    doc.fontSize(10).font('Times-Bold').text(`\n\n\n\n ${stock.name}`, 30, undefined, {underline: true});
-    doc.end();
-    return fileName;
-};
-
 const monthlReport = async (stock, activeDay) => { };
+
+async function getEntityById(entityType, entityId) {
+    if (entityType === 'stock') return await Stock.findById(entityId);
+    if (entityType === 'distributionPoint') return await DistributionPoint.findById(entityId);
+    if (entityType === 'producer') return await Producer.findById(entityId);
+    return null;
+}
 
 const checkActive = async (dayId) => {
     const activeDay = await ActiveDay.findById(dayId);
@@ -317,19 +218,14 @@ const checkActive = async (dayId) => {
     }
 };
 
-const checkDay = async (stockId) => {
-    const activeDay = await ActiveDay.findOne({isActive: true, stock: stockId});
-
-    if (!activeDay) {
-        return null;
-    } else {
-        return activeDay;
-    }
+const checkDay = async (data) => {
+    const activeDay = await ActiveDay.findOne({isActive: true, [data.entityType]: data.entityId});
+    return activeDay || null;
 };
 
 const getActiveDay = catchAsync(async (req, res) => {
-
-    const activeDay = await ActiveDay.findOne({isActive: true, stock: req.query.stockId});
+    const {entityType, entityId} = req.body;
+    const activeDay = await checkDay({entityType, entityId});
 
     if (!activeDay) {
         return res.status(httpStatus.BAD_REQUEST).json({
@@ -347,7 +243,9 @@ const getActiveDay = catchAsync(async (req, res) => {
 
 const getActiveDays = catchAsync(async (req, res) => {
 
-    const activeDays = await ActiveDay.find({stock: req.query.stockId});
+    const {entityType, entityId} = req.query;
+
+    const activeDays = await ActiveDay.find({[entityType]: entityId});
 
     return res.status(httpStatus.OK).json({
         success: true,
@@ -357,17 +255,22 @@ const getActiveDays = catchAsync(async (req, res) => {
 });
 
 const startDay = catchAsync(async (req, res) => {
-    const stockId = req.query.stockId;
-    const stock = await checkStock(stockId);
+    const {id, entityType} = req.body;
 
-    if (!stock) {
-        return res.status(httpStatus.BAD_REQUEST).json({
+    let entity = await getEntityById(entityType, id);
+
+    if (!entity) {
+        return res.status(httpStatus.NOT_FOUND).json({
             success: false,
-            message: 'Stock Not Found.'
+            message: 'Entity Not Found.'
         });
     }
 
-    const activeDay = await ActiveDay.findOne({isActive: true, stock: stock.id});
+    // Check if there is already an active day associated with the entity
+    const activeDay = await ActiveDay.findOne({
+        [entityType]: id,
+        isActive: true
+    });
 
     if (activeDay) {
         return res.status(httpStatus.BAD_REQUEST).json({
@@ -383,7 +286,7 @@ const startDay = catchAsync(async (req, res) => {
 
     // Create active day for today
     daysToCreate.push({
-        stock: stock.id,
+        [entityType]: id,
         name: `${today.getDate()}-${today.getMonth() + 1}-${today.getFullYear()}`,
         type: 'day'
     });
@@ -391,7 +294,7 @@ const startDay = catchAsync(async (req, res) => {
     // If today is the last day of the month, create active day for the entire month
     if (today.getDate() === lastDayOfMonth) {
         daysToCreate.push({
-            stock: stock.id,
+            [entityType]: id,
             name: `${today.toLocaleString('default', {month: 'long'})}-${today.getFullYear()}`,
             type: 'month',
             isActive: false
@@ -403,12 +306,10 @@ const startDay = catchAsync(async (req, res) => {
 
     return res.status(httpStatus.CREATED).json({
         success: true,
-        message: 'Day Started Successfully.',
+        message: 'Day started successfully.',
         activeDay: createdDays.find(day => day.isActive)
     });
 });
-
-
 
 const endDay = catchAsync(async (req, res) => {
 

@@ -6,7 +6,16 @@ const paymentSchema = mongoose.Schema(
         stock: {
             type: mongoose.SchemaTypes.ObjectId,
             ref: 'Stock',
-            required: true,
+        },
+
+        producer: {
+            type: mongoose.SchemaTypes.ObjectId,
+            ref: 'Producer',
+        },
+
+        distributionPoint: {
+            type: mongoose.SchemaTypes.ObjectId,
+            ref: 'DistributionPoint',
         },
 
         customer: {
@@ -45,14 +54,19 @@ const paymentSchema = mongoose.Schema(
             type: String,
         },
 
-        isCreditPayment :{
+        isCreditPayment: {
             type: Boolean,
             default: false
         },
 
-        credit:{
+        credit: {
             type: mongoose.SchemaTypes.ObjectId,
             ref: 'Credit',
+        },
+
+        isMine: {
+            type: Boolean,
+            default: false
         }
     },
     {

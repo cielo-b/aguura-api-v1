@@ -11,3 +11,7 @@ module.exports.paymentMethodController = require('./paymentMethod.controller');
 module.exports.paymentController = require('./payment.controller');
 module.exports.stockController = require('./stock.controller');
 module.exports.expenseController = require('./expense.controller');
+module.exports.producerController = require('./producer.controller');
+module.exports.productController = require('./product.controller');
+module.exports.distributionPointController = require('./distributionPoint.controller');
+module.exports.emptyCratesController = require('./emptyCrates.controller');

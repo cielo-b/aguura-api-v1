@@ -3,9 +3,10 @@ const jwt = require('jsonwebtoken');
 const moment = require('moment');
 const catchAsync = require('../utils/catchAsync');
 const {authService, userService, tokenService} = require('../services');
-const {Token, User, Order, Stock} = require('../models');
+const {Token, User, Order, Stock, Sales} = require('../models');
 const {checkStock} = require('./stock.controller');
 const config = require('../config/config');
+const {tokenTypes} = require('../config/tokens');
 
 
 const register = catchAsync(async (req, res) => {
@@ -93,7 +94,14 @@ const setFCMToken = catchAsync(async (req, res) => {
 });
 
 const logout = catchAsync(async (req, res) => {
-    await authService.logout(req.body.refreshToken);
+    const tokenDoc = await Token.findOne({token: req.body.refreshToken, type: tokenTypes.REFRESH, blacklisted: false});
+    if (!tokenDoc) {
+        return res.status(httpStatus.BAD_REQUEST).json({
+            success: false,
+            message: 'Something Went Wrong.'
+        });
+    }
+    await tokenDoc.deleteOne();
     return res.status(httpStatus.OK).json({
         success: true,
         message: 'Logged Out Successfully',
@@ -121,7 +129,7 @@ const refreshTokens = catchAsync(async (req, res) => {
     }
     await tokenDoc.deleteOne();
     const tokens = await tokenService.generateAuthTokens(user);
-    
+
     // const current = tokens.refresh.token;
     // const prevTokens = await Token.find({user: user.id});
     // for (let token of prevTokens) {
@@ -204,17 +212,26 @@ const allCutomers = catchAsync(async (req, res) => {
 
     for (let i = 0; i < users.length; i++) {
         const u = users[i];
-        const orders = await Order.find({customer: u.id});
+        const orders = await Order.find({customer: u.id, stock: stockId});
         let totalOrdersAmount = 0;
         for (const order of orders) {
             totalOrdersAmount += order.totalPrice;
         }
+
+        const sales = await Sales.find({customer: u.id, stock: stockId});
+        let totalSales = 0;
+        for (const sale of sales) {
+            totalSales += sale.totalPrice;
+        }
+
         customers.push({
             name: u.fullName,
             phone: u.phone ? u.phone : '',
             totalOrders: orders.length,
             totalOrdersAmount: totalOrdersAmount,
-            id: u.id
+            id: u.id,
+            totalSales: sales.length,
+            totalSalesAmount: totalSales
         });
     }
 

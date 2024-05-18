@@ -2,24 +2,24 @@ const httpStatus = require('http-status');
 
 const {PaymentMethod} = require('../models');
 const catchAsync = require('../utils/catchAsync');
-const {checkStock} = require('./stock.controller');
+const {getEntityById} = require('./sales.controller');
 
 const newMethod = catchAsync(async (req, res) => {
 
-    const stockId = req.query.stockId;
-    const stock = await checkStock(stockId);
+    const {entityId, entityType, name} = req.body;
 
-    if (!stock) {
-        return res.status(httpStatus.BAD_REQUEST).json({
+    let entity = await getEntityById(entityType, entityId)
+
+    if (!entity) {
+        return res.status(httpStatus.NOT_FOUND).json({
             success: false,
-            message: 'Stock Not Found.'
+            message: 'Entity Not Found.'
         });
     }
 
-    const {name} = req.body;
     const methodName = name.replace(/\s/g, '').toLowerCase();
 
-    const method = await PaymentMethod.findOne({methodName, stock: stock.id});
+    const method = await PaymentMethod.findOne({methodName, [entityType]: entity.id});
 
     if (method) {
         return res.status(httpStatus.BAD_REQUEST).json({
@@ -28,7 +28,7 @@ const newMethod = catchAsync(async (req, res) => {
         });
     }
 
-    const newMethod = await PaymentMethod.create({name, methodName, stock: stock.id});
+    const newMethod = await PaymentMethod.create({name, methodName, [entityType]: entity.id});
 
     return res.status(httpStatus.CREATED).json({
         success: true,
@@ -51,10 +51,10 @@ const editMethod = catchAsync(async (req, res) => {
     }
 
 
-    const {name} = req.body;
+    const {name, entityType, entityId} = req.body;
     const methodName = name.replace(/\s/g, '').toLowerCase();
 
-    const _method = await PaymentMethod.findOne({methodName});
+    const _method = await PaymentMethod.findOne({methodName, [entityType]: entityId});
 
     if (_method) {
         return res.status(httpStatus.BAD_REQUEST).json({
@@ -77,7 +77,8 @@ const editMethod = catchAsync(async (req, res) => {
 });
 
 const allmethods = catchAsync(async (req, res) => {
-    const methods = await PaymentMethod.find({stock: req.query.stockId}, {methodName: 0});
+    const {entityType, entityId} = req.query;
+    const methods = await PaymentMethod.find({[entityType]: entityId}, {methodName: 0});
 
     return res.status(httpStatus.OK).json({
         success: true,

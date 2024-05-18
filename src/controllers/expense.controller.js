@@ -2,23 +2,22 @@ const httpStatus = require('http-status');
 
 const {Expense} = require('../models');
 const catchAsync = require('../utils/catchAsync');
-const {checkStock} = require('./stock.controller');
-const {checkDay} = require('./activeDay.controller');
+const {checkActive} = require('./activeDay.controller');
+const {getEntityById} = require('./sales.controller');
 
 const newExpense = catchAsync(async (req, res) => {
 
-    const stockId = req.query.stockId;
-    const stock = await checkStock(stockId);
+    const {entityId, entityType, dayId, name, amount} = req.body;
 
-    if (!stock) {
-        return res.status(httpStatus.BAD_REQUEST).json({
+    let entity = await getEntityById(entityType, entityId);
+    if (!entity) {
+        return res.status(httpStatus.NOT_FOUND).json({
             success: false,
-            message: 'Stock Not Found.'
+            message: 'Entity Not Found.'
         });
     }
 
-    const activeDay = await checkDay(stockId);
-
+    const activeDay = await checkActive(dayId);
     if (!activeDay) {
         return res.status(httpStatus.BAD_REQUEST).json({
             success: false,
@@ -26,9 +25,7 @@ const newExpense = catchAsync(async (req, res) => {
         });
     }
 
-    const {name, amount} = req.body;
-
-    const expense = await Expense.create({stock: stock.id, activeDay: activeDay.id, name, amount});
+    const expense = await Expense.create({[entityType]: entityId, activeDay: dayId, name, amount});
 
     if (!expense) {
         return res.status(httpStatus.BAD_REQUEST).json({
@@ -47,8 +44,9 @@ const newExpense = catchAsync(async (req, res) => {
 
 const editExpense = catchAsync(async (req, res) => {
 
-    const expense = await Expense.findById(req.params.id);
+    const {name, amount, id} = req.body;
 
+    const expense = await Expense.findById(id);
     if (!expense) {
         return res.status(httpStatus.BAD_REQUEST).json({
             success: false,
@@ -56,13 +54,10 @@ const editExpense = catchAsync(async (req, res) => {
         });
     }
 
-    const {name, amount} = req.body;
-
     expense.name = name ? name : expense.name;
     expense.amount = amount ? amount : expense.amount;
 
     await expense.save({validateBeforeSave: false});
-
 
     return res.status(httpStatus.CREATED).json({
         success: true,
@@ -73,7 +68,17 @@ const editExpense = catchAsync(async (req, res) => {
 
 const allExpenses = catchAsync(async (req, res) => {
 
-    const expenses = await Expense.find({stock: req.query.stockId});
+    const {entityId, entityType} = req.query;
+
+    let entity = await getEntityById(entityType, entityId);
+    if (!entity) {
+        return res.status(httpStatus.NOT_FOUND).json({
+            success: false,
+            message: 'Entity Not Found.'
+        });
+    }
+
+    const expenses = await Expense.find({[entityType]: entityId});
 
     return res.status(httpStatus.OK).json({
         success: true,
@@ -84,14 +89,23 @@ const allExpenses = catchAsync(async (req, res) => {
 
 const dailyExpenses = catchAsync(async (req, res) => {
 
-    const expenses = await Expense.find({stock: req.query.stockId, activeDay: req.query.activeDayId});
+    const {entityId, entityType, dayId} = req.query;
+
+    let entity = await getEntityById(entityType, entityId);
+    if (!entity) {
+        return res.status(httpStatus.NOT_FOUND).json({
+            success: false,
+            message: 'Entity Not Found.'
+        });
+    }
+
+    const expenses = await Expense.find({[entityType]: entityId, activeDay: dayId});
 
     return res.status(httpStatus.OK).json({
         success: true,
         expenses
     });
 });
-
 
 module.exports = {
     newExpense,

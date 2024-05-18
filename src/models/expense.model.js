@@ -3,10 +3,19 @@ const {toJSON} = require('./plugins');
 
 const expenseSchema = mongoose.Schema(
     {
+        producer: {
+            type: mongoose.SchemaTypes.ObjectId,
+            ref: 'Producer',
+        },
+
+        distributionPoint: {
+            type: mongoose.SchemaTypes.ObjectId,
+            ref: 'DistributionPoint',
+        },
+
         stock: {
             type: mongoose.SchemaTypes.ObjectId,
             ref: 'Stock',
-            required: true,
         },
 
         activeDay: {

@@ -6,18 +6,20 @@ const inventoryProductSchema = mongoose.Schema(
         stock: {
             type: mongoose.SchemaTypes.ObjectId,
             ref: 'Stock',
-            required: true,
         },
 
-        company: {
+        distributionPoint: {
             type: mongoose.SchemaTypes.ObjectId,
-            ref: 'Company',
+            ref: 'DistributionPoint',
+        },
+
+        product: {
+            type: mongoose.SchemaTypes.ObjectId,
+            ref: 'Product',
         },
 
         name: {
             type: String,
-            required: true,
-            trim: true,
         },
 
         totalAvailable: {
@@ -35,7 +37,6 @@ const inventoryProductSchema = mongoose.Schema(
             type: String,
             trim: true,
             lowercase: true,
-            required: true,
         },
 
         prevDayRemaining: {
@@ -54,12 +55,6 @@ const inventoryProductSchema = mongoose.Schema(
         timestamps: true,
     }
 );
-
-// Pre-save hook to ensure productName is updated based on name
-inventoryProductSchema.pre('save', function (next) {
-    this.productName = this.name.replace(/\s/g, '').toLowerCase();
-    next();
-});
 
 // add plugin that converts mongoose to json
 inventoryProductSchema.plugin(toJSON);

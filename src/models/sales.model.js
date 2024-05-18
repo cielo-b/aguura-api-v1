@@ -12,9 +12,23 @@ const salesSchema = mongoose.Schema(
         stock: {
             type: mongoose.SchemaTypes.ObjectId,
             ref: 'Stock',
-            required: true,
         },
-        
+
+        distributionPoint: {
+            type: mongoose.SchemaTypes.ObjectId,
+            ref: 'DistributionPoint',
+        },
+
+        producer: {
+            type: mongoose.SchemaTypes.ObjectId,
+            ref: 'Producer',
+        },
+
+        inventory: {
+            type: mongoose.SchemaTypes.ObjectId,
+            ref: 'Inventory',
+        },
+
         customer: {
             type: mongoose.SchemaTypes.ObjectId,
             ref: 'User',
@@ -22,10 +36,17 @@ const salesSchema = mongoose.Schema(
 
         products: [
             {
-                id: {
+                product: {
+                    type: mongoose.SchemaTypes.ObjectId,
+                    ref: 'Product',
+                },
+                salesProduct: {
                     type: mongoose.SchemaTypes.ObjectId,
                     ref: 'SalesProduct',
-                    required: true,
+                },
+                inventoryProduct: {
+                    type: mongoose.SchemaTypes.ObjectId,
+                    ref: 'InventoryProduct',
                 },
                 name: {
                     type: String,
@@ -89,11 +110,11 @@ const salesSchema = mongoose.Schema(
             required: true,
             default: true
         },
-        
+
         fromOrder: {
             type: Boolean,
             required: true,
-            default: true
+            default: false
         },
 
         customerName: {
@@ -103,6 +124,10 @@ const salesSchema = mongoose.Schema(
 
         customerPhone: {
             type: String,
+        },
+
+        purchase: {
+            type: Number,
         }
     },
     {

@@ -13,6 +13,10 @@ const paymentRoute = require('./payment.route');
 const paymentMethodRoute = require('./paymentMethod.route');
 const stockRoute = require('./stock.route');
 const expenseRoute = require('./expense.route');
+const producerRoute = require('./producer.route');
+const productRoute = require('./product.route');
+const distributionPointRoute = require('./distributionPoint.route');
+const emptyCratesRoute = require('./emptyCrates.route');
 
 const docsRoute = require('./docs.route');
 
@@ -70,6 +74,22 @@ const defaultRoutes = [
     {
         path: '/expense',
         route: expenseRoute,
+    },
+    {
+        path: '/producer',
+        route: producerRoute,
+    },
+    {
+        path: '/product',
+        route: productRoute,
+    },
+    {
+        path: '/distribution-point',
+        route: distributionPointRoute,
+    },
+    {
+        path: '/empty-crates',
+        route: emptyCratesRoute,
     },
 
     {

@@ -2,36 +2,40 @@ const httpStatus = require('http-status');
 
 const {Inventory, InventoryProduct} = require('../models');
 const catchAsync = require('../utils/catchAsync');
-const {checkActive, checkDay} = require('./activeDay.controller');
-const {checkStock} = require('./stock.controller');
+const {checkDay} = require('./activeDay.controller');
 const formatNumber = require('../utils/formatNumber');
+const {getEntityById} = require('./sales.controller');
 
 const newInventory = catchAsync(async (req, res) => {
 
-    const stockId = req.query.stockId;
-    const stock = await checkStock(stockId);
+    const {entityType, entityId, products: reqProducts, dayId} = req.body;
 
-    if (!stock) {
-        return res.status(httpStatus.BAD_REQUEST).json({
+    let entity = await getEntityById(entityType, entityId);
+    if (!entity) {
+        return res.status(httpStatus.NOT_FOUND).json({
             success: false,
-            message: 'Stock Not Found.'
+            message: 'Entity Not Found.'
         });
     }
 
-    const activeDay = await checkDay(stock.id);
-
+    const activeDay = await checkDay({entityType, entityId});
     if (!activeDay) {
         return res.status(httpStatus.BAD_REQUEST).json({
             success: false,
             message: 'No Active Day, Plz Start New Day And Try Again.'
         });
     }
+    if (activeDay.id.toString() !== dayId.toString()) {
+        return res.status(httpStatus.BAD_REQUEST).json({
+            success: false,
+            message: 'Active Days Mismatching.'
+        });
+    }
+
 
     let products = [];
     let totalPrice = 0;
     let description = ``;
-
-    const reqProducts = req.body.products;
 
     for (let i = 0; i < reqProducts.length; i++) {
         let reqProduct = reqProducts[i];
@@ -39,9 +43,9 @@ const newInventory = catchAsync(async (req, res) => {
 
         const inventoryProduct = {
             name: product.name,
-            quantity: parseFloat(reqProduct.quantity).toFixed(2),
+            quantity: parseFloat(reqProduct.quantity),
             unitPrice: product.price,
-            totalPrice: product.price * parseFloat(reqProduct.quantity).toFixed(2),
+            totalPrice: product.price * parseFloat(reqProduct.quantity),
             id: product.id
         };
 
@@ -50,7 +54,7 @@ const newInventory = catchAsync(async (req, res) => {
         description = description + `${inventoryProduct.name}: ${formatNumber(inventoryProduct.quantity)} x ${formatNumber(inventoryProduct.unitPrice)} = ${formatNumber(inventoryProduct.totalPrice)} Rwf\n`;
     }
 
-    const inventory = await Inventory.create({activeDay: activeDay.id, products, totalPrice, stock: stock.id, description});
+    const inventory = await Inventory.create({activeDay: activeDay.id, products, totalPrice, [entityType]: entityId, description});
 
     if (!inventory) {
         return res.status(httpStatus.BAD_REQUEST).json({
@@ -165,8 +169,18 @@ const editInventory = catchAsync(async (req, res) => {
 });
 
 const allInventory = catchAsync(async (req, res) => {
+    const {entityType, entityId} = req.query;
 
-    const inventories = await Inventory.find({stock: req.query.stockId});
+    let entity = await getEntityById(entityType, entityId);
+
+    if (!entity) {
+        return res.status(httpStatus.NOT_FOUND).json({
+            success: false,
+            message: 'Entity Not Found.'
+        });
+    }
+
+    const inventories = await Inventory.find({[entityType]: entityId});
 
     return res.status(httpStatus.OK).json({
         success: true,
@@ -177,17 +191,17 @@ const allInventory = catchAsync(async (req, res) => {
 
 const dailyInventory = catchAsync(async (req, res) => {
 
-    const dayId = req.params.dayId;
-    const activeDay = await checkActive(dayId);
+    const {entityId, entityType, dayId} = req.query;
 
-    if (!activeDay) {
-        return res.status(httpStatus.BAD_REQUEST).json({
+    let entity = await getEntityById(entityType, entityId);
+
+    if (!entity) {
+        return res.status(httpStatus.NOT_FOUND).json({
             success: false,
-            message: 'No Active Day, Plz Start New Day And Try Again.'
+            message: 'Entity Not Found.'
         });
     }
-
-    const inventories = await Inventory.find({activeDay: dayId});
+    const inventories = await Inventory.find({[entityType]: entityId, activeDay: dayId});
 
     return res.status(httpStatus.OK).json({
         success: true,

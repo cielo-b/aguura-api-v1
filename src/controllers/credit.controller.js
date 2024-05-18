@@ -73,7 +73,9 @@ const payCredit = catchAsync(async (req, res) => {
 
 
 const adminCredits = catchAsync(async (req, res) => {
-    const credits = await Credit.find({isFullyPaid: req.query.isFullyPaid, stock: req.query.stockId});
+    const {isFullyPaid, entityType, entityId} = req.query;
+
+    const credits = await Credit.find({isFullyPaid, [entityType]: entityId});
 
     return res.status(httpStatus.OK).json({
         success: true,

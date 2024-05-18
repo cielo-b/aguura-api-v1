@@ -6,13 +6,27 @@ const emptyCratesSchema = mongoose.Schema(
         stock: {
             type: mongoose.SchemaTypes.ObjectId,
             ref: 'Stock',
-            required: true,
         },
-        
+
+        distributionPoint: {
+            type: mongoose.SchemaTypes.ObjectId,
+            ref: 'DistributionPoint',
+        },
+
+        producer: {
+            type: mongoose.SchemaTypes.ObjectId,
+            ref: 'Producer',
+        },
+
         activeDay: {
             type: mongoose.SchemaTypes.ObjectId,
             ref: 'ActiveDay',
-            required: true,
+        },
+
+        product: {
+            type: mongoose.SchemaTypes.ObjectId,
+            ref: 'InventoryProduct',
+            required: true
         },
 
         name: {
@@ -23,12 +37,7 @@ const emptyCratesSchema = mongoose.Schema(
         number: {
             type: Number,
             required: true,
-        },
-
-        isBrarirwa: {
-            type: Boolean,
-            required: true
-        },
+        }
     },
     {
         timestamps: true,

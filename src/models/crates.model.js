@@ -6,7 +6,16 @@ const cratesSchema = mongoose.Schema(
         stock: {
             type: mongoose.SchemaTypes.ObjectId,
             ref: 'Stock',
-            required: true,
+        },
+
+        distributionPoint: {
+            type: mongoose.SchemaTypes.ObjectId,
+            ref: 'DistributionPoint',
+        },
+
+        producer: {
+            type: mongoose.SchemaTypes.ObjectId,
+            ref: 'Producer',
         },
 
         activeDay: {
@@ -58,6 +67,10 @@ const cratesSchema = mongoose.Schema(
         },
 
         customerPhone: {
+            type: String,
+        },
+
+        renderedTo: {
             type: String,
         }
     },

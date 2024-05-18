@@ -46,7 +46,13 @@ const userSchema = mongoose.Schema(
 
         fcmToken: {
             type: String
-        }
+        },
+
+        monthlyPayment: {
+            type: Number,
+            required: true,
+            default: parseFloat(0)
+        },
     },
     {
         timestamps: true,

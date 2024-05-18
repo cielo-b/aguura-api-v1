@@ -20,6 +20,11 @@ const stockShema = mongoose.Schema(
             required: true,
         },
 
+        location: {
+            type: String,
+            required: true,
+        },
+
         description: {
             type: String,
             required: true,
@@ -43,7 +48,7 @@ const stockShema = mongoose.Schema(
             required: true,
             enum: [
                 'pharmacy',
-                'beer',
+                'drinks',
                 'fashion',
                 'electronics',
                 'others'
