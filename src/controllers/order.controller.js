@@ -125,7 +125,7 @@ const completeOrder = catchAsync(async (req, res) => {
 
         if (producer) {
             let customers = producer.customers;
-            let stockIndex = customers.findIndex(d => d.id.toString() === customerId.toString());
+            let stockIndex = customers.findIndex(d => d.id.toString() === order.customer.toString());
 
             if (stockIndex !== -1) {
                 customers[stockIndex].totalPurchases -= parseFloat(iPurchase);
