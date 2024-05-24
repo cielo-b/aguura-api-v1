@@ -134,6 +134,32 @@ const completeOrder = catchAsync(async (req, res) => {
                 await producer.save({validateBeforeSave: false});
             }
         }
+    } else if (entityType === 'distributionPoint') {
+        const reqProducts = order.products;
+        const distributorProducts = await InventoryProduct.find({distributionPoint: order.distributionPoint});
+
+        for (let i = 0; i < reqProducts.length; i++) {
+            let reqProduct = reqProducts[i];
+            const distProduct = distributorProducts.find(p => p._id.toString() === reqProduct.id.toString());
+
+            // === update dist products ===
+            if (distProduct) {
+                distProduct.totalAvailable -= parseFloat(reqProduct.quantity);
+                await distProduct.save({validateBeforeSave: false});
+            }
+        }
+    } else {
+        const reqProducts = order.products;
+        for (let i = 0; i < reqProducts.length; i++) {
+            let reqProduct = reqProducts[i];
+            const product = await Product.findById(reqProduct.id);
+
+            // === update producer products ===
+            if (product) {
+                product.totalAvailable -= parseFloat(reqProduct.quantity);
+                await product.save({validateBeforeSave: false});
+            }
+        }
     }
 
     // if not fully paid, create new credit
@@ -211,7 +237,7 @@ const inventOrder = catchAsync(async (req, res) => {
     let iDescription = ``;
 
     // update inventory products availability
-    if (entityType === 'producer') {
+    if (entityType === 'distributionPoint') {
         const distributor = await DistributionPoint.findById(order.distributionPoint);
         const distributionProducts = await InventoryProduct.find({distributionPoint: distributor._id});
         const reqProducts = order.products;
@@ -246,16 +272,26 @@ const inventOrder = catchAsync(async (req, res) => {
                 let reqProduct = reqProducts[i];
                 let product = await InventoryProduct.findOne({distributionPoint: distributor._id, product: reqProduct.id});
 
-                product.totalAvailable = parseFloat(product.totalAvailable) + parseFloat(reqProduct.quantity);
-                product.dailyAdded = parseFloat(product.dailyAdded) + parseFloat(reqProduct.quantity);
+                product.totalAvailable += parseFloat(reqProduct.quantity);
+                product.dailyAdded += parseFloat(reqProduct.quantity);
                 await product.save({validateBeforeSave: false});
 
                 // update empty
-                // const eCrate = await EmptyCrates.findOne({product: product._id});
-                // if (eCrate) {
-                //     eCrate.number -= parseFloat(reqProduct.quantity);
-                //     await eCrate.save({validateBeforeSave: false});
-                // }
+
+                // distributor
+                const eCrate = await EmptyCrates.findOne({product: product._id});
+                if (eCrate) {
+                    eCrate.number -= parseFloat(reqProduct.quantity);
+                    await eCrate.save({validateBeforeSave: false});
+                }
+
+                // producer
+                const _product = await Product.findById(product.product);
+                const _eCrate = await EmptyCrates.findOne({product: _product._id});
+                if (_eCrate) {
+                    _eCrate.number += parseFloat(reqProduct.quantity);
+                    await _eCrate.save({validateBeforeSave: false});
+                }
             }
 
             // Update distributor purchases
@@ -268,7 +304,7 @@ const inventOrder = catchAsync(async (req, res) => {
                 await entity.save({validateBeforeSave: false});
             }
         }
-    } else if (entityType === 'distributionPoint') {
+    } else if (entityType === 'stock') {
         const stock = await Stock.findById(order.stock);
         const stockProducts = await InventoryProduct.find({stock: stock._id});
         const distributorProducts = await InventoryProduct.find({distributionPoint: order.distributionPoint});
@@ -315,18 +351,27 @@ const inventOrder = catchAsync(async (req, res) => {
                         product.dailyAdded = parseFloat(product.dailyAdded) + parseFloat(reqProduct.quantity);
                         await product.save({validateBeforeSave: false});
 
-                        // update empty
+                        // update empty to be checked
+                        
+                        // stock
                         const eCrate = await EmptyCrates.findOne({product: product._id});
                         if (eCrate) {
                             eCrate.number -= parseFloat(reqProduct.quantity);
                             await eCrate.save({validateBeforeSave: false});
                         }
+
+                        // distributor
+                        const _eCrate = await EmptyCrates.findOne({product: distProduct._id});
+                        if (_eCrate) {
+                            _eCrate.number += parseFloat(reqProduct.quantity);
+                            await _eCrate.save({validateBeforeSave: false});
+                        }
                     }
                 }
 
                 // === update dist products ===
-                distProduct.totalAvailable = parseFloat(distProduct.totalAvailable) - parseFloat(reqProduct.quantity);
-                await distProduct.save({validateBeforeSave: false});
+                // distProduct.totalAvailable = parseFloat(distProduct.totalAvailable) - parseFloat(reqProduct.quantity);
+                // await distProduct.save({validateBeforeSave: false});
 
                 // === find producer ===
                 if (!producer) {

@@ -13,6 +13,11 @@ const inventorySchema = mongoose.Schema(
             ref: 'DistributionPoint',
         },
 
+        producer: {
+            type: mongoose.SchemaTypes.ObjectId,
+            ref: 'Producer',
+        },
+
         activeDay: {
             type: mongoose.SchemaTypes.ObjectId,
             ref: 'ActiveDay',

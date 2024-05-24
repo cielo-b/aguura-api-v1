@@ -116,10 +116,11 @@ const addStockProducts = catchAsync(async (req, res) => {
     for (let p of products) {
         const productName = p.name.replace(/\s/g, '').toLowerCase();
         if (isByProducer) {
-            const product = await Product.findById(p.productId);
+            const product = await InventoryProduct.findById(p.productId);
+            const saleProduct = await SalesProduct.findOne({inventoryProduct: product.id});
             if (product) {
                 producers.push(product.producer);
-                _products.push({productName, name: product.name, product: product.id, salePrice: p.price, price: p.purchasePrice, stock: stock.id});
+                _products.push({productName, name: product.name, product: product.id, salePrice: p.price, price: saleProduct.price, stock: stock.id});
             }
         } else {
             _products.push({productName, name: p.name, salePrice: p.price, price: p.purchasePrice, stock: stock.id});

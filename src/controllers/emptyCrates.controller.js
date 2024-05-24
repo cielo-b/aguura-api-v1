@@ -2,7 +2,7 @@ const httpStatus = require('http-status');
 
 const catchAsync = require('../utils/catchAsync');
 const {getEntityById} = require('./sales.controller');
-const {InventoryProduct, EmptyCrates} = require('../models');
+const {InventoryProduct, EmptyCrates, Product} = require('../models');
 
 const registerEmptyCrates = catchAsync(async (req, res) => {
     const {entityId, entityType, products} = req.body;
@@ -16,7 +16,7 @@ const registerEmptyCrates = catchAsync(async (req, res) => {
     }
 
     for (let p of products) {
-        const product = await InventoryProduct.findById(p.id);
+        const product = entityType !== 'producer' ? await InventoryProduct.findById(p.id) : await Product.findById(p.id);
         if (product) {
             await EmptyCrates.create({[entityType]: entityId, name: product.name, product: product.id, number: parseFloat(p.number)});
         }

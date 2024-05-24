@@ -26,31 +26,65 @@ async function updateProducerInventory(initials, distributor) {
     for (const iProduct of initials) {
         const inP = await InventoryProduct.findOne({distributionPoint: distributor?._id, product: iProduct.id});
         if (inP) {
-            inP.totalAvailable = parseFloat(inP.totalAvailable) + parseFloat(iProduct.quantity);
+            // distributor
+            inP.totalAvailable -= parseFloat(iProduct.quantity);
             await inP.save({validateBeforeSave: false});
 
+            // producer
+            const product = await Product.findById(inP.product);
+            if (product) {
+                product.totalAvailable += parseFloat(iProduct.quantity);
+                await product.save({validateBeforeSave: false});
+            }
+
             // update empty
-            const eCrate = await EmptyCrates.findOne({product: inP._id});
+
+            // producer
+            const eCrate = await EmptyCrates.findOne({product: product._id});
             if (eCrate) {
                 eCrate.number -= parseFloat(iProduct.quantity);
                 await eCrate.save({validateBeforeSave: false});
+            }
+
+            // distributor
+            const _eCrate = await EmptyCrates.findOne({product: inP._id});
+            if (_eCrate) {
+                _eCrate.number += parseFloat(iProduct.quantity);
+                await _eCrate.save({validateBeforeSave: false});
             }
         }
     }
 }
 
-async function updateDistributorInventory(initials, stock) {
+async function updateDistributorInventory(initials, stock, distributionPoint) {
     for (const iProduct of initials) {
         const inP = await InventoryProduct.findOne({stock: stock?._id, productName: iProduct.productName});
         if (inP) {
-            inP.totalAvailable = parseFloat(inP.totalAvailable) + parseFloat(iProduct.quantity);
+            // stock
+            inP.totalAvailable -= parseFloat(iProduct.quantity);
             await inP.save({validateBeforeSave: false});
 
+            // distributor
+            const product = await InventoryProduct.findOne({distributionPoint, productName: iProduct.productName});
+            if (product) {
+                product.totalAvailable += parseFloat(iProduct.quantity);
+                await product.save({validateBeforeSave: false});
+            }
+
             // update empty
-            const eCrate = await EmptyCrates.findOne({product: inP._id});
+
+            // distributor
+            const eCrate = await EmptyCrates.findOne({product: product._id});
             if (eCrate) {
                 eCrate.number -= parseFloat(iProduct.quantity);
                 await eCrate.save({validateBeforeSave: false});
+            }
+
+            // stock
+            const _eCrate = await EmptyCrates.findOne({product: inP._id});
+            if (_eCrate) {
+                _eCrate.number += parseFloat(iProduct.quantity);
+                await _eCrate.save({validateBeforeSave: false});
             }
         }
     }
@@ -60,6 +94,7 @@ async function updateInventory(initials) {
     for (const iProduct of initials) {
         const sIProduct = await SalesProduct.findById(iProduct.id);
         const inP = await InventoryProduct.findById(sIProduct.inventoryProduct);
+
         inP.totalAvailable += parseFloat(iProduct.quantity);
         await inP.save({validateBeforeSave: false});
 
@@ -180,14 +215,31 @@ async function updateInventoryProducts(distributorId, reqProducts, inventoryId, 
         let reqProduct = reqProducts[i];
         let product = await InventoryProduct.findOne({distributionPoint: distributorId, productName: reqProduct.productName});
 
-        product.totalAvailable = parseFloat(product.totalAvailable) - parseFloat(reqProduct.quantity);
+        // distributor
+        product.totalAvailable += parseFloat(reqProduct.quantity);
         await product.save({validateBeforeSave: false});
 
+        // producer
+        const _product = await Product.findById(inP.product);
+        if (_product) {
+            _product.totalAvailable -= parseFloat(reqProduct.quantity);
+            await product.save({validateBeforeSave: false});
+        }
+
         // update empty
+
+        // distributor
         const eCrate = await EmptyCrates.findOne({product: product._id});
         if (eCrate) {
-            eCrate.number += parseFloat(reqProduct.quantity);
+            eCrate.number -= parseFloat(reqProduct.quantity);
             await eCrate.save({validateBeforeSave: false});
+        }
+
+        // producer
+        const _eCrate = await EmptyCrates.findOne({product: _product._id});
+        if (_eCrate) {
+            _eCrate.number += parseFloat(reqProduct.quantity);
+            await _eCrate.save({validateBeforeSave: false});
         }
     }
 
@@ -238,16 +290,34 @@ async function updateStockProducts(stockId, reqProducts, inventoryId, iPurchase)
     // update inventory products availability
     for (let i = 0; i < reqProducts.length; i++) {
         let reqProduct = reqProducts[i];
-        let product = await InventoryProduct.findOne({stock: stockId, productName: reqProduct.productName});
 
-        product.totalAvailable = parseFloat(product.totalAvailable) - parseFloat(reqProduct.quantity);
+        // stock
+        let product = await InventoryProduct.findOne({stock: stockId, productName: reqProduct.productName});
+        product.totalAvailable += parseFloat(reqProduct.quantity);
         await product.save({validateBeforeSave: false});
 
+
+        // distributor
+        const _product = await InventoryProduct.findById(reqProduct.id);
+        if (_product) {
+            _product.totalAvailable -= parseFloat(reqProduct.quantity);
+            await _product.save({validateBeforeSave: false});
+        }
+
         // update empty
+
+        // stock
         const eCrate = await EmptyCrates.findOne({product: product._id});
         if (eCrate) {
-            eCrate.number += parseFloat(reqProduct.quantity);
+            eCrate.number -= parseFloat(reqProduct.quantity);
             await eCrate.save({validateBeforeSave: false});
+        }
+
+        // distributor
+        const _eCrate = await EmptyCrates.findOne({product: _product._id});
+        if (_eCrate) {
+            _eCrate.number += parseFloat(reqProduct.quantity);
+            await _eCrate.save({validateBeforeSave: false});
         }
     }
 
@@ -497,40 +567,6 @@ const newSales = catchAsync(async (req, res) => {
         }
     }
 
-    // update inventory products availability
-    if (entityType === 'distributionPoint') {
-        for (let i = 0; i < reqProducts.length; i++) {
-            let reqProduct = reqProducts[i];
-            let inventoryProduct = await InventoryProduct.findById(reqProduct.id);
-
-            inventoryProduct.totalAvailable = (parseFloat(inventoryProduct.totalAvailable) - parseFloat(reqProduct.quantity));
-            await inventoryProduct.save({validateBeforeSave: false});
-
-            // update empty crates
-            const emptyCrate = await EmptyCrates.findOne({product: inventoryProduct?.id});
-            if (emptyCrate) {
-                emptyCrate.number += parseFloat(reqProduct.quantity);
-                await emptyCrate.save({validateBeforeSave: false});
-            }
-        }
-    } else if (entityType === 'stock') {
-        for (let i = 0; i < reqProducts.length; i++) {
-            let reqProduct = reqProducts[i];
-            let product = await SalesProduct.findById(reqProduct.id);
-            let inventoryProduct = await InventoryProduct.findById(product.inventoryProduct);
-
-            inventoryProduct.totalAvailable = (parseFloat(inventoryProduct.totalAvailable) - parseFloat(reqProduct.quantity));
-            await inventoryProduct.save({validateBeforeSave: false});
-
-            // update empty crates
-            const emptyCrate = await EmptyCrates.findOne({product: inventoryProduct?.id});
-            if (emptyCrate) {
-                emptyCrate.number += parseFloat(reqProduct.quantity);
-                await emptyCrate.save({validateBeforeSave: false});
-            }
-        }
-    }
-
     // if not fully paid, create new credit
     if (!isFullyPaid) {
         let obj = {activeDay: activeDay.id, [entityType]: entityId, sales: sales.id, totalAmount: totalPrice - amountPaid, description, customer, customerName, customerPhone};
@@ -588,11 +624,34 @@ const newSales = catchAsync(async (req, res) => {
             // update inventory products availability
             for (let i = 0; i < reqProducts.length; i++) {
                 let reqProduct = reqProducts[i];
-                let product = await InventoryProduct.findOne({distributionPoint: distributor._id, productName: reqProduct.productName});
 
-                product.totalAvailable = parseFloat(product.totalAvailable) + parseFloat(reqProduct.quantity);
-                product.dailyAdded = parseFloat(product.dailyAdded) + parseFloat(reqProduct.quantity);
+                // distributor
+                let product = await InventoryProduct.findOne({distributionPoint: distributor._id, productName: reqProduct.productName});
+                product.totalAvailable += parseFloat(reqProduct.quantity);
+                product.dailyAdded += parseFloat(reqProduct.quantity);
                 await product.save({validateBeforeSave: false});
+
+                // producer
+                let _product = await Product.findById(reqProduct.id);
+                _product.totalAvailable -= parseFloat(reqProduct.quantity);
+                await _product.save({validateBeforeSave: false});
+
+                // update empty crates
+
+                // producer
+                const emptyCrate = await EmptyCrates.findOne({product: _product?.id});
+                if (emptyCrate) {
+                    emptyCrate.number += parseFloat(reqProduct.quantity);
+                    await emptyCrate.save({validateBeforeSave: false});
+                }
+
+                // distributor
+                const eCrate = await EmptyCrates.findOne({product: product._id});
+                if (eCrate) {
+                    eCrate.number -= parseFloat(reqProduct.quantity);
+                    await eCrate.save({validateBeforeSave: false});
+                }
+
             }
 
             // Update distributor purchases
@@ -644,18 +703,33 @@ const newSales = catchAsync(async (req, res) => {
             // update inventory products availability
             for (let i = 0; i < reqProducts.length; i++) {
                 let reqProduct = reqProducts[i];
-                let product = await InventoryProduct.findOne({stock: stock._id, productName: reqProduct.productName});
 
-                product.totalAvailable = parseFloat(product.totalAvailable) - parseFloat(reqProduct.quantity);
+                // stock
+                let product = await InventoryProduct.findOne({stock: stock._id, productName: reqProduct.productName});
+                product.totalAvailable += parseFloat(reqProduct.quantity);
+                product.dailyAdded += parseFloat(reqProduct.quantity);
                 await product.save({validateBeforeSave: false});
 
-                // update empty
-                const eCrate = await EmptyCrates.findOne({product: product._id});
+                // distributor
+                let _product = await InventoryProduct.findById(reqProduct.id);
+                _product.totalAvailable -= parseFloat(reqProduct.quantity);
+                await _product.save({validateBeforeSave: false});
+
+                // update empty crates
+
+                // distributor
+                const eCrate = await EmptyCrates.findOne({product: _product._id});
                 if (eCrate) {
                     eCrate.number += parseFloat(reqProduct.quantity);
                     await eCrate.save({validateBeforeSave: false});
                 }
 
+                // stock
+                const _eCrate = await EmptyCrates.findOne({product: product._id});
+                if (_eCrate) {
+                    _eCrate.number -= parseFloat(reqProduct.quantity);
+                    await _eCrate.save({validateBeforeSave: false});
+                }
 
 
                 if (!producer) {
@@ -713,6 +787,7 @@ const newSales = catchAsync(async (req, res) => {
         let total = 0;
 
         // update inventory products availability
+
         for (let i = 0; i < reqProducts.length; i++) {
             let reqProduct = reqProducts[i];
             let salesProduct = await SalesProduct.findById(reqProduct.id);
@@ -826,7 +901,7 @@ const editSales = catchAsync(async (req, res) => {
             let name = p.name.replace(/\s/g, '').toLowerCase();
             initials.push({id: p.product, quantity: p.quantity, productName: name});
         }
-        await updateDistributorInventory(initials, distributor);
+        await updateDistributorInventory(initials, stock, entityId);
     } else {
         for (const p of salesProducts) {
             initials.push({id: p.salesProduct, quantity: p.quantity});

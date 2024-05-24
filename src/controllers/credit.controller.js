@@ -1,6 +1,6 @@
 const httpStatus = require('http-status');
 
-const {Credit, Sales, PaymentMethod, Payment} = require('../models');
+const {Credit, Sales, PaymentMethod, Payment, Producer, DistributionPoint} = require('../models');
 const catchAsync = require('../utils/catchAsync');
 const formatNumber = require('../utils/formatNumber');
 
@@ -75,7 +75,11 @@ const payCredit = catchAsync(async (req, res) => {
 const adminCredits = catchAsync(async (req, res) => {
     const {isFullyPaid, entityType, entityId} = req.query;
 
-    const credits = await Credit.find({isFullyPaid, [entityType]: entityId});
+    const credits = entityType === 'producer' ?
+        await Credit.find({isFullyPaid, [entityType]: entityId}) :
+        entityType === 'distributionPoint' ?
+            await Credit.find({isFullyPaid, [entityType]: entityId, producer: {$eq: null}}) :
+            await Credit.find({isFullyPaid, [entityType]: entityId, distributionPoint: {$eq: null}, producer: {$eq: null}});
 
     return res.status(httpStatus.OK).json({
         success: true,
@@ -95,8 +99,48 @@ const myCredits = catchAsync(async (req, res) => {
 
 });
 
+const entityCredits = catchAsync(async (req, res) => {
+
+    const {entityType, entityId} = req.query;
+
+    let credits = entityType === 'distributionPoint' ?
+        await Credit.find({isFullyPaid: false, [entityType]: entityId, producer: {$ne: null}}) :
+        await Credit.find({isFullyPaid: false, [entityType]: entityId, distributionPoint: {$ne: null}, producer: {$eq: null}});
+
+    credits = await Promise.all(credits.map(async credit => {
+        if (entityType === 'distributionPoint') {
+            const producer = await Producer.findById(credit.producer).populate('manager');
+
+            return {
+                name: producer.name,
+                phone: producer.manager.phone,
+                description: credit.description,
+                totalAmount: credit.totalAmount,
+                amountPaid: credit.amountPaid,
+            };
+        } else {
+            const distributor = await DistributionPoint.findById(credit.distributionPoint).populate('manager');
+
+            return {
+                name: distributor.name,
+                phone: distributor.manager.phone,
+                description: credit.description,
+                totalAmount: credit.totalAmount,
+                amountPaid: credit.amountPaid,
+            };
+        }
+    }));
+
+    return res.status(httpStatus.OK).json({
+        success: true,
+        credits
+    });
+
+});
+
 module.exports = {
     payCredit,
     adminCredits,
-    myCredits
+    myCredits,
+    entityCredits
 };

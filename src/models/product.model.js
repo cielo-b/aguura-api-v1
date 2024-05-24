@@ -22,6 +22,18 @@ const productSchema = mongoose.Schema(
         price: {
             type: Number,
             required: true,
+        },
+
+        totalAvailable: {
+            type: Number,
+            required: true,
+            default: parseFloat('0')
+        },
+
+        dailyAdded: {
+            type: Number,
+            required: true,
+            default: parseFloat('0')
         }
     },
     {

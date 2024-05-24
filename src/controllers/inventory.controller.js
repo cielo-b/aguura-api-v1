@@ -1,10 +1,11 @@
 const httpStatus = require('http-status');
 
-const {Inventory, InventoryProduct} = require('../models');
+const {Inventory, InventoryProduct, Product} = require('../models');
 const catchAsync = require('../utils/catchAsync');
 const {checkDay} = require('./activeDay.controller');
 const formatNumber = require('../utils/formatNumber');
 const {getEntityById} = require('./sales.controller');
+const {compareSync} = require('bcryptjs');
 
 const newInventory = catchAsync(async (req, res) => {
 
@@ -39,7 +40,7 @@ const newInventory = catchAsync(async (req, res) => {
 
     for (let i = 0; i < reqProducts.length; i++) {
         let reqProduct = reqProducts[i];
-        let product = await InventoryProduct.findById(reqProduct.id);
+        let product = entityType === 'producer' ? await Product.findById(reqProduct.id) : await InventoryProduct.findById(reqProduct.id);
 
         const inventoryProduct = {
             name: product.name,
@@ -66,10 +67,10 @@ const newInventory = catchAsync(async (req, res) => {
     // update inventory products availability
     for (let i = 0; i < reqProducts.length; i++) {
         let reqProduct = reqProducts[i];
-        let product = await InventoryProduct.findById(reqProduct.id);
+        let product = entityType === 'producer' ? await Product.findById(reqProduct.id) : await InventoryProduct.findById(reqProduct.id);
 
-        product.totalAvailable = parseFloat(product.totalAvailable) + parseFloat(reqProduct.quantity);
-        product.dailyAdded = parseFloat(product.dailyAdded) + parseFloat(reqProduct.quantity);
+        product.totalAvailable += parseFloat(reqProduct.quantity);
+        product.dailyAdded += parseFloat(reqProduct.quantity);
         await product.save({validateBeforeSave: false});
     }
 
@@ -94,6 +95,8 @@ const editInventory = catchAsync(async (req, res) => {
         });
     }
 
+    let entityType = inventory.producer ? 'producer' : inventory.distributionPoint ? 'distributionPoint' : 'stock';
+
     let products = [];
     let totalPrice = 0;
     let description = ``;
@@ -111,7 +114,7 @@ const editInventory = catchAsync(async (req, res) => {
 
     for (let i = 0; i < reqProducts.length; i++) {
         let reqProduct = reqProducts[i];
-        let product = await InventoryProduct.findById(reqProduct.id);
+        let product = entityType === 'producer' ? await Product.findById(reqProduct.id) : await InventoryProduct.findById(reqProduct.id);
 
         const inventoryProduct = {
             name: product.name,
@@ -141,9 +144,9 @@ const editInventory = catchAsync(async (req, res) => {
     for (let i = 0; i < initials.length; i++) {
         let iP = initials[i];
         if (iP) {
-            let p = await InventoryProduct.findById(iP.id);
-            p.totalAvailable -= parseFloat(iP.quantity); // Subtract without converting to strings
-            p.dailyAdded -= parseFloat(iP.quantity); // Subtract without converting to strings
+            let p = entityType === 'producer' ? await Product.findById(iP.id) : await InventoryProduct.findById(iP.id);
+            p.totalAvailable -= parseFloat(iP.quantity);
+            p.dailyAdded -= parseFloat(iP.quantity);
             await p.save({validateBeforeSave: false});
         }
     }
@@ -151,10 +154,9 @@ const editInventory = catchAsync(async (req, res) => {
     // update inventory products availability
     for (let i = 0; i < reqProducts.length; i++) {
         let reqProduct = reqProducts[i];
-        let product = await InventoryProduct.findById(reqProduct.id);
-
-        product.totalAvailable += parseFloat(reqProduct.quantity); // Add without converting to strings
-        product.dailyAdded += parseFloat(reqProduct.quantity); // Add without converting to strings
+        let product = entityType === 'producer' ? await Product.findById(reqProduct.id) : await InventoryProduct.findById(reqProduct.id);
+        product.totalAvailable += parseFloat(reqProduct.quantity);
+        product.dailyAdded += parseFloat(reqProduct.quantity);
         await product.save({validateBeforeSave: false});
     }
 

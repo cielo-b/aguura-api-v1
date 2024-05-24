@@ -94,13 +94,13 @@ const getAllDistributionPoints = catchAsync(async (req, res) => {
         });
     }
 
-    let distributionPoints = await DistributionPoint.find({});
+    let distributionPoints = await DistributionPoint.find({}).populate('manager')
 
     distributionPoints = await Promise.all(distributionPoints.map(async (distributionPoint) => {
-
+        
         let products = await InventoryProduct.find({distributionPoint: distributionPoint.id, totalAvailable: {$gt: 0}});
 
-        products = Promise.all(products.map(async p => {
+        products = await Promise.all(products.map(async p => {
             const saleProduct = await SalesProduct.findOne({inventoryProduct: p._id});
             if (saleProduct) {
                 return {
@@ -112,7 +112,7 @@ const getAllDistributionPoints = catchAsync(async (req, res) => {
                 };
             }
         }));
-
+        
         return {
             managerName: distributionPoint.manager.fullName,
             managerPhone: distributionPoint.manager.phone,
