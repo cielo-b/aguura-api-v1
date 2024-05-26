@@ -106,7 +106,8 @@ const getAllProducers = catchAsync(async (req, res) => {
             return {
                 name: p.name,
                 id: p._id,
-                price: p.price
+                price: p.price,
+                total: p.totalAvailable,
             };
         });
 

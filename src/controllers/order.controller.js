@@ -205,6 +205,7 @@ const completeOrder = catchAsync(async (req, res) => {
 });
 
 const inventOrder = catchAsync(async (req, res) => {
+
     const {entityType, entityId, id, activeDay} = req.body;
 
     let entity = await getEntityById(entityType, entityId);
@@ -262,6 +263,8 @@ const inventOrder = catchAsync(async (req, res) => {
 
         const inventory = await Inventory.create({activeDay, products: iProducts, totalPrice: iTotalPrice, distributionPoint: distributor._id, description: iDescription});
         if (inventory) {
+            let producer = null;
+
             if (sales) {
                 sales.inventory = inventory.id;
                 await sales.save({validateBeforeSave: false});
@@ -287,6 +290,9 @@ const inventOrder = catchAsync(async (req, res) => {
 
                 // producer
                 const _product = await Product.findById(product.product);
+                if (_product) {
+                    producer = await Producer.findById(_product.producer);
+                }
                 const _eCrate = await EmptyCrates.findOne({product: _product._id});
                 if (_eCrate) {
                     _eCrate.number += parseFloat(reqProduct.quantity);
@@ -295,15 +301,19 @@ const inventOrder = catchAsync(async (req, res) => {
             }
 
             // Update distributor purchases
-            let distributors = entity.distributionPoints;
-            let distributorIndex = distributors.findIndex(d => d.id.toString() === distributor._id.toString());
+            if (producer) {
 
-            if (distributorIndex !== -1) {
-                distributors[distributorIndex].totalPurchases += parseFloat(order.totalPrice);
-                entity.distributionPoints = distributors;
-                await entity.save({validateBeforeSave: false});
+                let distributors = producer.distributionPoints;
+                let distributorIndex = distributors.findIndex(d => d.id.toString() === distributor._id.toString());
+
+                if (distributorIndex !== -1) {
+                    distributors[distributorIndex].totalPurchases += parseFloat(order.totalPrice);
+                    entity.distributionPoints = distributors;
+                    await entity.save({validateBeforeSave: false});
+                }
             }
         }
+
     } else if (entityType === 'stock') {
         const stock = await Stock.findById(order.stock);
         const stockProducts = await InventoryProduct.find({stock: stock._id});
@@ -352,7 +362,7 @@ const inventOrder = catchAsync(async (req, res) => {
                         await product.save({validateBeforeSave: false});
 
                         // update empty to be checked
-                        
+
                         // stock
                         const eCrate = await EmptyCrates.findOne({product: product._id});
                         if (eCrate) {
