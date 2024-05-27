@@ -79,7 +79,7 @@ const allProducts = catchAsync(async (req, res) => {
 
     for (let i = 0; i < products.length; i++) {
         const ip = await InventoryProduct.findById(products[i].inventoryProduct);
-        const product = await Product.findOne({productName: ip.productName})
+        const product = await Product.findOne({productName: ip.productName});
         resProducts.push({
             name: ip.name,
             price: products[i].price,
@@ -97,23 +97,37 @@ const allProducts = catchAsync(async (req, res) => {
 
 const availableProducts = catchAsync(async (req, res) => {
 
-    const products = await SalesProduct.find({stock: req.query.stockId}).populate('inventoryProduct');
-    let resProducts = [];
+    let products = await SalesProduct.find({stock: req.query.stockId});
 
-    for (let i = 0; i < products.length; i++) {
-        if (parseInt(products[i].inventoryProduct.totalAvailable) > 0) {
-            resProducts.push({
-                name: products[i].inventoryProduct.name,
-                price: products[i].price,
-                id: products[i]._id,
-                number: products[i].inventoryProduct.totalAvailable,
-            });
-        }
-    }
+    products = await Promise.all(products.map(async product => {
+        const inProduct = await InventoryProduct.findById(product.inventoryProduct);
+        if (parseFloat(inProduct.totalAvailable) > 0) {
+            const producerProduct = await Product.findById(inProduct.product);
+            if (producerProduct) {
+                return {
+                    name: inProduct.name,
+                    price: product.price,
+                    id: product._id,
+                    number: inProduct.totalAvailable,
+                    producer: producerProduct.producer
+                };
+            } else {
+                return {
+                    name: inProduct.name,
+                    price: product.price,
+                    id: product._id,
+                    number: inProduct.totalAvailable,
+                    producer: null
+                };
+            }
+        } 
+    }));
+
+    products = products.filter(p => p !== undefined);
 
     return res.status(httpStatus.OK).json({
         success: true,
-        products: resProducts
+        products
     });
 });
 

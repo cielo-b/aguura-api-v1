@@ -194,7 +194,7 @@ const getStock = catchAsync(async (req, res) => {
 const getAllStocks = catchAsync(async (req, res) => {
 
     let stocks = await Stock.find({type: req.query.type}).populate('admin');
-    stocks = stocks.map(async (stock) => {
+    stocks = await Promise.all(stocks.map(async (stock) => {
         return {
             managerName: stock.admin.fullName,
             managerPhone: stock.admin.phone,
@@ -203,7 +203,7 @@ const getAllStocks = catchAsync(async (req, res) => {
             type: stock.type,
             description: stock.description,
         };
-    });
+    }));
 
     return res.status(httpStatus.OK).json({
         success: true,

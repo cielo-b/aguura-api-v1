@@ -82,7 +82,7 @@ const completeOrder = catchAsync(async (req, res) => {
     // handle amount
     let paid = parseFloat(order.totalPrice) === parseFloat(amountPaid);
 
-    let obj = {activeDay: activeDay.id, products: order.products, totalPrice: order.totalPrice, isFullyPaid: paid, customerName: order.customerName || 'Next Dist Point', customerPhone: order.phone, amountPaid, description: order.description, [entityType]: entityId, payments: _payments, paymentDescription, fromOrder: true};
+    let obj = {activeDay: activeDay.id, products: order.products, totalPrice: order.totalPrice, isFullyPaid: paid, customerName: order.customerName, customerPhone: order.phone, amountPaid, description: order.description, [entityType]: entityId, payments: _payments, paymentDescription, fromOrder: true};
     const sales = await Sales.create(obj);
 
     if (!sales) {
@@ -164,7 +164,7 @@ const completeOrder = catchAsync(async (req, res) => {
 
     // if not fully paid, create new credit
     if (!paid) {
-        let obj = {activeDay: activeDay.id, sales: sales.id, totalAmount: order.totalPrice - amountPaid, customerName: order.customerName, customerPhone: order.phone, description: order.description, [entityType]: entityId};
+        let obj = {customer: order.customer, activeDay: activeDay.id, sales: sales.id, totalAmount: order.totalPrice - amountPaid, customerName: order.customerName, customerPhone: order.phone, description: order.description, [entityType]: entityId};
         if (entityType === 'producer') {
             obj.distributionPoint = order.distributionPoint;
         } else if (entityType === 'distributionPoint') {
@@ -183,7 +183,7 @@ const completeOrder = catchAsync(async (req, res) => {
     if (payments.length > 0) {
         for (const payment of payments) {
             let method = await PaymentMethod.findById(payment.id);
-            const obj = {activeDay: activeDay.id, method: method.id, customerName: order.customerName || 'Stock X', customerPhone: order.phone, amount: payment.amount, [entityType]: entityId};
+            const obj = {activeDay: activeDay.id, method: method.id, customerName: order.customerName, customerPhone: order.phone, amount: payment.amount, [entityType]: entityId};
             if (entityType === 'producer') {
                 obj.distributionPoint = order.distributionPoint;
             } else if (entityType === 'distribution') {
@@ -876,7 +876,7 @@ const newOrder = catchAsync(async (req, res) => {
 
     }
 
-    const order = await Order.create({totalPrice, products, description, customer: user.id, stock: stock.id});
+    const order = await Order.create({totalPrice, products, description, customer: user.id, stock: stock.id, customerName: user.fullName, phone: user.phone});
 
     if (!order) {
         return res.status(httpStatus.BAD_REQUEST).json({

@@ -1,22 +1,3 @@
-const PDFDocument = require('pdfkit-table');
-const fs = require('fs');
-const path = require('path');
-
-const {Sales, InventoryProduct, Credit, PaymentMethod, Payment, Crates, EmptyCrates, User, SalesProduct, Expense} = require('../models');
-const formatNumber = require('../utils/formatNumber');
-
-const reportsDirectory = path.join(__dirname, '../../public/reports');
-
-// Fonts
-
-// const JainiPurva = '/usr/share/fonts/JainiPurva-Regular.ttf';
-// const PoppinsRegular = '/usr/share/fonts/Poppins-Regular.ttf';
-// const PoppinsBold = '/usr/share/fonts/Poppins-Bold.ttf';
-
-const JainiPurva = 'c:/fonts/Jaini_Purva/JainiPurva-Regular.ttf';
-const PoppinsRegular = 'c:/fonts/Poppins/Poppins-Regular.ttf';
-const PoppinsBold = 'c:/fonts/Poppins/Poppins-Bold.ttf';
-
 const exportData = async (stock, activeDay) => {
 
     const fileName = `${stock.id}-${activeDay.name}-daily-report.pdf`;
@@ -29,26 +10,42 @@ const exportData = async (stock, activeDay) => {
     const admin = await User.findById(stock.admin);
     pdfDoc.fontSize(16).font(JainiPurva).text(`${title}`);
     pdfDoc.moveDown();
+    const normalX = pdfDoc.x;
 
     const adminTitle = `Manager: ${admin?.fullName} / ${admin?.phone}`;
-    pdfDoc.fontSize(8).font(PoppinsRegular).text(`${adminTitle}`);
+    const adminTitleWidth = pdfDoc.widthOfString(adminTitle);
+    const adminTitleX = (pdfDoc.page.width + 15) - pdfDoc.page.margins.right - adminTitleWidth;
+    const adminTitleY = 45;
+    pdfDoc.fontSize(8).font(PoppinsRegular).text(adminTitle, adminTitleX, adminTitleY);
+    pdfDoc.x = normalX;
     pdfDoc.moveDown();
+    pdfDoc.moveDown();
+
+    // companies
+    const companies = await Company.find({stock: stock.id});
 
     // sales section
     let totalSales = 0;
     let totalProducts = 0;
     let salesData = [
-        ['Product', 'Quantity', 'Total Price']
+        ['Producer', 'Quantity', 'Total Price']
     ];
-
-    const salesProducts = await SalesProduct.find({stock: stock.id}).populate('inventoryProduct');
-
-    for (let product of salesProducts) {
+    for (let company of companies) {
         // find sales related to that company
-        const sales = await Sales.find({stock: stock.id, activeDay: activeDay.id, 'products.salesProduct': product.id});
+        const sales = await Sales.find({stock: stock.id, activeDay: activeDay.id}).populate({
+            path: 'products.id',
+            populate: {
+                path: 'inventoryProduct',
+                match: {company: company.id}
+            }
+        });
 
         // filter products
-        const products = sales.flatMap(sale => sale.products.filter(product => product.salesProduct.equals(product.id)));
+        const products = sales.flatMap(sale =>
+            sale.products.filter(product =>
+                product.id && product.id.inventoryProduct && product.id.inventoryProduct.company.equals(company.id)
+            )
+        );
 
         let total = 0;
         let qty = 0;
@@ -62,17 +59,52 @@ const exportData = async (stock, activeDay) => {
 
         //push data
         let data = [];
-        data.push(product.inventoryProduct.name);
+        data.push(company.name);
         data.push(formatNumber(qty));
         data.push(`${formatNumber(total)} Rwf`);
 
         salesData.push(data);
     }
+    // find sales with products without any associated company
+    const salesWithNoCompanyProducts = await Sales.find({
+        stock: stock.id,
+        activeDay: activeDay.id
+    }).populate({
+        path: 'products.id',
+        populate: {
+            path: 'inventoryProduct',
+        }
+    });
+    // Filter sales to include only those with products without any associated company
+    const filteredSales = salesWithNoCompanyProducts.filter(sale =>
+        sale.products.some(product => !product.id.inventoryProduct || !product.id.inventoryProduct.company)
+    );
+    // Find products whose inventory products have no associated company within filtered sales
+    const productsWithNoCompany = filteredSales.flatMap(sale =>
+        sale.products.filter(product =>
+            !product.id.inventoryProduct || !product.id.inventoryProduct.company
+        )
+    );
+    let subSalesTotal = 0;
+    let subSaleQty = 0;
+    for (let product of productsWithNoCompany) {
+        subSalesTotal = subSalesTotal + parseFloat(product.totalPrice);
+        subSaleQty = subSaleQty + parseFloat(product.quantity);
+    }
+    totalSales = totalSales + parseFloat(subSalesTotal);
+    totalProducts = totalProducts + parseFloat(subSaleQty);
+
+    //push data
+    let subSaleData = [];
+    subSaleData.push('Others');
+    subSaleData.push(formatNumber(subSaleQty));
+    subSaleData.push(`${formatNumber(subSalesTotal)} Rwf`);
+    salesData.push(subSaleData);
     salesData.push(['Total', formatNumber(totalProducts), `${formatNumber(totalSales)} Rwf`]);
 
     const salesOptions = {
         title: "Sales",
-        subtitle: "Daily Sales Categorized By Product",
+        subtitle: "Daily Sales Categorized By Producers/Companies.",
         width: 500,
         x: 0,
         y: 0,
@@ -81,7 +113,7 @@ const exportData = async (stock, activeDay) => {
         prepareRow: (row, indexColumn, indexRow, rectRow) => pdfDoc.fontSize(8).font(PoppinsRegular),
     };
     // Sales Table
-    await pdfDoc.table({
+    pdfDoc.table({
         headers: salesData[0],
         rows: salesData.slice(1),
         widths: [null, null, null],
@@ -95,9 +127,7 @@ const exportData = async (stock, activeDay) => {
     const payments = await Payment.find({
         activeDay: activeDay.id,
         stock: stock.id,
-        isCreditPayment: true,
-        distributionPoint: null,
-        producer: null
+        isCreditPayment: true
     }).populate({
         path: 'credit',
         match: {activeDay: {$ne: activeDay.id}}
@@ -126,7 +156,7 @@ const exportData = async (stock, activeDay) => {
         prepareRow: (row, indexColumn, indexRow, rectRow) => pdfDoc.fontSize(8).font(PoppinsRegular),
     };
     // Paid Credits Table
-    await pdfDoc.table({
+    pdfDoc.table({
         headers: paidCreditsData[0],
         rows: paidCreditsData.slice(1),
         widths: [null, null, null],
@@ -139,13 +169,7 @@ const exportData = async (stock, activeDay) => {
 
 
     // credit section
-    const credits = await Credit.find({
-        activeDay: activeDay.id,
-        stock: stock.id,
-        isFullyPaid: false,
-        distributionPoint: null,
-        producer: null
-    });
+    const credits = await Credit.find({activeDay: activeDay.id, stock: stock.id, isFullyPaid: false});
     let totalCredit = 0;
     let creditsData = [
         ['Customer', 'Credit']
@@ -171,7 +195,7 @@ const exportData = async (stock, activeDay) => {
         prepareRow: (row, indexColumn, indexRow, rectRow) => pdfDoc.fontSize(8).font(PoppinsRegular),
     };
     // Credits Table
-    await pdfDoc.table({
+    pdfDoc.table({
         headers: creditsData[0],
         rows: creditsData.slice(1),
         widths: [null, null, null],
@@ -213,7 +237,7 @@ const exportData = async (stock, activeDay) => {
         prepareRow: (row, indexColumn, indexRow, rectRow) => pdfDoc.fontSize(8).font(PoppinsRegular),
     };
     // Credits Table
-    await pdfDoc.table({
+    pdfDoc.table({
         headers: paymentsData[0],
         rows: paymentsData.slice(1),
         widths: [null, null, null],
@@ -259,7 +283,7 @@ const exportData = async (stock, activeDay) => {
         prepareRow: (row, indexColumn, indexRow, rectRow) => pdfDoc.fontSize(8).font(PoppinsRegular),
     };
     // Credits Table
-    await pdfDoc.table({
+    pdfDoc.table({
         headers: inventoryData[0],
         rows: inventoryData.slice(1),
         widths: [null, null, null],
@@ -268,21 +292,15 @@ const exportData = async (stock, activeDay) => {
     }, inventoryOptions);
 
 
-    // =================================================================================
 
+    // =================================================================================
     // crates section
     let totalCrates = 0;
     const cratesData = [
-        ['Customer', 'Given Crates']
+        ['Customer', 'Rendered Crates']
     ];
 
-    const crates = await Crates.find({
-        activeDay: activeDay.id,
-        stock: stock.id,
-        allReturned: false,
-        distributionPoint: null,
-        producer: null
-    });
+    const crates = await Crates.find({activeDay: activeDay.id, stock: stock.id, allReturned: false});
     for (let crate of crates) {
         const products = crate.products;
         const remaining = products.filter(p => p.given > p.returned || p.remaining > 0);
@@ -308,7 +326,7 @@ const exportData = async (stock, activeDay) => {
         prepareRow: (row, indexColumn, indexRow, rectRow) => pdfDoc.fontSize(8).font(PoppinsRegular),
     };
     // Credits Table
-    await pdfDoc.table({
+    pdfDoc.table({
         headers: cratesData[0],
         rows: cratesData.slice(1),
         widths: [null, null, null],
@@ -325,7 +343,7 @@ const exportData = async (stock, activeDay) => {
         ['Name', 'Total']
     ];
 
-    const eCrates = await EmptyCrates.find({stock: stock.id});
+    const eCrates = await EmptyCrates.find({activeDay: activeDay.id, stock: stock.id});
     for (let crate of eCrates) {
         totalECrates = totalECrates + parseFloat(crate.number);
         let data = [crate.name, `${formatNumber(crate.number)}`];
@@ -343,52 +361,13 @@ const exportData = async (stock, activeDay) => {
         prepareRow: (row, indexColumn, indexRow, rectRow) => pdfDoc.fontSize(8).font(PoppinsRegular),
     };
     // Credits Table
-    await pdfDoc.table({
+    pdfDoc.table({
         headers: eCratesData[0],
         rows: eCratesData.slice(1),
         widths: [null, null, null],
         headerBackgroundColor: 'gray',
         stripe: true
     }, eCratesOptions);
-
-
-    // =================================================================================
-
-    // expenses section
-    let totalExpenses = 0;
-    const expensesData = [
-        ['Name', 'Total']
-    ];
-
-    const expenses = await Expense.find({activeDay: activeDay.id, stock: stock.id});
-
-    for (let expense of expenses) {
-        totalExpenses += parseFloat(expense.amount);
-        let data = [expense.name, `${formatNumber(expense.amount)}`];
-        expensesData.push(data);
-    }
-
-    expensesData.push(['Total', `${formatNumber(totalExpenses)}`]);
-
-    const expensesOptions = {
-        title: "Expenses",
-        subtitle: "Daily Expenses.",
-        width: 500,
-        x: 0,
-        y: 0,
-        columnSpacing: 5,
-        prepareHeader: () => pdfDoc.fontSize(8).font(PoppinsBold),
-        prepareRow: (row, indexColumn, indexRow, rectRow) => pdfDoc.fontSize(8).font(PoppinsRegular),
-    };
-
-    // Expenses Table
-    await pdfDoc.table({
-        headers: expensesData[0],
-        rows: expensesData.slice(1),
-        widths: [null, null, null],
-        headerBackgroundColor: 'gray',
-        stripe: true
-    }, expensesOptions);
 
 
     // =================================================================================
@@ -406,5 +385,3 @@ const exportData = async (stock, activeDay) => {
 
     return fileName;
 };
-
-module.exports = exportData;

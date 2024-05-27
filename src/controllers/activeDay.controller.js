@@ -313,18 +313,17 @@ const startDay = catchAsync(async (req, res) => {
 
 const endDay = catchAsync(async (req, res) => {
 
-    const stockId = req.query.stockId;
-    const stock = await checkStock(stockId);
+    const {activeDay: dayId, entityId, entityType} = req.body;
 
-    if (!stock) {
-        return res.status(httpStatus.BAD_REQUEST).json({
+    let entity = await getEntityById(entityType, entityId);
+    if (!entity) {
+        return res.status(httpStatus.NOT_FOUND).json({
             success: false,
-            message: 'Stock Not Found.'
+            message: 'Entity Not Found.'
         });
     }
 
-    const activeDay = await ActiveDay.findById(req.params.id);
-    const {crates} = req.body;
+    const activeDay = await ActiveDay.findById(dayId);
 
     if (!activeDay) {
         return res.status(httpStatus.BAD_REQUEST).json({
@@ -332,20 +331,9 @@ const endDay = catchAsync(async (req, res) => {
             message: 'Active Day Not Found.'
         });
     }
-    if (crates.length === 0 && stock.type === 'beer') {
-        return res.status(httpStatus.BAD_REQUEST).json({
-            success: false,
-            message: 'Please Register Empty Crates.'
-        });
-    }
-
-    // register crates
-    for (let crate of crates) {
-        await EmptyCrates.create({stock: stock.id, activeDay: activeDay.id, name: crate.name, number: crate.number, isBrarirwa: crate.isBrarirwa});
-    }
 
     // generate pdf
-    const pdfFileName = await exportData(stock, activeDay);
+    const pdfFileName = await exportData(entity, activeDay);
     const url = config.url + '/public/reports/' + pdfFileName;
 
     // update remaining products in inventory
@@ -356,7 +344,7 @@ const endDay = catchAsync(async (req, res) => {
         await product.save({validateBeforeSave: false});
     }
 
-    activeDay.isActive = false;
+    // activeDay.isActive = false;
     await activeDay.save({validateBeforeSave: false});
 
     return res.status(httpStatus.OK).json({
