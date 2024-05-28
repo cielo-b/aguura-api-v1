@@ -469,12 +469,12 @@ const newSales = catchAsync(async (req, res) => {
 
     const {products: reqProducts, isFullyPaid, amountPaid, payments, customerId, entityId, entityType} = req.body;
 
-    if (!customerId) {
-        return res.status(httpStatus.NOT_FOUND).json({
-            success: false,
-            message: 'Plz Select Customer.'
-        });
-    }
+    // if (!customerId) {
+    //     return res.status(httpStatus.NOT_FOUND).json({
+    //         success: false,
+    //         message: 'Plz Select Customer.'
+    //     });
+    // }
 
     let entity = await getEntityById(entityType, entityId);
 
