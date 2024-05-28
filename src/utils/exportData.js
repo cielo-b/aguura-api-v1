@@ -18,6 +18,8 @@ const PoppinsBold = '/usr/share/fonts/Poppins-Bold.ttf';
 // const PoppinsBold = 'c:/fonts/Poppins/Poppins-Bold.ttf';
 
 const exportData = async (stock, activeDay) => {
+    const type = stock.type;
+
     const fileName = `${stock.id}-${activeDay.name}-daily-report.pdf`;
     const pdfFilePath = path.join(reportsDirectory, `/${fileName}`);
 
@@ -282,91 +284,95 @@ const exportData = async (stock, activeDay) => {
         stripe: true
     }, inventoryOptions);
 
-    // crates section
-    let totalCrates = 0;
-    const cratesData = [
-        ['Customer', 'Given Crates']
-    ];
+    // ======================================
+    if (type === 'drinks') {
+        // crates section
+        let totalCrates = 0;
+        const cratesData = [
+            ['Customer', 'Given Crates']
+        ];
 
-    const crates = await Crates.find({
-        activeDay: activeDay.id,
-        stock: stock.id,
-        allReturned: false,
-        distributionPoint: null,
-        producer: null
-    });
-    for (let crate of crates) {
-        const products = crate.products;
-        const remaining = products.filter(p => p.given > p.returned || p.remaining > 0);
-        let desc = '';
-        let total = 0;
-        for (let p of remaining) {
-            desc = desc + `${p.name}: ${p.remaining}\n`;
-            total = total + parseFloat(p.remaining);
+        const crates = await Crates.find({
+            activeDay: activeDay.id,
+            stock: stock.id,
+            allReturned: false,
+            distributionPoint: null,
+            producer: null
+        });
+        for (let crate of crates) {
+            const products = crate.products;
+            const remaining = products.filter(p => p.given > p.returned || p.remaining > 0);
+            let desc = '';
+            let total = 0;
+            for (let p of remaining) {
+                desc = desc + `${p.name}: ${p.remaining}\n`;
+                total = total + parseFloat(p.remaining);
+            }
+            totalCrates = totalCrates + parseFloat(total);
+            let data = [crate.customerName, `${formatNumber(total)}`];
+            cratesData.push(data);
         }
-        totalCrates = totalCrates + parseFloat(total);
-        let data = [crate.customerName, `${formatNumber(total)}`];
-        cratesData.push(data);
+        cratesData.push(['Total', `${formatNumber(totalCrates)}`]);
+        const cratesOptions = {
+            title: "Rendered Crates",
+            subtitle: "Daily Rendered Crates.",
+            width: 500,
+            x: 0,
+            y: 0,
+            columnSpacing: 5,
+            prepareHeader: () => pdfDoc.fontSize(8).font(PoppinsBold),
+            prepareRow: (row, indexColumn, indexRow, rectRow) => pdfDoc.fontSize(8).font(PoppinsRegular),
+        };
+
+        // Ensure there's space before adding the crates table
+        ensureSpaceForNextSection(100);
+
+        // Crates Table
+        await pdfDoc.table({
+            headers: cratesData[0],
+            rows: cratesData.slice(1),
+            widths: [null, null, null],
+            headerBackgroundColor: 'gray',
+            stripe: true
+        }, cratesOptions);
+
+        // empty crates section
+        let totalECrates = 0;
+        const eCratesData = [
+            ['Name', 'Total']
+        ];
+
+        const eCrates = await EmptyCrates.find({stock: stock.id});
+        for (let crate of eCrates) {
+            totalECrates = totalECrates + parseFloat(crate.number);
+            let data = [crate.name, `${formatNumber(crate.number)}`];
+            eCratesData.push(data);
+        }
+        eCratesData.push(['Total', `${formatNumber(totalECrates)}`]);
+        const eCratesOptions = {
+            title: "Empty Crates",
+            subtitle: "Daily Final Empty Crates.",
+            width: 500,
+            x: 0,
+            y: 0,
+            columnSpacing: 5,
+            prepareHeader: () => pdfDoc.fontSize(8).font(PoppinsBold),
+            prepareRow: (row, indexColumn, indexRow, rectRow) => pdfDoc.fontSize(8).font(PoppinsRegular),
+        };
+
+        // Ensure there's space before adding the empty crates table
+        ensureSpaceForNextSection(100);
+
+        // Empty Crates Table
+        await pdfDoc.table({
+            headers: eCratesData[0],
+            rows: eCratesData.slice(1),
+            widths: [null, null, null],
+            headerBackgroundColor: 'gray',
+            stripe: true
+        }, eCratesOptions);
     }
-    cratesData.push(['Total', `${formatNumber(totalCrates)}`]);
-    const cratesOptions = {
-        title: "Rendered Crates",
-        subtitle: "Daily Rendered Crates.",
-        width: 500,
-        x: 0,
-        y: 0,
-        columnSpacing: 5,
-        prepareHeader: () => pdfDoc.fontSize(8).font(PoppinsBold),
-        prepareRow: (row, indexColumn, indexRow, rectRow) => pdfDoc.fontSize(8).font(PoppinsRegular),
-    };
 
-    // Ensure there's space before adding the crates table
-    ensureSpaceForNextSection(100);
-
-    // Crates Table
-    await pdfDoc.table({
-        headers: cratesData[0],
-        rows: cratesData.slice(1),
-        widths: [null, null, null],
-        headerBackgroundColor: 'gray',
-        stripe: true
-    }, cratesOptions);
-
-    // empty crates section
-    let totalECrates = 0;
-    const eCratesData = [
-        ['Name', 'Total']
-    ];
-
-    const eCrates = await EmptyCrates.find({stock: stock.id});
-    for (let crate of eCrates) {
-        totalECrates = totalECrates + parseFloat(crate.number);
-        let data = [crate.name, `${formatNumber(crate.number)}`];
-        eCratesData.push(data);
-    }
-    eCratesData.push(['Total', `${formatNumber(totalECrates)}`]);
-    const eCratesOptions = {
-        title: "Empty Crates",
-        subtitle: "Daily Final Empty Crates.",
-        width: 500,
-        x: 0,
-        y: 0,
-        columnSpacing: 5,
-        prepareHeader: () => pdfDoc.fontSize(8).font(PoppinsBold),
-        prepareRow: (row, indexColumn, indexRow, rectRow) => pdfDoc.fontSize(8).font(PoppinsRegular),
-    };
-
-    // Ensure there's space before adding the empty crates table
-    ensureSpaceForNextSection(100);
-
-    // Empty Crates Table
-    await pdfDoc.table({
-        headers: eCratesData[0],
-        rows: eCratesData.slice(1),
-        widths: [null, null, null],
-        headerBackgroundColor: 'gray',
-        stripe: true
-    }, eCratesOptions);
 
     // expenses section
     let totalExpenses = 0;
