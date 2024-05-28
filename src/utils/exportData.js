@@ -9,16 +9,15 @@ const reportsDirectory = path.join(__dirname, '../../public/reports');
 
 // Fonts
 
-// const JainiPurva = '/usr/share/fonts/JainiPurva-Regular.ttf';
-// const PoppinsRegular = '/usr/share/fonts/Poppins-Regular.ttf';
-// const PoppinsBold = '/usr/share/fonts/Poppins-Bold.ttf';
+const JainiPurva = '/usr/share/fonts/JainiPurva-Regular.ttf';
+const PoppinsRegular = '/usr/share/fonts/Poppins-Regular.ttf';
+const PoppinsBold = '/usr/share/fonts/Poppins-Bold.ttf';
 
-const JainiPurva = 'c:/fonts/Jaini_Purva/JainiPurva-Regular.ttf';
-const PoppinsRegular = 'c:/fonts/Poppins/Poppins-Regular.ttf';
-const PoppinsBold = 'c:/fonts/Poppins/Poppins-Bold.ttf';
+// const JainiPurva = 'c:/fonts/Jaini_Purva/JainiPurva-Regular.ttf';
+// const PoppinsRegular = 'c:/fonts/Poppins/Poppins-Regular.ttf';
+// const PoppinsBold = 'c:/fonts/Poppins/Poppins-Bold.ttf';
 
 const exportData = async (stock, activeDay) => {
-
     const fileName = `${stock.id}-${activeDay.name}-daily-report.pdf`;
     const pdfFilePath = path.join(reportsDirectory, `/${fileName}`);
 
@@ -34,6 +33,13 @@ const exportData = async (stock, activeDay) => {
     pdfDoc.fontSize(8).font(PoppinsRegular).text(`${adminTitle}`);
     pdfDoc.moveDown();
 
+    // Helper function to check if there's enough space for the next section
+    const ensureSpaceForNextSection = (heightNeeded) => {
+        if (pdfDoc.y + heightNeeded > pdfDoc.page.height - pdfDoc.page.margins.bottom) {
+            pdfDoc.addPage();
+        }
+    };
+
     // sales section
     let totalSales = 0;
     let totalProducts = 0;
@@ -48,7 +54,7 @@ const exportData = async (stock, activeDay) => {
         const sales = await Sales.find({stock: stock.id, activeDay: activeDay.id, 'products.salesProduct': product.id});
 
         // filter products
-        const products = sales.flatMap(sale => sale.products.filter(product => product.salesProduct.equals(product.id)));
+        const products = sales.flatMap(sale => sale.products.filter(p => p.salesProduct.toString() === product._id.toString()));
 
         let total = 0;
         let qty = 0;
@@ -60,7 +66,7 @@ const exportData = async (stock, activeDay) => {
         totalSales = totalSales + parseFloat(total);
         totalProducts = totalProducts + parseFloat(qty);
 
-        //push data
+        // push data
         let data = [];
         data.push(product.inventoryProduct.name);
         data.push(formatNumber(qty));
@@ -80,6 +86,10 @@ const exportData = async (stock, activeDay) => {
         prepareHeader: () => pdfDoc.fontSize(8).font(PoppinsBold),
         prepareRow: (row, indexColumn, indexRow, rectRow) => pdfDoc.fontSize(8).font(PoppinsRegular),
     };
+
+    // Ensure there's space before adding the sales table
+    ensureSpaceForNextSection(100);
+
     // Sales Table
     await pdfDoc.table({
         headers: salesData[0],
@@ -88,8 +98,6 @@ const exportData = async (stock, activeDay) => {
         headerBackgroundColor: 'gray',
         stripe: true
     }, salesOptions);
-
-    // =================================================================================
 
     // paid credit section
     const payments = await Payment.find({
@@ -125,6 +133,10 @@ const exportData = async (stock, activeDay) => {
         prepareHeader: () => pdfDoc.fontSize(8).font(PoppinsBold),
         prepareRow: (row, indexColumn, indexRow, rectRow) => pdfDoc.fontSize(8).font(PoppinsRegular),
     };
+
+    // Ensure there's space before adding the paid credits table
+    ensureSpaceForNextSection(100);
+
     // Paid Credits Table
     await pdfDoc.table({
         headers: paidCreditsData[0],
@@ -133,10 +145,6 @@ const exportData = async (stock, activeDay) => {
         headerBackgroundColor: 'gray',
         stripe: true
     }, paidCreditsOptions);
-
-
-    // =================================================================================
-
 
     // credit section
     const credits = await Credit.find({
@@ -170,6 +178,10 @@ const exportData = async (stock, activeDay) => {
         prepareHeader: () => pdfDoc.fontSize(8).font(PoppinsBold),
         prepareRow: (row, indexColumn, indexRow, rectRow) => pdfDoc.fontSize(8).font(PoppinsRegular),
     };
+
+    // Ensure there's space before adding the credits table
+    ensureSpaceForNextSection(100);
+
     // Credits Table
     await pdfDoc.table({
         headers: creditsData[0],
@@ -179,10 +191,7 @@ const exportData = async (stock, activeDay) => {
         stripe: true
     }, creditsOptions);
 
-
-    // =================================================================================
-
-    // payments
+    // payments section
     const methods = await PaymentMethod.find({stock: stock.id});
     let totalPayments = 0;
     let paymentsData = [
@@ -212,7 +221,11 @@ const exportData = async (stock, activeDay) => {
         prepareHeader: () => pdfDoc.fontSize(8).font(PoppinsBold),
         prepareRow: (row, indexColumn, indexRow, rectRow) => pdfDoc.fontSize(8).font(PoppinsRegular),
     };
-    // Credits Table
+
+    // Ensure there's space before adding the payments table
+    ensureSpaceForNextSection(100);
+
+    // Payments Table
     await pdfDoc.table({
         headers: paymentsData[0],
         rows: paymentsData.slice(1),
@@ -221,8 +234,6 @@ const exportData = async (stock, activeDay) => {
         stripe: true
     }, paymentsOptions);
 
-
-    // =================================================================================
     // inventory section
     let totalCost = 0;
     let totalPrev = 0;
@@ -258,7 +269,11 @@ const exportData = async (stock, activeDay) => {
         prepareHeader: () => pdfDoc.fontSize(8).font(PoppinsBold),
         prepareRow: (row, indexColumn, indexRow, rectRow) => pdfDoc.fontSize(8).font(PoppinsRegular),
     };
-    // Credits Table
+
+    // Ensure there's space before adding the inventory table
+    ensureSpaceForNextSection(100);
+
+    // Inventory Table
     await pdfDoc.table({
         headers: inventoryData[0],
         rows: inventoryData.slice(1),
@@ -266,9 +281,6 @@ const exportData = async (stock, activeDay) => {
         headerBackgroundColor: 'gray',
         stripe: true
     }, inventoryOptions);
-
-
-    // =================================================================================
 
     // crates section
     let totalCrates = 0;
@@ -307,7 +319,11 @@ const exportData = async (stock, activeDay) => {
         prepareHeader: () => pdfDoc.fontSize(8).font(PoppinsBold),
         prepareRow: (row, indexColumn, indexRow, rectRow) => pdfDoc.fontSize(8).font(PoppinsRegular),
     };
-    // Credits Table
+
+    // Ensure there's space before adding the crates table
+    ensureSpaceForNextSection(100);
+
+    // Crates Table
     await pdfDoc.table({
         headers: cratesData[0],
         rows: cratesData.slice(1),
@@ -315,9 +331,6 @@ const exportData = async (stock, activeDay) => {
         headerBackgroundColor: 'gray',
         stripe: true
     }, cratesOptions);
-
-
-    // =================================================================================
 
     // empty crates section
     let totalECrates = 0;
@@ -342,7 +355,11 @@ const exportData = async (stock, activeDay) => {
         prepareHeader: () => pdfDoc.fontSize(8).font(PoppinsBold),
         prepareRow: (row, indexColumn, indexRow, rectRow) => pdfDoc.fontSize(8).font(PoppinsRegular),
     };
-    // Credits Table
+
+    // Ensure there's space before adding the empty crates table
+    ensureSpaceForNextSection(100);
+
+    // Empty Crates Table
     await pdfDoc.table({
         headers: eCratesData[0],
         rows: eCratesData.slice(1),
@@ -350,9 +367,6 @@ const exportData = async (stock, activeDay) => {
         headerBackgroundColor: 'gray',
         stripe: true
     }, eCratesOptions);
-
-
-    // =================================================================================
 
     // expenses section
     let totalExpenses = 0;
@@ -364,11 +378,11 @@ const exportData = async (stock, activeDay) => {
 
     for (let expense of expenses) {
         totalExpenses += parseFloat(expense.amount);
-        let data = [expense.name, `${formatNumber(expense.amount)}`];
+        let data = [expense.name, `${formatNumber(expense.amount)} Rwf`];
         expensesData.push(data);
     }
 
-    expensesData.push(['Total', `${formatNumber(totalExpenses)}`]);
+    expensesData.push(['Total', `${formatNumber(totalExpenses)} Rwf`]);
 
     const expensesOptions = {
         title: "Expenses",
@@ -381,6 +395,9 @@ const exportData = async (stock, activeDay) => {
         prepareRow: (row, indexColumn, indexRow, rectRow) => pdfDoc.fontSize(8).font(PoppinsRegular),
     };
 
+    // Ensure there's space before adding the expenses table
+    ensureSpaceForNextSection(100);
+
     // Expenses Table
     await pdfDoc.table({
         headers: expensesData[0],
@@ -389,9 +406,6 @@ const exportData = async (stock, activeDay) => {
         headerBackgroundColor: 'gray',
         stripe: true
     }, expensesOptions);
-
-
-    // =================================================================================
 
     // Add copyright
     const text = "Aguura@2024";
@@ -406,5 +420,6 @@ const exportData = async (stock, activeDay) => {
 
     return fileName;
 };
+
 
 module.exports = exportData;
