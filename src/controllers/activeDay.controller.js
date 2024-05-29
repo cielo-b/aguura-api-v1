@@ -357,17 +357,17 @@ const endDay = catchAsync(async (req, res) => {
 
 const downloadReport = catchAsync(async (req, res) => {
 
-    const stockId = req.query.stockId;
-    const stock = await checkStock(stockId);
+    const {activeDayId: dayId, entityId, entityType} = req.query;
 
-    if (!stock) {
-        return res.status(httpStatus.BAD_REQUEST).json({
+    let entity = await getEntityById(entityType, entityId);
+    if (!entity) {
+        return res.status(httpStatus.NOT_FOUND).json({
             success: false,
-            message: 'Stock Not Found.'
+            message: 'Entity Not Found.'
         });
     }
 
-    const activeDay = await ActiveDay.findById(req.query.activeDayId);
+    const activeDay = await ActiveDay.findById(dayId);
 
     if (!activeDay) {
         return res.status(httpStatus.BAD_REQUEST).json({
@@ -377,7 +377,7 @@ const downloadReport = catchAsync(async (req, res) => {
     }
 
     // generate pdf
-    const pdfFileName = activeDay.type === 'day' ? await exportData(stock, activeDay) : await monthlReport(stock.name, activeDay);
+    const pdfFileName = activeDay.type === 'day' ? await exportData(entity, activeDay) : await monthlReport(entity.name, activeDay);
     const url = config.url + '/public/reports/' + pdfFileName;
 
     return res.status(httpStatus.OK).json({
