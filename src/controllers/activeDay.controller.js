@@ -377,7 +377,7 @@ const downloadReport = catchAsync(async (req, res) => {
     }
 
     // generate pdf
-    const pdfFileName = activeDay.type === 'day' ? await generatePDF(stock.name, activeDay) : await monthlReport(stock.name, activeDay);
+    const pdfFileName = activeDay.type === 'day' ? await exportData(stock, activeDay) : await monthlReport(stock.name, activeDay);
     const url = config.url + '/public/reports/' + pdfFileName;
 
     return res.status(httpStatus.OK).json({
