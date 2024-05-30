@@ -224,20 +224,13 @@ const checkDay = async (data) => {
 };
 
 const getActiveDay = catchAsync(async (req, res) => {
-    const {entityType, entityId} = req.body;
+    const {entityType, entityId} = req.query;
     const activeDay = await checkDay({entityType, entityId});
-
-    if (!activeDay) {
-        return res.status(httpStatus.BAD_REQUEST).json({
-            success: false,
-            message: 'No Active Day.'
-        });
-    }
 
     return res.status(httpStatus.OK).json({
         success: true,
         message: 'Day Found Successfully.',
-        day: activeDay
+        activeDay
     });
 });
 
@@ -255,9 +248,9 @@ const getActiveDays = catchAsync(async (req, res) => {
 });
 
 const startDay = catchAsync(async (req, res) => {
-    const {id, entityType} = req.body;
+    const {entityId, entityType} = req.body;
 
-    let entity = await getEntityById(entityType, id);
+    let entity = await getEntityById(entityType, entityId);
 
     if (!entity) {
         return res.status(httpStatus.NOT_FOUND).json({
@@ -268,7 +261,7 @@ const startDay = catchAsync(async (req, res) => {
 
     // Check if there is already an active day associated with the entity
     const activeDay = await ActiveDay.findOne({
-        [entityType]: id,
+        [entityType]: entityId,
         isActive: true
     });
 
@@ -286,7 +279,7 @@ const startDay = catchAsync(async (req, res) => {
 
     // Create active day for today
     daysToCreate.push({
-        [entityType]: id,
+        [entityType]: entityId,
         name: `${today.getDate()}-${today.getMonth() + 1}-${today.getFullYear()}`,
         type: 'day'
     });
@@ -294,7 +287,7 @@ const startDay = catchAsync(async (req, res) => {
     // If today is the last day of the month, create active day for the entire month
     if (today.getDate() === lastDayOfMonth) {
         daysToCreate.push({
-            [entityType]: id,
+            [entityType]: entityId,
             name: `${today.toLocaleString('default', {month: 'long'})}-${today.getFullYear()}`,
             type: 'month',
             isActive: false
