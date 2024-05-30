@@ -53,6 +53,14 @@ const userSchema = mongoose.Schema(
             required: true,
             default: parseFloat(0)
         },
+
+        ebmTIN: {
+            type: Number
+        },
+
+        ebmBHFId: {
+            type: String
+        }
     },
     {
         timestamps: true,

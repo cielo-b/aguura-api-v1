@@ -344,7 +344,7 @@ const endDay = catchAsync(async (req, res) => {
         await product.save({validateBeforeSave: false});
     }
 
-    // activeDay.isActive = false;
+    activeDay.isActive = false;
     await activeDay.save({validateBeforeSave: false});
 
     return res.status(httpStatus.OK).json({

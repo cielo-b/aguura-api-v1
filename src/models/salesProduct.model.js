@@ -23,6 +23,10 @@ const salesProductSchema = mongoose.Schema(
         price: {
             type: Number,
             required: true,
+        },
+
+        ebmItemCode: {
+            type: String
         }
     },
     {

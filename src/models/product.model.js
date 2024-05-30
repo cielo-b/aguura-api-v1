@@ -34,6 +34,10 @@ const productSchema = mongoose.Schema(
             type: Number,
             required: true,
             default: parseFloat('0')
+        },
+
+        ebmItemCode: {
+            type: String
         }
     },
     {
