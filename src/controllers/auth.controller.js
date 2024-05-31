@@ -43,13 +43,13 @@ const login = catchAsync(async (req, res) => {
     const {phone, password} = req.body;
     const user = await authService.loginWithPhoneAndPassword(phone, password);
 
-    const _tokens = await Token.find({user: user.id});
+    // const _tokens = await Token.find({user: user.id});
+    // for (let token of _tokens) {
+    //     if (token) {
+    //         await token.deleteOne();
+    //     }
+    // }
 
-    for (let token of _tokens) {
-        if (token) {
-            await token.deleteOne();
-        }
-    }
     const tokens = await tokenService.generateAuthTokens(user);
 
     res.status(httpStatus.OK).json({
