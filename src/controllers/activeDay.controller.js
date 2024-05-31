@@ -248,7 +248,7 @@ const getActiveDays = catchAsync(async (req, res) => {
 });
 
 const startDay = catchAsync(async (req, res) => {
-    const {entityId, entityType} = req.body;
+    const {id: entityId, entityType} = req.body;
 
     let entity = await getEntityById(entityType, entityId);
 
