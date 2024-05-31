@@ -879,7 +879,7 @@ const editSales = catchAsync(async (req, res) => {
         });
     }
 
-    if (amountPaid > 0) {
+    if (!isFullyPaid && (amountPaid > 0)) {
         const totalPayments = payments.reduce((total, p) => total + parseFloat(p.amount), 0);
         if (parseFloat(totalPayments) !== parseFloat(amountPaid)) {
             return res.status(httpStatus.BAD_REQUEST).json({
