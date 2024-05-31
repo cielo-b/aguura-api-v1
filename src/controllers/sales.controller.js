@@ -955,6 +955,11 @@ const editSales = catchAsync(async (req, res) => {
 
     if (!isFullyPaid) {
         await handleCredit(sale, totalPrice, amountPaid, description, customerName || sale.customerName, customerPhone || sale.customerPhone, entityType, entityId);
+    } else {
+        let credit = await Credit.findOne({sales: sale.id});
+        if (credit) {
+            await credit.deleteOne();
+        }
     }
 
     await deletePayments(sale.id);
