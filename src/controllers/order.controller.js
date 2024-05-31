@@ -805,22 +805,20 @@ const getStockOrders = catchAsync(async (req, res) => {
     }
 
     let orders = [];
-    if (isMine) {
-        let queryObj = {stock: stock.id, isCompleted, status, distributionPoint: {$ne: null}};
-        orders = await Order.find(queryObj);
-        orders = await Promise.all(orders.map(async order => {
-            const distributor = await DistributionPoint.findById(order.distributionPoint).populate('manager');
-            return {
-                id: order.id,
-                description: order.description,
-                name: distributor?.name,
-                phone: distributor?.manager.phone,
-                totalPrice: order.totalPrice,
-                products: order.products,
-                distributorId: distributor?.id
-            };
-        }));
-    }
+    let queryObj = {stock: stock._id, isCompleted, status, distributionPoint: {$ne: null}};
+    orders = await Order.find(queryObj);
+    orders = await Promise.all(orders.map(async order => {
+        const distributor = await DistributionPoint.findById(order.distributionPoint).populate('manager');
+        return {
+            id: order.id,
+            description: order.description,
+            name: distributor?.name,
+            phone: distributor?.manager.phone,
+            totalPrice: order.totalPrice,
+            products: order.products,
+            distributorId: distributor?.id
+        };
+    }));
 
     return res.status(httpStatus.OK).json({
         success: true,
