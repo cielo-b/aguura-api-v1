@@ -954,11 +954,11 @@ const editSales = catchAsync(async (req, res) => {
     }
 
     if (!isFullyPaid) {
-        await handleCredit(sale, totalPrice, amountPaid, description, customerName, customerPhone, entityType, entityId);
+        await handleCredit(sale, totalPrice, amountPaid, description, customerName || sale.customerName, customerPhone || sale.customerPhone, entityType, entityId);
     }
 
     await deletePayments(sale.id);
-    await createPayments(payments, sale, entityType, entityId, user, customerName, customerPhone);
+    await createPayments(payments, sale, entityType, entityId, user, customerName || sale.customerName, customerPhone || sale.customerPhone);
 
     if (sale.products.length === 0) {
         await sale.deleteOne();
