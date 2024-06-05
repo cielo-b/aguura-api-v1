@@ -1,8 +1,12 @@
 const httpStatus = require('http-status');
+const fs = require('fs');
+const path = require('path');
 
 const {InventoryProduct, Product, DistributionPoint, Producer, SalesProduct} = require('../models');
 const catchAsync = require('../utils/catchAsync');
 const {checkStock} = require('./stock.controller');
+const config = require('../config/config');
+const {url} = require('inspector');
 
 
 // ========= Distributor Products =========
@@ -99,6 +103,115 @@ const getDistributorProducts = catchAsync(async (req, res) => {
 
 // ========= Stock Products =========
 
+const newStockProduct = catchAsync(async (req, res) => {
+    const stockId = req.query.stockId;
+    const stock = await checkStock(stockId);
+
+    if (!stock) {
+        return res.status(httpStatus.BAD_REQUEST).json({
+            success: false,
+            message: 'Stock Not Found.'
+        });
+    }
+
+    const {name, price, purchasePrice, sizes, details, description} = req.body;
+
+    const productName = name.replace(/\s/g, '').toLowerCase();
+    const existing = await InventoryProduct.findOne({productName, stock: stock.id});
+    if (existing) {
+        return res.status(httpStatus.BAD_REQUEST).json({
+            success: false,
+            messsage: 'Product Already Exists'
+        });
+    }
+
+    // images
+    const images = req.files.length > 0 ? req.files.map(file => {
+        return {
+            url: config.url + '/public/images/' + file.filename
+        };
+    }) : [];
+
+    const iP = await InventoryProduct.create({productName, images, sizes: stock?.type === 'fashion' ? JSON.parse(sizes) : [], details: stock?.type === 'fashion' ? JSON.parse(details) : [], name, price: purchasePrice, stock: stock.id, description});
+    if (iP) {
+        await SalesProduct.create({stock: stock.id, price, inventoryProduct: iP.id});
+    }
+
+    return res.status(httpStatus.CREATED).json({
+        success: true,
+        message: `Product Added Successfully.`
+    });
+
+});
+
+const edit = catchAsync(async (req, res) => {
+    const product = await InventoryProduct.findById(req.params.productId);
+
+    if (!product) {
+        return res.status(httpStatus.BAD_REQUEST).json({
+            success: false,
+            message: 'Product Not Found.',
+        });
+    }
+
+    const {name, price, sizes, details, description, images: existingImages, removedImages} = req.body;
+
+    const productName = name.replace(/\s/g, '').toLowerCase();
+    const existing = await InventoryProduct.findOne({productName, stock: product.stock});
+    if (existing && (existing._id.toString() !== product._id.toString())) {
+        return res.status(httpStatus.BAD_REQUEST).json({
+            success: false,
+            messsage: 'Product Name Is Taken'
+        });
+    }
+
+    const pPrice = price ? price : product.price;
+    const pName = name ? name : product.name;
+    product.price = pPrice;
+    product.name = pName;
+    product.productName = productName;
+    product.description = description;
+    product.details = JSON.parse(details);
+    product.sizes = JSON.parse(sizes);
+
+    await product.save({validateBeforeSave: false});
+
+    // images
+    for (let i of JSON.parse(removedImages)) {
+        const filename = path.basename(new URL(i.url).pathname);
+        // Construct the file path without specifying the full path
+        const filePath = path.join('public', 'images', filename);
+
+        // Delete the file
+        fs.unlink(filePath, (err) => {
+            if (err) {
+                console.error(`Error deleting file ${filePath}:`, err);
+            } else {
+                console.log(`File ${filePath} deleted successfully.`);
+            }
+        });
+    }
+
+    let images = req.files.length > 0 ? req.files.map(file => {
+        return {
+            url: config.url + '/public/images/' + file.filename
+        };
+    }) : [];
+
+    for (let img of JSON.parse(existingImages)) {
+        images.push({url: img.url});
+    }
+
+    product.images = images;
+    await product.save({validateBeforeSave: false});
+
+    return res.status(httpStatus.CREATED).json({
+        success: true,
+        message: `Product Edited Successfully.`
+    });
+
+});
+
 const addStockProducts = catchAsync(async (req, res) => {
     const stockId = req.query.stockId;
     const stock = await checkStock(stockId);
@@ -169,12 +282,18 @@ const getStockProducts = catchAsync(async (req, res) => {
     let products = await InventoryProduct.find({stock: stock.id});
     products = await Promise.all(products.map(async (p) => {
         const product = await Product.findOne({productName: p.productName});
+        const salesP = await SalesProduct.findOne({inventoryProduct: p._id});
         return {
             id: p._id,
             name: p.name,
             price: p.price,
             producer: product?.producer,
-            totalAvailable: p.totalAvailable
+            totalAvailable: p.totalAvailable,
+            images: p.images,
+            sizes: p.sizes,
+            details: p.details,
+            description: p.description,
+            sellingPrice: salesP?.price
         };
     }));
 
@@ -250,6 +369,8 @@ const allProducts = catchAsync(async (req, res) => {
 module.exports = {
     addDistributorProducts,
     getDistributorProducts,
+    newStockProduct,
+    edit,
     addStockProducts,
     getStockProducts,
     editProduct,

@@ -52,7 +52,8 @@ app.use(cors({
 app.use(passport.initialize());
 passport.use('jwt', jwtStrategy);
 
-//server static images
+//server static files
+app.use('/public/images', express.static(path.join(__dirname, '../public/images')));
 app.use('/public/reports', express.static(path.join(__dirname, '../public/reports')));
 
 

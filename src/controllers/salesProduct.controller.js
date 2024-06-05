@@ -85,7 +85,11 @@ const allProducts = catchAsync(async (req, res) => {
             price: products[i].price,
             id: products[i]._id,
             inventoryProduct: ip.id,
-            producer: product?.producer
+            producer: product?.producer,
+            images: ip.images,
+            sizes: ip.sizes,
+            details: ip.details,
+            description: ip.description,
         });
     }
 
@@ -103,24 +107,18 @@ const availableProducts = catchAsync(async (req, res) => {
         const inProduct = await InventoryProduct.findById(product.inventoryProduct);
         if (parseFloat(inProduct.totalAvailable) > 0) {
             const producerProduct = await Product.findById(inProduct.product);
-            if (producerProduct) {
-                return {
-                    name: inProduct.name,
-                    price: product.price,
-                    id: product._id,
-                    number: inProduct.totalAvailable,
-                    producer: producerProduct.producer
-                };
-            } else {
-                return {
-                    name: inProduct.name,
-                    price: product.price,
-                    id: product._id,
-                    number: inProduct.totalAvailable,
-                    producer: null
-                };
-            }
-        } 
+            return {
+                name: inProduct.name,
+                price: product.price,
+                id: product._id,
+                number: inProduct.totalAvailable,
+                producer: producerProduct?.producer,
+                images: inProduct.images,
+                sizes: inProduct.sizes,
+                details: inProduct.details,
+                description: inProduct.description,
+            };
+        }
     }));
 
     products = products.filter(p => p !== undefined);

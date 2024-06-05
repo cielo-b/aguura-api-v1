@@ -60,6 +60,15 @@ const userSchema = mongoose.Schema(
 
         ebmBHFId: {
             type: String
+        },
+
+        credit: {
+            type: Number,
+        },
+
+        suspended: {
+            type: Boolean,
+            default: false
         }
     },
     {

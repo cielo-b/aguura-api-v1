@@ -23,4 +23,12 @@ const upload = multer({
     fileFilter: fileFilter
 }).single('image');
 
-module.exports = upload;
+const multipleUpload = multer({
+    storage,
+    fileFilter,
+}).array('images')
+
+module.exports = {
+    upload,
+    multipleUpload
+};
