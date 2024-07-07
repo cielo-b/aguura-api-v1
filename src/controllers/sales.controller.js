@@ -20,6 +20,7 @@ const {
 const catchAsync = require('../utils/catchAsync');
 const {checkDay} = require('./activeDay.controller');
 const formatNumber = require('../utils/formatNumber');
+const {ebmService} = require('../services');
 
 
 async function updateProducerInventory(initials, distributor) {
@@ -125,6 +126,12 @@ async function processProducts(reqProducts, entityType) {
             unitPrice: product.price,
             totalPrice: product.price * reqProduct.quantity,
             product: product.id,
+            itemCd: product.itemCd,
+            itemClsCd: product.itemClsCd,
+            itemTyCd: product.itemTyCd,
+            orgNatCd: product.orgNatCd,
+            pkgUnitCd: product.pkgUnitCd,
+            qtyUnitCd: product.qtyUnitCd
 
         } : entityType === 'distributionPoint' ? {
 
@@ -133,7 +140,13 @@ async function processProducts(reqProducts, entityType) {
             unitPrice: product.price,
             totalPrice: product.price * reqProduct.quantity,
             salesProduct: product.id,
-            inventoryProduct: reqProduct.id
+            inventoryProduct: reqProduct.id,
+            itemCd: product.itemCd,
+            itemClsCd: product.itemClsCd,
+            itemTyCd: product.itemTyCd,
+            orgNatCd: product.orgNatCd,
+            pkgUnitCd: product.pkgUnitCd,
+            qtyUnitCd: product.qtyUnitCd
 
         } : {
 
@@ -142,6 +155,12 @@ async function processProducts(reqProducts, entityType) {
             unitPrice: product.price,
             totalPrice: product.price * reqProduct.quantity,
             salesProduct: product.id,
+            itemCd: product.itemCd,
+            itemClsCd: product.itemClsCd,
+            itemTyCd: product.itemTyCd,
+            orgNatCd: product.orgNatCd,
+            pkgUnitCd: product.pkgUnitCd,
+            qtyUnitCd: product.qtyUnitCd
 
         };
 
@@ -458,6 +477,7 @@ async function getCustomerDetails(customerId, body) {
     return {
         customerName: user ? user.fullName : distributor ? distributor.name : stock ? stock.name : body.customerName,
         customerPhone: user ? user.phone : distributor ? distributor.manager?.phone : stock ? stock.admin?.phone : body.customerPhone,
+        customerTin: user ? user.tin : distributor ? distributor.manager?.tin : stock ? stock.admin?.tin : null,
         user,
         distributor,
         customer,
@@ -485,6 +505,8 @@ const newSales = catchAsync(async (req, res) => {
         });
     }
 
+    const manager = entityType === 'stock' ? entity.admin : entity.manager;
+
     const activeDay = await checkDay({entityId, entityType});
 
     if (!activeDay) {
@@ -494,7 +516,7 @@ const newSales = catchAsync(async (req, res) => {
         });
     }
 
-    let {customerName, customerPhone, user, distributor, customer, stock} = await getCustomerDetails(customerId, req.body);
+    let {customerName, customerPhone, user, distributor, customer, stock, customerTin} = await getCustomerDetails(customerId, req.body);
 
     if (!isFullyPaid && !amountPaid) {
         return res.status(httpStatus.BAD_REQUEST).json({
@@ -827,6 +849,120 @@ const newSales = catchAsync(async (req, res) => {
         sales.purchase = parseFloat(total);
         await sales.save({validateBeforeSave: false});
     }
+
+    // manage ebm sales
+    let itemList = [];
+    let totalTxAmt = 0;
+
+    for (let i = 0; i < products.length; i++) {
+        const product = products[i];
+        const tx = (18 / 100) * product.totalPrice;
+        itemList.push({
+            itemSeq: i + 1,
+            itemCd: product.itemCd,
+            itemClsCd: product.itemClsCd,
+            itemNm: product.name,
+            bcd: null,
+            pkgUnitCd: product.pkgUnitCd,
+            pkg: i + 1,
+            qtyUnitCd: product.qtyUnitCd,
+            qty: product.quantity,
+            prc: product.unitPrice,
+            splyAmt: product.unitPrice,
+            dcRt: 0,
+            dcAmt: 0,
+            isrccCd: null,
+            isrccNm: null,
+            isrcRt: null,
+            isrcAmt: null,
+            taxTyCd: "B",
+            taxblAmt: product.totalPrice,
+            taxAmt: tx,
+            totAmt: product.totalPrice - tax
+        });
+
+        totalTxAmt += (18 / 100) * product.totalPrice;
+    }
+
+    // total sales
+    if (manager.country === 'rwanda') {
+        const availableSales = await Sales.find({[entityType]: entityId});
+        const pmtTyCd = _payments.length === 0 ? '02' :
+            _payments[0].name.toString().trim().toLowerCase() === 'cash' ? '01' :
+                _payments[0].name.toString().trim().toLowerCase().contains('mobile') ? '06' :
+                    _payments[0].name.toString().trim().toLowerCase().contains('card') ? '05' :
+                        _payments[0].name.toString().trim().toLowerCase().contains('bank') ? '04' : '07';
+
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        const seconds = String(now.getSeconds()).padStart(2, '0');
+        const cfmDt = `${year}${month}${day}${hours}${minutes}${seconds}`;
+
+        const response = await ebmService.saveSales({
+            tin: manager.tin,
+            bhfId: manager.bhfId,
+            invcNo: availableSales.length,
+            orgInvcNo: availableSales.length,
+            custTin: customer.tin ? customer.tin : null,
+            prcOrdCd: null,
+            custNm: entityType === 'producer' ? distributor.name : entityType === 'distributionPoint' ? stock.name : user.fullName,
+            salesTyCd: "N",
+            rcptTyCd: "S",
+            pmtTyCd,
+            salesSttsCd: "02",
+            cfmDt,
+            salesDt: `${year}${month}${day}`,
+            stockRlsDt: cfmDt,
+            cnclReqDt: null,
+            cnclDt: null,
+            rfdDt: null,
+            rfdRsnCd: null,
+            totItemCnt: itemList.length,
+            taxblAmtA: totalPrice,
+            taxblAmtB: 0,
+            taxblAmtC: 0,
+            taxblAmtD: 0,
+            taxRtA: 18,
+            taxRtB: 0,
+            taxRtC: 0,
+            taxRtD: 0,
+            taxAmtA: (18 / 100) * totalPrice,
+            taxAmtB: 0,
+            taxAmtC: 0,
+            taxAmtD: 0,
+            totTaxblAmt: totalPrice,
+            totalTxAmt,
+            totAmt: totalPrice - totalTxAmt,
+            prchrAcptcYn: "Y",
+            remark: null,
+            regrId: entity.id.slice(0, 20),
+            regrNm: entity.name,
+            modrId: manager.id.slice(0, 20),
+            modrNm: manager.fullName,
+            receipt: {
+                custTin: customerTin, // check with ebm team if customer has no tin
+                custMblNo: customerPhone,
+                rptNo: availableSales.length,
+                trdeNm: null,
+                adrs: null,
+                topMsg: `Thank You For Working With ${entity.name}`,
+                btmMsg: `\nPowered By Aguura.`,
+                prchrAcptcYn: "Y"
+            },
+        });
+
+        if (response.resultCd !== '000') {
+            return res.status(httpStatus.CREATED).json({
+                success: false,
+                message: 'Sales Recorded Into Aguura But Failed Into EBM, Plz Delete It And Try Again.',
+            });
+        }
+    }
+
 
     return res.status(httpStatus.CREATED).json({
         success: true,

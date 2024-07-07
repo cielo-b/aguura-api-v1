@@ -24,6 +24,11 @@ const saveStockItems = async (data) => {
     return response.data;
 };
 
+const saveSales = async (data) => {
+    const response = await API.post(`/trnsSales/saveSales`, data);
+    return response.data;
+};
+
 
 
 
@@ -60,6 +65,7 @@ module.exports = {
     selectItems,
     saveItems,
     saveStockItems,
+    saveSales,
 
     customReqDate,
     generateItemCode
