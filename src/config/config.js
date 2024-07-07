@@ -31,7 +31,7 @@ module.exports = {
   env: envVars.NODE_ENV,
   port: envVars.PORT,
   url: envVars.URL,
-  embUrl: envVars.EBM_API_URL,
+  ebmUrl: envVars.EBM_API_URL,
   name: envVars.NAME || 'Aguura',
   mongoose: {
     url: envVars.MONGODB_URL + (envVars.NODE_ENV === 'test' ? '-test' : ''),

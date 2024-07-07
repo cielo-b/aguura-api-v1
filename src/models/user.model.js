@@ -26,6 +26,13 @@ const userSchema = mongoose.Schema(
             unique: true
         },
 
+        email: {
+            type: String,
+            // required: true,
+            trim: true,
+            unique: true
+        },
+
         password: {
             type: String,
             required: true,
@@ -54,11 +61,15 @@ const userSchema = mongoose.Schema(
             default: parseFloat(0)
         },
 
-        ebmTIN: {
-            type: Number
+        tin: {
+            type: String
         },
 
-        ebmBHFId: {
+        bhfId: {
+            type: String
+        },
+
+        dvcSrlNo: {
             type: String
         },
 
@@ -68,6 +79,24 @@ const userSchema = mongoose.Schema(
 
         suspended: {
             type: Boolean,
+            default: false
+        },
+
+        country: {
+            type: String,
+            required: true,
+            default: 'rwanda'
+        },
+
+        countryCode: {
+            type: String,
+            required: true,
+            default: 'RW'
+        },
+
+        isVerfied: {
+            type: Boolean,
+            required: true,
             default: false
         }
     },
@@ -82,6 +111,11 @@ userSchema.plugin(toJSON);
 
 userSchema.statics.isPhoneTaken = async function (phone, excludeUserId) {
     const user = await this.findOne({phone, _id: {$ne: excludeUserId}});
+    return !!user;
+};
+
+userSchema.statics.isEmailTaken = async function (email, excludeUserId) {
+    const user = await this.findOne({email, _id: {$ne: excludeUserId}});
     return !!user;
 };
 

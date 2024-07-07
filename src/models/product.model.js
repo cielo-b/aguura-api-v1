@@ -36,9 +36,30 @@ const productSchema = mongoose.Schema(
             default: parseFloat('0')
         },
 
-        ebmItemCode: {
+        itemCd: {
+            type: String
+        },
+
+        itemClsCd: {
+            type: String
+        },
+
+        itemTyCd: {
+            type: String
+        },
+
+        orgnNatCd: {
+            type: String
+        },
+
+        pkgUnitCd: {
+            type: String
+        },
+        
+        qtyUnitCd: {
             type: String
         }
+
     },
     {
         timestamps: true,

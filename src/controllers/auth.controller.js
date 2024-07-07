@@ -2,7 +2,7 @@ const httpStatus = require('http-status');
 const jwt = require('jsonwebtoken');
 const moment = require('moment');
 const catchAsync = require('../utils/catchAsync');
-const {authService, userService, tokenService} = require('../services');
+const {authService, userService, tokenService, ebmService} = require('../services');
 const {Token, User, Order, Stock, Sales} = require('../models');
 const {checkStock} = require('./stock.controller');
 const config = require('../config/config');
@@ -242,6 +242,41 @@ const allCutomers = catchAsync(async (req, res) => {
     });
 });
 
+const initializeEBM = catchAsync(async (req, res) => {
+    const user = await userService.getUserById(req.user._id);
+
+    if (!user) {
+        return res.status(httpStatus.BAD_REQUEST).json({
+            success: false,
+            message: 'User Not Found.'
+        });
+    }
+
+    const {tin, bhfId, dvcSrlNo} = req.body;
+
+    const data = await ebmService.initialize({tin, bhfId, dvcSrlNo});
+
+    if (data.resultCd === '902') {
+
+        user.tin = tin;
+        user.bhfId = bhfId;
+        user.dvcSrlNo = dvcSrlNo;
+        await user.save({validateBeforeSave: false});
+
+        return res.status(httpStatus.OK).json({
+            success: true,
+            message: 'Connected To EBM Successfully.',
+            user
+        });
+    } else {
+        return res.status(httpStatus.BAD_REQUEST).json({
+            success: false,
+            message: 'Unable To Connected To EBM, Plz Try Again.'
+        });
+    }
+
+});
+
 module.exports = {
     register,
     login,
@@ -253,5 +288,7 @@ module.exports = {
     setFCMToken,
 
     addUser,
-    allCutomers
+    allCutomers,
+
+    initializeEBM
 };

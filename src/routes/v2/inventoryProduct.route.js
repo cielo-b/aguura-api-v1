@@ -15,5 +15,6 @@ router.get('/all-stock-products', auth('admin'), inventoryProductController.getS
 
 router.patch('/edit-product/:productId', auth(['admin', 'distributor']), inventoryProductController.editProduct);
 router.get('/all-products', auth(['admin', 'superAdmin']), inventoryProductController.allProducts);
+router.post('/import-ebm-products', auth(['distributor', 'admin']), inventoryProductController.importEbmProducts);
 
 module.exports = router;

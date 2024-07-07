@@ -1,11 +1,12 @@
 const httpStatus = require('http-status');
 
-const {Inventory, InventoryProduct, Product} = require('../models');
+const {Inventory, InventoryProduct, Product, User} = require('../models');
 const catchAsync = require('../utils/catchAsync');
 const {checkDay} = require('./activeDay.controller');
 const formatNumber = require('../utils/formatNumber');
 const {getEntityById} = require('./sales.controller');
 const {compareSync} = require('bcryptjs');
+const {ebmService} = require('../services');
 
 const newInventory = catchAsync(async (req, res) => {
 
@@ -18,6 +19,8 @@ const newInventory = catchAsync(async (req, res) => {
             message: 'Entity Not Found.'
         });
     }
+
+    const manager = await User.findById(entityType === 'stock' ? entity.admin : entity.manager);
 
     const activeDay = await checkDay({entityType, entityId});
     if (!activeDay) {
@@ -47,7 +50,13 @@ const newInventory = catchAsync(async (req, res) => {
             quantity: parseFloat(reqProduct.quantity),
             unitPrice: product.price,
             totalPrice: product.price * parseFloat(reqProduct.quantity),
-            id: product.id
+            id: product.id,
+            itemCd: product.itemCd,
+            itemClsCd: product.itemClsCd,
+            itemTyCd: product.itemTyCd,
+            orgnNatCd: product.orgnNatCd,
+            pkgUnitCd: product.pkgUnitCd,
+            qtyUnitCd: product.qtyUnitCd
         };
 
         products.push(inventoryProduct);
@@ -74,6 +83,65 @@ const newInventory = catchAsync(async (req, res) => {
         await product.save({validateBeforeSave: false});
     }
 
+    if (manager.country === 'rwanda') {
+        // update ebm products 
+        let itemList = [];
+        let totalTxAmt = 0;
+
+        for (let i = 0; i < products.length; i++) {
+            const product = products[i];
+            itemList.push({
+                itemSeq: i + 1,
+                itemCd: product.itemCd,
+                itemClsCd: product.itemClsCd,
+                itemNm: product.name,
+                bcd: null,
+                pkgUnitCd: product.pkgUnitCd,
+                pkg: product.quantity,
+                qtyUnitCd: product.qtyUnitCd,
+                qty: product.quantity,
+                itemExprDt: null,
+                prc: product.unitPrice,
+                splyAmt: product.totalPrice,
+                totDcAmt: 0,
+                taxblAmt: product.totalPrice,
+                taxTyCd: "B",
+                taxAmt: (18 / 100) * product.totalPrice,
+                totAmt: product.totalPrice
+            });
+            totalTxAmt += (18 / 100) * product.totalPrice;
+        }
+
+        const response = await ebmService.saveStockItems({
+            tin: manager.tin,
+            bhfId: manager.bhfId,
+            sarNo: 1,
+            orgSarNo: 0,
+            regTyCd: "M",
+            custTin: null,
+            custNm: null,
+            custBhfId: null,
+            sarTyCd: "02",
+            ocrnDt: ebmService.customReqDate().slice(0, 8),
+            totItemCnt: itemList.length,
+            totTaxblAmt: totalPrice,
+            totTaxAmt: totalTxAmt,
+            totAmt: totalPrice - totalTxAmt,
+            remark: null,
+            regrId: entity.id.slice(0, 20),
+            regrNm: entity.name,
+            modrNm: manager.fullName,
+            modrId: manager.id.slice(0, 20),
+            itemList
+        });
+
+        if (response.resultCd !== '000') {
+            return res.status(httpStatus.CREATED).json({
+                success: false,
+                message: 'Inventory Recorded Into Aguura But Failed Into EBM, Plz Delete This Inventory And Try Again.',
+            });
+        }
+    }
 
     return res.status(httpStatus.CREATED).json({
         success: true,

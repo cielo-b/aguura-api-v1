@@ -85,7 +85,31 @@ const inventoryProductSchema = mongoose.Schema(
                     required: true,
                 },
             }
-        ]
+        ],
+
+        itemCd: {
+            type: String
+        },
+
+        itemClsCd: {
+            type: String
+        },
+
+        itemTyCd: {
+            type: String
+        },
+
+        orgnNatCd: {
+            type: String
+        },
+
+        pkgUnitCd: {
+            type: String
+        },
+
+        qtyUnitCd: {
+            type: String
+        }
     },
     {
         timestamps: true,
