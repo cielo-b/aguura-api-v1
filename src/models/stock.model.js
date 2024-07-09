@@ -48,6 +48,7 @@ const stockShema = mongoose.Schema(
             required: true,
             enum: [
                 'pharmacy',
+                'bralirwa',
                 'drinks',
                 'food',
                 'fashion',

@@ -256,7 +256,7 @@ const initializeEBM = catchAsync(async (req, res) => {
 
     const data = await ebmService.initialize({tin, bhfId, dvcSrlNo});
 
-    if (data.resultCd === '902') {
+    if (data.resultCd === '902' || data.resultCd === '000') {
 
         user.tin = tin;
         user.bhfId = bhfId;

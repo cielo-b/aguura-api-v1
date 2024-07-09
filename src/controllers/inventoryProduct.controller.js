@@ -594,15 +594,19 @@ const importEbmProducts = catchAsync(async (req, res) => {
         });
     }
 
-    for (let item of ebmItems) {
+    for (let _item of ebmItems) {
+        
+        const item = JSON.parse(_item.item);
+        
         const productName = item.itemNm.replace(/\s/g, '').toLowerCase();
         const product = await InventoryProduct.findOne({[entityType]: entityId, productName});
+
         if (!product) {
-            await InventoryProduct.create({
+            const inventoryProduct = await InventoryProduct.create({
                 [entityType]: entityId,
                 name: item.itemNm,
                 productName,
-                price: item.dftPrc,
+                price: _item.price,
                 itemCd: item.itemCd,
                 itemClsCd: item.itemClsCd,
                 itemTyCd: item.itemTyCd,
@@ -610,6 +614,18 @@ const importEbmProducts = catchAsync(async (req, res) => {
                 pkgUnitCd: item.pkgUnitCd,
                 qtyUnitCd: item.qtyUnitCd
             });
+
+            if (inventoryProduct) {
+                const sp = await SalesProduct.create({
+                    price: item.dftPrc,
+                    inventoryProduct: inventoryProduct.id,
+                    [entityType]: entityId
+                });
+
+                if (!sp) {
+                    await inventoryProduct.deleteOne();
+                }
+            }
         }
     }
 
