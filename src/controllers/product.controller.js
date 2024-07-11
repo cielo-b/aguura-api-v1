@@ -156,7 +156,7 @@ const allProducts = catchAsync(async (req, res) => {
     const response = await ebmService.selectItems({
         tin: manager.tin.toString(),
         bhfId: manager.bhfId,
-        lastReqDt: ebmService.customReqDate()
+        lastReqDt: `20130101000000`
     });
 
     // Create a set of product keys based on itemCd, itemClsCd, and name

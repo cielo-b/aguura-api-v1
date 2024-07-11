@@ -6,10 +6,45 @@ const {InventoryProduct, Product, DistributionPoint, Producer, SalesProduct, Use
 const catchAsync = require('../utils/catchAsync');
 const {checkStock} = require('./stock.controller');
 const config = require('../config/config');
-const {url} = require('inspector');
 const {ebmService} = require('../services');
 const {getEntityById} = require('./sales.controller');
 
+
+const generateEBMRequestData = (product, manager, entity, number) => {
+    const {itemCd, pkgUnitCd, qtyUnitCd} = ebmService.generateItemCode(entity.type, manager?.countryCode || 'RW', 2, number);
+
+    const data = {
+        tin: manager.tin,
+        bhfId: manager.bhfId,
+        itemCd,
+        itemClsCd: '5059690800',
+        itemTyCd: '2',
+        itemNm: product.name,
+        itemStdNm: null,
+        orgnNatCd: product.orgnNatCd || 'RW',
+        pkgUnitCd,
+        qtyUnitCd,
+        taxTyCd: "B",
+        btchNo: null,
+        bcd: null,
+        dftPrc: product.price,
+        grpPrcL1: null,
+        grpPrcL2: null,
+        grpPrcL3: null,
+        grpPrcL4: null,
+        grpPrcL5: null,
+        addInfo: null,
+        sftyQty: null,
+        isrcAplcbYn: "N",
+        useYn: "Y",
+        regrNm: entity.name,
+        regrId: entity.id.slice(0, 20),
+        modrNm: manager.fullName,
+        modrId: manager.id.slice(0, 20)
+    };
+
+    return data;
+};
 
 // ========= Distributor Products =========
 
@@ -68,42 +103,15 @@ const addDistributorProducts = catchAsync(async (req, res) => {
         }
     }
 
+    const currentProducts = await InventoryProduct.find({distributionPoint: distributionPoint.id});
+
     // save products to ebm
     if (manager.country === 'rwanda') {
         for (let i = 0; i < savedProducts.length; i++) {
 
             const product = savedProducts[i];
-            const {itemCd, pkgUnitCd, qtyUnitCd} = ebmService.generateItemCode(distributionPoint.type, manager?.countryCode || 'RW', 2, (currentProducts.length + i + 1));
 
-            const data = {
-                tin: manager.tin,
-                bhfId: manager.bhfId,
-                itemCd,
-                itemClsCd: '5059690800',
-                itemTyCd: '2',
-                itemNm: product.name,
-                itemStdNm: null,
-                orgnNatCd: product.orgnNatCd || 'RW',
-                pkgUnitCd,
-                qtyUnitCd,
-                taxTyCd: "B",
-                btchNo: null,
-                bcd: null,
-                dftPrc: product.price,
-                grpPrcL1: null,
-                grpPrcL2: null,
-                grpPrcL3: null,
-                grpPrcL4: null,
-                grpPrcL5: null,
-                addInfo: null,
-                sftyQty: null,
-                isrcAplcbYn: "N",
-                useYn: "Y",
-                regrNm: distributionPoint.name,
-                regrId: distributionPoint.id.slice(0, 20),
-                modrNm: manager.fullName,
-                modrId: manager.id.slice(0, 20)
-            };
+            const data = generateEBMRequestData(product, manager, distributionPoint, (currentProducts.length + i + 1));
 
             const response = await ebmService.saveItems(data);
 
@@ -154,7 +162,7 @@ const getDistributorProducts = catchAsync(async (req, res) => {
     const response = await ebmService.selectItems({
         tin: manager.tin.toString(),
         bhfId: manager.bhfId,
-        lastReqDt: ebmService.customReqDate()
+        lastReqDt: `20130101000000`
     });
     const productKeys = new Set(products.map(product => `${product.itemCd}-${product.itemClsCd}-${product.name}`));
     const ebmItemsWithoutProducts = (response.resultCd === '000' ? response.data?.itemList : []).filter(item => {
@@ -216,42 +224,16 @@ const newStockProduct = catchAsync(async (req, res) => {
             url: config.url + '/public/images/' + file.filename
         };
     }) : [];
-
+    
     const iP = await InventoryProduct.create({productName, images, sizes: stock?.type === 'fashion' ? JSON.parse(sizes) : [], details: stock?.type === 'fashion' ? JSON.parse(details) : [], name, price: purchasePrice, stock: stock.id, description});
+
+    const currentProducts = await InventoryProduct.find({stock: stock.id});
+    
     if (iP) {
         if (manager.country === 'rwanda') {
             const product = iP;
-            const {itemCd, pkgUnitCd, qtyUnitCd} = ebmService.generateItemCode(stock.type, manager?.countryCode || 'RW', 2, (currentProducts.length + i + 1));
 
-            const data = {
-                tin: manager.tin,
-                bhfId: manager.bhfId,
-                itemCd,
-                itemClsCd: '5059690800',
-                itemTyCd: '2',
-                itemNm: product.name,
-                itemStdNm: null,
-                orgnNatCd: product.orgnNatCd || 'RW',
-                pkgUnitCd,
-                qtyUnitCd,
-                taxTyCd: "B",
-                btchNo: null,
-                bcd: null,
-                dftPrc: product.price,
-                grpPrcL1: null,
-                grpPrcL2: null,
-                grpPrcL3: null,
-                grpPrcL4: null,
-                grpPrcL5: null,
-                addInfo: null,
-                sftyQty: null,
-                isrcAplcbYn: "N",
-                useYn: "Y",
-                regrNm: stock.name,
-                regrId: stock.id.slice(0, 20),
-                modrNm: manager.fullName,
-                modrId: manager.id.slice(0, 20)
-            };
+            const data = generateEBMRequestData(product, manager, stock, (currentProducts.length + i + 1));
 
             const response = await ebmService.saveItems(data);
 
@@ -405,42 +387,15 @@ const addStockProducts = catchAsync(async (req, res) => {
         }
     }
 
+    const currentProducts = await InventoryProduct.find({stock: stock.id});
+
     // save products to ebm
     if (manager.country === 'rwanda') {
         for (let i = 0; i < savedProducts.length; i++) {
 
             const product = savedProducts[i];
-            const {itemCd, pkgUnitCd, qtyUnitCd} = ebmService.generateItemCode(distributionPoint.type, manager?.countryCode || 'RW', 2, (currentProducts.length + i + 1));
 
-            const data = {
-                tin: manager.tin,
-                bhfId: manager.bhfId,
-                itemCd,
-                itemClsCd: '5059690800',
-                itemTyCd: '2',
-                itemNm: product.name,
-                itemStdNm: null,
-                orgnNatCd: product.orgnNatCd || 'RW',
-                pkgUnitCd,
-                qtyUnitCd,
-                taxTyCd: "B",
-                btchNo: null,
-                bcd: null,
-                dftPrc: product.price,
-                grpPrcL1: null,
-                grpPrcL2: null,
-                grpPrcL3: null,
-                grpPrcL4: null,
-                grpPrcL5: null,
-                addInfo: null,
-                sftyQty: null,
-                isrcAplcbYn: "N",
-                useYn: "Y",
-                regrNm: stock.name,
-                regrId: stock.id.slice(0, 20),
-                modrNm: manager.fullName,
-                modrId: manager.id.slice(0, 20)
-            };
+            const data = generateEBMRequestData(product, manager, stock, (currentProducts.length + i + 1));
 
             const response = await ebmService.saveItems(data);
 
@@ -488,7 +443,7 @@ const getStockProducts = catchAsync(async (req, res) => {
     const response = await ebmService.selectItems({
         tin: manager.tin.toString(),
         bhfId: manager.bhfId,
-        lastReqDt: ebmService.customReqDate()
+        lastReqDt: `20130101000000`
     });
 
     const productKeys = new Set(products.map(product => `${product.itemCd}-${product.itemClsCd}-${product.name}`));
@@ -595,9 +550,9 @@ const importEbmProducts = catchAsync(async (req, res) => {
     }
 
     for (let _item of ebmItems) {
-        
+
         const item = JSON.parse(_item.item);
-        
+
         const productName = item.itemNm.replace(/\s/g, '').toLowerCase();
         const product = await InventoryProduct.findOne({[entityType]: entityId, productName});
 

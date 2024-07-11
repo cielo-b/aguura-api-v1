@@ -155,12 +155,12 @@ async function processProducts(reqProducts, entityType) {
             unitPrice: product.price,
             totalPrice: product.price * reqProduct.quantity,
             salesProduct: product.id,
-            itemCd: product.itemCd,
-            itemClsCd: product.itemClsCd,
-            itemTyCd: product.itemTyCd,
-            orgNatCd: product.orgNatCd,
-            pkgUnitCd: product.pkgUnitCd,
-            qtyUnitCd: product.qtyUnitCd
+            itemCd: product.inventoryProduct.itemCd,
+            itemClsCd: product.inventoryProduct.itemClsCd,
+            itemTyCd: product.inventoryProduct.itemTyCd,
+            orgNatCd: product.inventoryProduct.orgNatCd,
+            pkgUnitCd: product.inventoryProduct.pkgUnitCd,
+            qtyUnitCd: product.inventoryProduct.qtyUnitCd
 
         };
 
@@ -485,6 +485,82 @@ async function getCustomerDetails(customerId, body) {
     };
 }
 
+const generateEBMRequestData = (products, manager, entity) => {
+
+    let itemList = [];
+    let totalTxAmt = 0;
+    let totalPrice = 0;
+
+    for (let i = 0; i < products.length; i++) {
+        const product = products[i];
+        itemList.push({
+            itemSeq: i + 1,
+            itemCd: product.itemCd,
+            itemClsCd: product.itemClsCd,
+            itemNm: product.name,
+            bcd: null,
+            pkgUnitCd: product.pkgUnitCd,
+            pkg: product.quantity,
+            qtyUnitCd: product.qtyUnitCd,
+            qty: product.quantity,
+            itemExprDt: null,
+            prc: product.unitPrice,
+            splyAmt: product.totalPrice,
+            totDcAmt: 0,
+            taxblAmt: product.totalPrice,
+            taxTyCd: "B",
+            taxAmt: ((18 / 118) * product.totalPrice).toFixed(2),
+            totAmt: product.totalPrice
+        });
+
+        totalTxAmt = parseFloat(totalTxAmt) + parseFloat(((18 / 118) * product.totalPrice).toFixed(2));
+        totalPrice += product.totalPrice;
+    }
+
+    const data = {
+        tin: manager.tin,
+        bhfId: manager.bhfId,
+        sarNo: itemList.length,
+        orgSarNo: 0,
+        regTyCd: "M",
+        custTin: null,
+        custNm: null,
+        custBhfId: null,
+        sarTyCd: "02",
+        ocrnDt: ebmService.customReqDate().slice(0, 8),
+        totItemCnt: itemList.length,
+        totTaxblAmt: totalPrice,
+        totTaxAmt: (totalTxAmt).toFixed(2),
+        totAmt: (parseFloat(totalPrice) - parseFloat(totalTxAmt)).toFixed(2),
+        remark: null,
+        regrId: entity.id.slice(0, 20),
+        regrNm: entity.name,
+        modrNm: manager.fullName,
+        modrId: manager.id.slice(0, 20),
+        itemList
+    };
+
+    return data;
+};
+
+const generateStockMasterRequestData = (manager, product, entity) => {
+    const data = {
+        tin: manager.tin,
+        bhfId: manager.bhfId,
+        itemCd: product.itemCd,
+        rsdQty: 10,
+        regrId: entity.id.slice(0, 20),
+        regrNm: entity.name,
+        modrNm: manager.fullName,
+        modrId: manager.id.slice(0, 20),
+    };
+
+    return data;
+};
+
+
+// ===== APIs ===========
+
 const newSales = catchAsync(async (req, res) => {
 
     const {products: reqProducts, isFullyPaid, amountPaid, payments, customerId, entityId, entityType} = req.body;
@@ -505,7 +581,7 @@ const newSales = catchAsync(async (req, res) => {
         });
     }
 
-    const manager = entityType === 'stock' ? entity.admin : entity.manager;
+    const manager = await User.findById(entityType === 'stock' ? entity.admin : entity.manager);
 
     const activeDay = await checkDay({entityId, entityType});
 
@@ -878,10 +954,10 @@ const newSales = catchAsync(async (req, res) => {
             taxTyCd: "B",
             taxblAmt: product.totalPrice,
             taxAmt: tx,
-            totAmt: product.totalPrice - tax
+            totAmt: product.totalPrice - tx
         });
 
-        totalTxAmt += (18 / 100) * product.totalPrice;
+        totalTxAmt += (18 / 118) * product.totalPrice;
     }
 
     // total sales
@@ -889,9 +965,9 @@ const newSales = catchAsync(async (req, res) => {
         const availableSales = await Sales.find({[entityType]: entityId});
         const pmtTyCd = _payments.length === 0 ? '02' :
             _payments[0].name.toString().trim().toLowerCase() === 'cash' ? '01' :
-                _payments[0].name.toString().trim().toLowerCase().contains('mobile') ? '06' :
-                    _payments[0].name.toString().trim().toLowerCase().contains('card') ? '05' :
-                        _payments[0].name.toString().trim().toLowerCase().contains('bank') ? '04' : '07';
+                ['momo', 'mobile'].some(substring => _payments[0].name.toString().trim().toLowerCase().includes(substring)) ? '06' :
+                    ['card', 'credit', 'debit'].some(substring => _payments[0].name.toString().trim().toLowerCase().includes(substring)) ? '05' :
+                        ['bank', 'check'].some(substring => _payments[0].name.toString().trim().toLowerCase().includes(substring)) ? '04' : '07';
 
         const now = new Date();
         const year = now.getFullYear();
@@ -907,9 +983,9 @@ const newSales = catchAsync(async (req, res) => {
             bhfId: manager.bhfId,
             invcNo: availableSales.length,
             orgInvcNo: availableSales.length,
-            custTin: customer.tin ? customer.tin : null,
+            custTin: customerTin,
             prcOrdCd: null,
-            custNm: entityType === 'producer' ? distributor.name : entityType === 'distributionPoint' ? stock.name : user.fullName,
+            custNm: customerName,
             salesTyCd: "N",
             rcptTyCd: "S",
             pmtTyCd,
@@ -922,21 +998,21 @@ const newSales = catchAsync(async (req, res) => {
             rfdDt: null,
             rfdRsnCd: null,
             totItemCnt: itemList.length,
-            taxblAmtA: totalPrice,
-            taxblAmtB: 0,
+            taxblAmtA: 0,
+            taxblAmtB: totalPrice,
             taxblAmtC: 0,
             taxblAmtD: 0,
-            taxRtA: 18,
-            taxRtB: 0,
+            taxRtA: 0,
+            taxRtB: 18,
             taxRtC: 0,
             taxRtD: 0,
-            taxAmtA: (18 / 100) * totalPrice,
-            taxAmtB: 0,
+            taxAmtA: 0,
+            taxAmtB: ((18 / 118) * totalPrice).toFixed(2),
             taxAmtC: 0,
             taxAmtD: 0,
             totTaxblAmt: totalPrice,
-            totalTxAmt,
-            totAmt: totalPrice - totalTxAmt,
+            totTaxAmt: totalTxAmt.toFixed(2),
+            totAmt: totalPrice - totalTxAmt.toFixed(2),
             prchrAcptcYn: "Y",
             remark: null,
             regrId: entity.id.slice(0, 20),
@@ -953,13 +1029,40 @@ const newSales = catchAsync(async (req, res) => {
                 btmMsg: `\nPowered By Aguura.`,
                 prchrAcptcYn: "Y"
             },
+            itemList
         });
+
+        console.log(response);
 
         if (response.resultCd !== '000') {
             return res.status(httpStatus.CREATED).json({
                 success: false,
                 message: 'Sales Recorded Into Aguura But Failed Into EBM, Plz Delete It And Try Again.',
             });
+        } else {
+            const data = generateEBMRequestData(products, manager, entity);
+
+            const response = await ebmService.saveStockItems(data);
+
+            if (response.resultCd !== '000') {
+                return res.status(httpStatus.CREATED).json({
+                    success: false,
+                    message: 'Inventory Recorded Into Aguura But Failed Into EBM, Plz Delete This Inventory And Try Again.',
+                });
+            } else {
+                // update stock Items master
+                for (let i = 0; i < products.length; i++) {
+
+                    const product = products[i];
+                    const p = entityType === 'producer' ?
+                        await Product.findById(product.id) :
+                        await InventoryProduct.findById(product.id);
+
+                    const reqData = generateStockMasterRequestData(manager, p, entity);
+                    const response = await ebmService.stockItemsMaster(reqData);
+                    console.log(response);
+                }
+            }
         }
     }
 
