@@ -932,7 +932,7 @@ const newSales = catchAsync(async (req, res) => {
 
     for (let i = 0; i < products.length; i++) {
         const product = products[i];
-        const tx = (18 / 100) * product.totalPrice;
+        const tx = (18 / 118) * product.totalPrice;
         itemList.push({
             itemSeq: i + 1,
             itemCd: product.itemCd,
@@ -952,12 +952,13 @@ const newSales = catchAsync(async (req, res) => {
             isrcRt: null,
             isrcAmt: null,
             taxTyCd: "B",
-            taxblAmt: product.totalPrice,
-            taxAmt: tx,
-            totAmt: product.totalPrice - tx
+            taxblAmt: parseFloat(product.totalPrice.toFixed(2)),
+            taxAmt: parseFloat(tx.toFixed(2)),
+            totAmt: parseFloat(product.totalPrice.toFixed(2))
+            // totAmt: parseFloat((product.totalPrice - tx).toFixed(2))
         });
 
-        totalTxAmt += (18 / 118) * product.totalPrice;
+        totalTxAmt = parseFloat(totalTxAmt + ((18 / 118) * product.totalPrice).toFixed(2));
     }
 
     // total sales
@@ -978,7 +979,7 @@ const newSales = catchAsync(async (req, res) => {
         const seconds = String(now.getSeconds()).padStart(2, '0');
         const cfmDt = `${year}${month}${day}${hours}${minutes}${seconds}`;
 
-        const response = await ebmService.saveSales({
+        const data = {
             tin: manager.tin,
             bhfId: manager.bhfId,
             invcNo: availableSales.length,
@@ -1007,12 +1008,13 @@ const newSales = catchAsync(async (req, res) => {
             taxRtC: 0,
             taxRtD: 0,
             taxAmtA: 0,
-            taxAmtB: ((18 / 118) * totalPrice).toFixed(2),
+            taxAmtB: parseFloat(((18 / 118) * totalPrice).toFixed(2)),
             taxAmtC: 0,
             taxAmtD: 0,
             totTaxblAmt: totalPrice,
-            totTaxAmt: totalTxAmt.toFixed(2),
-            totAmt: totalPrice - totalTxAmt.toFixed(2),
+            totTaxAmt: parseFloat(((18 / 118) * totalPrice).toFixed(2)),
+            totAmt: totalPrice,
+            // totAmt: parseFloat((totalPrice - totalTxAmt).toFixed(2)),
             prchrAcptcYn: "Y",
             remark: null,
             regrId: entity.id.slice(0, 20),
@@ -1026,11 +1028,13 @@ const newSales = catchAsync(async (req, res) => {
                 trdeNm: null,
                 adrs: null,
                 topMsg: `Thank You For Working With ${entity.name}`,
-                btmMsg: `\nPowered By Aguura.`,
+                btmMsg: `Powered By Aguura.`,
                 prchrAcptcYn: "Y"
             },
             itemList
-        });
+        };
+        console.log(data);
+        const response = await ebmService.saveSales(data);
 
         console.log(response);
 
