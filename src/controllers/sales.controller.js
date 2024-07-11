@@ -548,7 +548,7 @@ const generateStockMasterRequestData = (manager, product, entity) => {
         tin: manager.tin,
         bhfId: manager.bhfId,
         itemCd: product.itemCd,
-        rsdQty: 10,
+        rsdQty: product.totalAvailable,
         regrId: entity.id.slice(0, 20),
         regrNm: entity.name,
         modrNm: manager.fullName,
