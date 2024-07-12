@@ -146,8 +146,8 @@ async function processProducts(reqProducts, entityType) {
             itemTyCd: product.itemTyCd,
             orgNatCd: product.orgNatCd,
             pkgUnitCd: product.pkgUnitCd,
-            qtyUnitCd: product.qtyUnitCd
-
+            qtyUnitCd: product.qtyUnitCd,
+            product: product.id,
         } : {
 
             name: product.inventoryProduct.name,
@@ -160,8 +160,8 @@ async function processProducts(reqProducts, entityType) {
             itemTyCd: product.inventoryProduct.itemTyCd,
             orgNatCd: product.inventoryProduct.orgNatCd,
             pkgUnitCd: product.inventoryProduct.pkgUnitCd,
-            qtyUnitCd: product.inventoryProduct.qtyUnitCd
-
+            qtyUnitCd: product.inventoryProduct.qtyUnitCd,
+            product: product.inventoryProduct.id
         };
 
         products.push(salesProduct);
@@ -983,11 +983,11 @@ const newSales = catchAsync(async (req, res) => {
             tin: manager.tin,
             bhfId: manager.bhfId,
             invcNo: availableSales.length,
-            orgInvcNo: availableSales.length,
+            orgInvcNo: 0,
             custTin: customerTin,
             prcOrdCd: null,
             custNm: customerName,
-            salesTyCd: "N",
+            salesTyCd: "T", // change for prod
             rcptTyCd: "S",
             pmtTyCd,
             salesSttsCd: "02",
@@ -1027,16 +1027,13 @@ const newSales = catchAsync(async (req, res) => {
                 rptNo: availableSales.length,
                 trdeNm: null,
                 adrs: null,
-                topMsg: `Thank You For Working With ${entity.name}`,
-                btmMsg: `Powered By Aguura.`,
+                topMsg: `${entity.name}\nAdrs: ${entity.location}\nTel: ${manager.phone}`,
+                btmMsg: `Powered By Aguura`,
                 prchrAcptcYn: "Y"
             },
             itemList
         };
-        console.log(data);
         const response = await ebmService.saveSales(data);
-
-        console.log(response);
 
         if (response.resultCd !== '000') {
             return res.status(httpStatus.CREATED).json({
@@ -1059,8 +1056,8 @@ const newSales = catchAsync(async (req, res) => {
 
                     const product = products[i];
                     const p = entityType === 'producer' ?
-                        await Product.findById(product.id) :
-                        await InventoryProduct.findById(product.id);
+                        await Product.findById(product.product) :
+                        await InventoryProduct.findById(product.product);
 
                     const reqData = generateStockMasterRequestData(manager, p, entity);
                     const response = await ebmService.stockItemsMaster(reqData);
