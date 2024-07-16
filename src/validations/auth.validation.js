@@ -6,6 +6,7 @@ const register = {
         phone: Joi.string().required(),
         fullName: Joi.string().required(),
         role: Joi.string().required(),
+        tin: Joi.string().required(),
         password: Joi.string().required().custom(password),
     }),
 };

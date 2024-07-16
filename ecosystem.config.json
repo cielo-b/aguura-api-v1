@@ -1,11 +1,11 @@
 {
     "apps": [
         {
-            "name": "stock",
+            "name": "aguura",
             "script": "src/index.js",
             "instances": "max",
             "autorestart": true,
-            "watch": false,
+            "watch": true,
             "time": true,
             "exec_mode": "cluster",
             "env": {

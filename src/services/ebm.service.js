@@ -40,6 +40,18 @@ const saveSales = async (data) => {
     return response.data;
 };
 
+// select customer
+const selectCustomer = async (data) => {
+    const response = await API.post(`/customers/selectCustomer`, data);
+    return response.data;
+};
+
+// save customer
+const saveCustomer = async (data) => {
+    const response = await API.post(`/branches/saveBrancheCustomers`, data);
+    return response.data;
+};
+
 
 
 
@@ -72,11 +84,16 @@ const generateItemCode = (entityType, countryCode, productType, number) => {
 
 module.exports = {
     initialize,
+
     selectItems,
     saveItems,
     saveStockItems,
-    saveSales,
     stockItemsMaster,
+
+    saveSales,
+    
+    selectCustomer,
+    saveCustomer,
 
     customReqDate,
     generateItemCode

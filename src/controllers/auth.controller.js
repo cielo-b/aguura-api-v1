@@ -11,7 +11,7 @@ const {tokenTypes} = require('../config/tokens');
 
 const register = catchAsync(async (req, res) => {
 
-    let {fullName, phone, password, role} = req.body;
+    let {fullName, phone, password, role, tin} = req.body;
 
     const stocks = await Stock.find({});
 
@@ -29,7 +29,14 @@ const register = catchAsync(async (req, res) => {
         });
     }
 
-    const user = await userService.createUser({fullName, phone, password, role});
+    if (tin && tin.toString().length < 9) {
+        return res.status(httpStatus.BAD_REQUEST).json({
+            success: false,
+            message: 'Invalid TIN'
+        });
+    }
+
+    const user = await userService.createUser({fullName, phone, password, role, tin});
     const tokens = await tokenService.generateAuthTokens(user);
     res.status(httpStatus.CREATED).json({
         success: true,

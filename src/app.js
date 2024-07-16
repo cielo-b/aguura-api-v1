@@ -69,7 +69,7 @@ app.get('/', (req, res) => {
     });
 });
 
-// v1 api routes
+// v2 api routes
 app.use('/api/v2', routes);
 
 // send back a 404 error for any unknown api request

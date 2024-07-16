@@ -2,7 +2,7 @@ const httpStatus = require('http-status');
 
 const {Stock, User, ActiveDay} = require('../models');
 const catchAsync = require('../utils/catchAsync');
-const {userService} = require('../services');
+const {userService, ebmService} = require('../services');
 
 const newStock = catchAsync(async (req, res) => {
 
@@ -238,6 +238,38 @@ const addStocks = catchAsync(async (req, res) => {
                 customers.push(user.id);
                 stock.customers = customers;
                 await stock.save({validateBeforeSave: false});
+
+                // check ebm stock
+                if (user.tin) {
+                    const manager = await User.findById(stock.admin);
+                    const response = await ebmService.selectCustomer({
+                        tin: manager.tin,
+                        bhfId: manager.bhfId,
+                        custmTin: user.tin
+                    });
+
+                    if (response.resultCd === '001') {
+                        const rsp = await ebmService.saveCustomer({
+                            tin: manager.tin,
+                            bhfId: manager.bhfId,
+                            custNo: 999991113,
+                            custTin: user.tin,
+                            custNm: user.fullName,
+                            adrs: null,
+                            telNo: user.phone,
+                            email: user.email,
+                            faxNo: null,
+                            useYn: "Y",
+                            remark: null,
+                            regrId: stock.id.slice(0, 20),
+                            regrNm: stock.name,
+                            modrNm: manager.fullName,
+                            modrId: manager.id.slice(0, 20),
+                        });
+
+                        console.log(rsp);
+                    }
+                }
             }
 
             user.stocks = userStocks;
