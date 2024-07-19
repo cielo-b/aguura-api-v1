@@ -21,6 +21,7 @@ const catchAsync = require('../utils/catchAsync');
 const {checkDay} = require('./activeDay.controller');
 const formatNumber = require('../utils/formatNumber');
 const {ebmService} = require('../services');
+const {date} = require('joi');
 
 
 async function updateProducerInventory(initials, distributor) {
@@ -1067,10 +1068,27 @@ const newSales = catchAsync(async (req, res) => {
         }
     }
 
+    const salesData = {
+        products: products.map(p => {
+            return {
+                name: p.name,
+                uPrc: p.unitPrice,
+                tPrc: p.totalPrice,
+                qty: p.quantity
+            };
+        }),
+        user: customerName,
+        entity: entity.name,
+        location: entity.location,
+        phone: manager.phone,
+        tin: manager.tin,
+        totalPrice
+    };
 
     return res.status(httpStatus.CREATED).json({
         success: true,
         message: 'Sales Recorded Successfully.',
+        salesData
     });
 
 });

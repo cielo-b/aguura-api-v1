@@ -6,7 +6,7 @@ const auth = require('../../middlewares/auth');
 
 const router = express.Router();
 
-router.post('/register', validate(authValidation.register), authController.register);
+router.post('/register', authController.register);
 router.post('/add-customer', authController.addUser);
 router.patch('/set-fcm-token', auth(), authController.setFCMToken);
 router.post('/connect-ebm', auth(['producer', 'distributor', 'admin']), authController.initializeEBM);

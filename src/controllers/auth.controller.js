@@ -261,6 +261,14 @@ const initializeEBM = catchAsync(async (req, res) => {
 
     const {tin, bhfId, dvcSrlNo} = req.body;
 
+    const existingUser = await User.findOne({tin});
+    if (existingUser) {
+        return res.status(httpStatus.BAD_REQUEST).json({
+            success: false,
+            message: 'TIN Already Taken.'
+        });
+    }
+
     const data = await ebmService.initialize({tin, bhfId, dvcSrlNo});
 
     if (data.resultCd === '902' || data.resultCd === '000') {

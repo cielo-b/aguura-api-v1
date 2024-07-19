@@ -83,7 +83,7 @@ const generateStockMasterRequestData = (manager, product, entity) => {
 
 const newInventory = catchAsync(async (req, res) => {
 
-    const {entityType, entityId, products: reqProducts, dayId, ebmUpdated} = req.body;
+    const {entityType, entityId, products: reqProducts, dayId} = req.body;
 
     let entity = await getEntityById(entityType, entityId);
     if (!entity) {
@@ -156,7 +156,7 @@ const newInventory = catchAsync(async (req, res) => {
         await product.save({validateBeforeSave: false});
     }
 
-    if (manager.country === 'rwanda' && !ebmUpdated) {
+    if (manager.country === 'rwanda') {
         // update ebm products 
 
         const data = generateEBMRequestData(products, manager, entity);

@@ -224,11 +224,11 @@ const newStockProduct = catchAsync(async (req, res) => {
             url: config.url + '/public/images/' + file.filename
         };
     }) : [];
-    
+
     const iP = await InventoryProduct.create({productName, images, sizes: stock?.type === 'fashion' ? JSON.parse(sizes) : [], details: stock?.type === 'fashion' ? JSON.parse(details) : [], name, price: purchasePrice, stock: stock.id, description});
 
     const currentProducts = await InventoryProduct.find({stock: stock.id});
-    
+
     if (iP) {
         if (manager.country === 'rwanda') {
             const product = iP;
@@ -567,7 +567,9 @@ const importEbmProducts = catchAsync(async (req, res) => {
                 itemTyCd: item.itemTyCd,
                 orgNatCd: item.orgNatCd,
                 pkgUnitCd: item.pkgUnitCd,
-                qtyUnitCd: item.qtyUnitCd
+                qtyUnitCd: item.qtyUnitCd,
+                dailyAdded: _item.quantity,
+                totalAvailable: _item.quantity,
             });
 
             if (inventoryProduct) {
