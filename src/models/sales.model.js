@@ -63,7 +63,11 @@ const salesSchema = mongoose.Schema(
                 totalPrice: {
                     type: Number,
                     required: true,
-                }
+                },
+                taxTyCd: {
+                    code: {type: String},
+                    name: {type: String}
+                },
             }
         ],
 
@@ -128,6 +132,16 @@ const salesSchema = mongoose.Schema(
 
         purchase: {
             type: Number,
+        },
+
+        rct: {
+            rcptNo: {type: Number},
+            intrlData: {type: String},
+            rcptSign: {type: String},
+            totRcptNo: {type: Number},
+            vsdcRcptPbctDate: {type: String},
+            sdcId: {type: String},
+            mrcNo: {type: String}
         }
     },
     {

@@ -71,14 +71,18 @@ const customReqDate = () => {
 
 // Generate item code
 const generateItemCode = (entityType, countryCode, productType, number) => {
-    const pkgUnitCd = entityType === 'drinks' ? 'BC' : 'BE';
-    const qtyUnitCd = entityType === 'drinks' ? 'CMT' : 'MGM';
-    const itemCd = `${countryCode}${productType}${pkgUnitCd}${qtyUnitCd}${number}`;
+    const pkgUnitCd = (entityType === 'bralirwa') ? 'BC' : 'BE';
+    const qtyUnitCd = (entityType === 'bralirwa') ? 'CMT' : 'MGM';
+    const nmbr = number.toString().padStart(7, '0')
+    const itemCd = `${countryCode}${productType}${pkgUnitCd}${qtyUnitCd}${nmbr}`;
+
+    // number has to be seven figures
 
     return {
         pkgUnitCd,
         qtyUnitCd,
-        itemCd
+        itemCd,
+        nmbr
     };
 };
 
@@ -91,7 +95,7 @@ module.exports = {
     stockItemsMaster,
 
     saveSales,
-    
+
     selectCustomer,
     saveCustomer,
 

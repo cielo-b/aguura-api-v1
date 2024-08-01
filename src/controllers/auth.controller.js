@@ -286,7 +286,7 @@ const initializeEBM = catchAsync(async (req, res) => {
     } else {
         return res.status(httpStatus.BAD_REQUEST).json({
             success: false,
-            message: 'Unable To Connected To EBM, Plz Try Again.'
+            message: `${data.resultMsg}, plz try again.`
         });
     }
 

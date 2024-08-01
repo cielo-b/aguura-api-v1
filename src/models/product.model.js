@@ -58,7 +58,16 @@ const productSchema = mongoose.Schema(
         
         qtyUnitCd: {
             type: String
-        }
+        },
+
+        nmbr: {
+            type: Number
+        },
+
+        taxTyCd: {
+            code: {type: String},
+            name: {type: String}
+        },
 
     },
     {

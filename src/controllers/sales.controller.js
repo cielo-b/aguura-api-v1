@@ -21,7 +21,6 @@ const catchAsync = require('../utils/catchAsync');
 const {checkDay} = require('./activeDay.controller');
 const formatNumber = require('../utils/formatNumber');
 const {ebmService} = require('../services');
-const {date} = require('joi');
 
 
 async function updateProducerInventory(initials, distributor) {
@@ -132,7 +131,8 @@ async function processProducts(reqProducts, entityType) {
             itemTyCd: product.itemTyCd,
             orgNatCd: product.orgNatCd,
             pkgUnitCd: product.pkgUnitCd,
-            qtyUnitCd: product.qtyUnitCd
+            qtyUnitCd: product.qtyUnitCd,
+            taxTyCd: product.taxTyCd
 
         } : entityType === 'distributionPoint' ? {
 
@@ -149,6 +149,7 @@ async function processProducts(reqProducts, entityType) {
             pkgUnitCd: product.pkgUnitCd,
             qtyUnitCd: product.qtyUnitCd,
             product: product.id,
+            taxTyCd: product.taxTyCd
         } : {
 
             name: product.inventoryProduct.name,
@@ -162,13 +163,15 @@ async function processProducts(reqProducts, entityType) {
             orgNatCd: product.inventoryProduct.orgNatCd,
             pkgUnitCd: product.inventoryProduct.pkgUnitCd,
             qtyUnitCd: product.inventoryProduct.qtyUnitCd,
-            product: product.inventoryProduct.id
+            product: product.inventoryProduct.id,
+            taxTyCd: product.inventoryProduct.taxTyCd
         };
 
         products.push(salesProduct);
         totalPrice += salesProduct.totalPrice;
         description += `${salesProduct.name}: ${formatNumber(salesProduct.quantity)} x ${formatNumber(salesProduct.unitPrice)} = ${formatNumber(salesProduct.totalPrice)} Rwf\n`;
     }
+
 
     return {products, totalPrice, description};
 }
@@ -646,6 +649,7 @@ const newSales = catchAsync(async (req, res) => {
     }
 
     const sales = await Sales.create(saleObject);
+    
     if (!sales) {
         return res.status(httpStatus.BAD_REQUEST).json({
             success: false,
@@ -983,7 +987,7 @@ const newSales = catchAsync(async (req, res) => {
         const data = {
             tin: manager.tin,
             bhfId: manager.bhfId,
-            invcNo: availableSales.length,
+            invcNo: availableSales.length + 10000000,
             orgInvcNo: 0,
             custTin: customerTin,
             prcOrdCd: null,
@@ -1034,22 +1038,25 @@ const newSales = catchAsync(async (req, res) => {
             },
             itemList
         };
-        const response = await ebmService.saveSales(data);
+        const resp = await ebmService.saveSales(data);
+        console.log(resp);
 
-        if (response.resultCd !== '000') {
+        if (resp.resultCd !== '000') {
             return res.status(httpStatus.CREATED).json({
                 success: false,
-                message: 'Sales Recorded Into Aguura But Failed Into EBM, Plz Delete It And Try Again.',
+                message: resp.resultMsg,
             });
         } else {
             const data = generateEBMRequestData(products, manager, entity);
 
             const response = await ebmService.saveStockItems(data);
 
+            console.log(response);
+
             if (response.resultCd !== '000') {
                 return res.status(httpStatus.CREATED).json({
                     success: false,
-                    message: 'Inventory Recorded Into Aguura But Failed Into EBM, Plz Delete This Inventory And Try Again.',
+                    message: 'Sales Recorded Into Aguura But Failed Into EBM, Plz Delete This Sales And Try Again.',
                 });
             } else {
                 // update stock Items master
@@ -1064,31 +1071,16 @@ const newSales = catchAsync(async (req, res) => {
                     const response = await ebmService.stockItemsMaster(reqData);
                     console.log(response);
                 }
+
+                sales.rct = resp.data;
+                await sales.save({validateBeforeSave: false});
             }
         }
     }
 
-    const salesData = {
-        products: products.map(p => {
-            return {
-                name: p.name,
-                uPrc: p.unitPrice,
-                tPrc: p.totalPrice,
-                qty: p.quantity
-            };
-        }),
-        user: customerName,
-        entity: entity.name,
-        location: entity.location,
-        phone: manager.phone,
-        tin: manager.tin,
-        totalPrice
-    };
-
     return res.status(httpStatus.CREATED).json({
         success: true,
         message: 'Sales Recorded Successfully.',
-        salesData
     });
 
 });

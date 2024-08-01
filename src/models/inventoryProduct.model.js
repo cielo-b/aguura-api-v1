@@ -109,7 +109,16 @@ const inventoryProductSchema = mongoose.Schema(
 
         qtyUnitCd: {
             type: String
-        }
+        },
+
+        nmbr: {
+            type: String
+        },
+
+        taxTyCd: {
+            code: {type: String},
+            name: {type: String}
+        },
     },
     {
         timestamps: true,

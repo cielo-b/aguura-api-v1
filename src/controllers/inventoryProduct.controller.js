@@ -8,10 +8,11 @@ const {checkStock} = require('./stock.controller');
 const config = require('../config/config');
 const {ebmService} = require('../services');
 const {getEntityById} = require('./sales.controller');
+const {number} = require('joi');
 
 
 const generateEBMRequestData = (product, manager, entity, number) => {
-    const {itemCd, pkgUnitCd, qtyUnitCd} = ebmService.generateItemCode(entity.type, manager?.countryCode || 'RW', 2, number);
+    const {itemCd, pkgUnitCd, qtyUnitCd, nmbr} = ebmService.generateItemCode(entity.type, manager?.countryCode || 'RW', 2, number);
 
     const data = {
         tin: manager.tin,
@@ -40,7 +41,8 @@ const generateEBMRequestData = (product, manager, entity, number) => {
         regrNm: entity.name,
         regrId: entity.id.slice(0, 20),
         modrNm: manager.fullName,
-        modrId: manager.id.slice(0, 20)
+        modrId: manager.id.slice(0, 20),
+        nmbr
     };
 
     return data;
@@ -73,10 +75,10 @@ const addDistributorProducts = catchAsync(async (req, res) => {
             const product = await Product.findById(p.productId);
             if (product) {
                 producers.push(product.producer);
-                _products.push({productName, name: product.name, product: product.id, price: product.price, salePrice: p.price, distributionPoint: distributionPoint.id});
+                _products.push({productName, taxTyCd: product.taxTyCd, name: product.name, product: product.id, price: product.price, salePrice: p.price, distributionPoint: distributionPoint.id});
             }
         } else {
-            _products.push({productName, name: p.name, price: p.purchasePrice, salePrice: p.price, distributionPoint: distributionPoint.id});
+            _products.push({productName, taxTyCd: p.taxTyCd, name: p.name, price: p.purchasePrice, salePrice: p.price, distributionPoint: distributionPoint.id});
         }
     }
     for (let p of _products) {
@@ -207,7 +209,7 @@ const newStockProduct = catchAsync(async (req, res) => {
 
     const manager = await User.findById(stock.admin);
 
-    const {name, price, purchasePrice, sizes, details, description} = req.body;
+    const {name, price, purchasePrice, sizes, details, description, taxTyCd} = req.body;
 
     const productName = name.replace(/\s/g, '').toLowerCase();
     const existing = await InventoryProduct.findOne({productName, stock: stock.id});
@@ -357,10 +359,10 @@ const addStockProducts = catchAsync(async (req, res) => {
             const saleProduct = await SalesProduct.findOne({inventoryProduct: product.id});
             if (product) {
                 producers.push(product.producer);
-                _products.push({productName, name: product.name, product: product.product || null, salePrice: p.price, price: saleProduct.price, stock: stock.id});
+                _products.push({productName, taxTyCd: product.taxTyCd, name: product.name, product: product.product || null, salePrice: p.price, price: saleProduct.price, stock: stock.id});
             }
         } else {
-            _products.push({productName, name: p.name, salePrice: p.price, price: p.purchasePrice, stock: stock.id});
+            _products.push({productName, taxTyCd: p.taxTyCd, name: p.name, salePrice: p.price, price: p.purchasePrice, stock: stock.id});
         }
     }
     for (let p of _products) {
@@ -400,12 +402,13 @@ const addStockProducts = catchAsync(async (req, res) => {
             const response = await ebmService.saveItems(data);
 
             if (response && response.resultCd === '000') {
-                product.itemCd = itemCd;
+                product.itemCd = data.itemCd;
                 product.itemClsCd = data.itemClsCd;
                 product.itemTyCd = data.itemTyCd;
                 product.orgnNatCd = data.orgnNatCd;
-                product.pkgUnitCd = pkgUnitCd;
-                product.qtyUnitCd = qtyUnitCd;
+                product.pkgUnitCd = data.pkgUnitCd;
+                product.qtyUnitCd = data.qtyUnitCd;
+                product.nmbr = data.nmbr;
 
                 await product.save({validateBeforeSave: false});
             } else {
@@ -570,6 +573,8 @@ const importEbmProducts = catchAsync(async (req, res) => {
                 qtyUnitCd: item.qtyUnitCd,
                 dailyAdded: _item.quantity,
                 totalAvailable: _item.quantity,
+                taxTyCd: _item.taxTyCd,
+                nmbr: item.itemCd.slice(-7)
             });
 
             if (inventoryProduct) {
