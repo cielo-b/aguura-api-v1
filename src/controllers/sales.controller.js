@@ -585,6 +585,9 @@ const newSales = catchAsync(async (req, res) => {
         });
     }
 
+    const availableSales = await Sales.find({[entityType]: entityId});
+    const rcptNo = availableSales.length + 1;
+
     const manager = await User.findById(entityType === 'stock' ? entity.admin : entity.manager);
 
     const activeDay = await checkDay({entityId, entityType});
@@ -639,7 +642,7 @@ const newSales = catchAsync(async (req, res) => {
         });
     }
 
-    let saleObject = {[entityType]: entityId, activeDay: activeDay.id, products, totalPrice, isFullyPaid, amountPaid: amount, description, paymentDescription, payments: _payments, customer, customerName, customerPhone};
+    let saleObject = {[entityType]: entityId, rcptNo, activeDay: activeDay.id, products, totalPrice, isFullyPaid, amountPaid: amount, description, paymentDescription, payments: _payments, customer, customerName, customerPhone};
     if (entityType === 'producer') {
         saleObject.distributionPoint = distributor?.id;
     } else if (entityType === 'distributionPoint') {
@@ -649,7 +652,7 @@ const newSales = catchAsync(async (req, res) => {
     }
 
     const sales = await Sales.create(saleObject);
-    
+
     if (!sales) {
         return res.status(httpStatus.BAD_REQUEST).json({
             success: false,
@@ -1282,6 +1285,52 @@ const dailySales = catchAsync(async (req, res) => {
 
 });
 
+const getSaleById = catchAsync(async (req, res) => {
+    const {saleId, entityId} = req.query;
+
+    // Find sale by saleId
+    const sale = await Sales.findById(saleId);
+    if (!sale) {
+        return res.status(httpStatus.NOT_FOUND).json({
+            success: false,
+            message: 'Sale not found'
+        });
+    }
+
+    // Define a helper function to retrieve an entity by ID
+    const findEntityById = async (id) => {
+        const stock = await Stock.findById(id);
+        if (stock) return stock;
+
+        const distributionPoint = await DistributionPoint.findById(id);
+        if (distributionPoint) return distributionPoint;
+
+        const producer = await Producer.findById(id);
+        if (producer) return producer;
+
+        return null;
+    };
+
+    // Retrieve the entity by entityId
+    const entity = await findEntityById(entityId);
+    if (!entity) {
+        return res.status(httpStatus.NOT_FOUND).json({
+            success: false,
+            message: 'Entity not found'
+        });
+    }
+
+    // Return the sale and entity information
+    return res.status(httpStatus.OK).json({
+        success: true,
+        saleData: {
+            sale,
+            entity
+        }
+    });
+});
+
+
 const salesStats = catchAsync(async (req, res) => {
     const sales = await Sales.find({stock: req.query.stockId}, {activeDay: 0, products: 0});
 
@@ -1308,6 +1357,7 @@ module.exports = {
     editSales,
     allSales,
     dailySales,
+    getSaleById,
     salesStats,
 
     getEntityById,

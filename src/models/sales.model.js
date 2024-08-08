@@ -142,6 +142,11 @@ const salesSchema = mongoose.Schema(
             vsdcRcptPbctDate: {type: String},
             sdcId: {type: String},
             mrcNo: {type: String}
+        },
+
+        rcptNo: {
+            type: Number,
+            required: true
         }
     },
     {
