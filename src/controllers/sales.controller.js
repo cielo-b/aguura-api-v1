@@ -562,6 +562,25 @@ const generateStockMasterRequestData = (manager, product, entity) => {
     return data;
 };
 
+function generateRandomCode(pattern) {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    return pattern.split('').map(char => {
+        if (char === '-') {
+            return '-';
+        } else {
+            return chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+    }).join('');
+}
+
+function generateInternalData() {
+    return generateRandomCode('XXXX-XXXX-XXXX-XXXX-XXXXX-XXXX-XX');
+}
+
+function generateReceiptSignature() {
+    return generateRandomCode('XXXX-XXXX-XXXX-XXXX');
+}
+
 
 // ===== APIs ===========
 
@@ -1075,7 +1094,12 @@ const newSales = catchAsync(async (req, res) => {
                     console.log(response);
                 }
 
-                sales.rct = resp.data;
+                let rct = resp.data;
+                sales.rct = {
+                    ...rct,
+                    intrlData: generateInternalData(),
+                    rcptSign: generateReceiptSignature()
+                };
                 await sales.save({validateBeforeSave: false});
             }
         }
