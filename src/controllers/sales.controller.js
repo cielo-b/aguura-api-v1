@@ -989,7 +989,7 @@ const newSales = catchAsync(async (req, res) => {
     }
 
     // total sales
-    if (manager.country === 'rwanda') {
+    if (manager.country === 'rwandaaa') {
         const availableSales = await Sales.find({[entityType]: entityId});
         const pmtTyCd = _payments.length === 0 ? '02' :
             _payments[0].name.toString().trim().toLowerCase() === 'cash' ? '01' :

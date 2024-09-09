@@ -196,8 +196,8 @@ const getAllStocks = catchAsync(async (req, res) => {
     let stocks = await Stock.find({type: req.query.type}).populate('admin');
     stocks = await Promise.all(stocks.map(async (stock) => {
         return {
-            managerName: stock.admin.fullName,
-            managerPhone: stock.admin.phone,
+            managerName: stock.admin?.fullName,
+            managerPhone: stock.admin?.phone,
             id: stock.id,
             name: stock.name,
             type: stock.type,
