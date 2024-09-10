@@ -146,7 +146,7 @@ const salesSchema = mongoose.Schema(
 
         rcptNo: {
             type: Number,
-            required: true
+            // required: true
         }
     },
     {

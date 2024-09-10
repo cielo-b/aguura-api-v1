@@ -443,17 +443,17 @@ const getStockProducts = catchAsync(async (req, res) => {
 
     let products = await InventoryProduct.find({stock: stock.id});
 
-    const response = await ebmService.selectItems({
-        tin: manager.tin.toString(),
-        bhfId: manager.bhfId,
-        lastReqDt: `20130101000000`
-    });
+    // const response = await ebmService.selectItems({
+    //     tin: manager.tin.toString(),
+    //     bhfId: manager.bhfId,
+    //     lastReqDt: `20130101000000`
+    // });
 
-    const productKeys = new Set(products.map(product => `${product.itemCd}-${product.itemClsCd}-${product.name}`));
-    const ebmItemsWithoutProducts = (response.resultCd === '000' ? response.data?.itemList : []).filter(item => {
-        const itemKey = `${item.itemCd}-${item.itemClsCd}-${item.itemNm}`;
-        return !productKeys.has(itemKey);
-    });
+    // const productKeys = new Set(products.map(product => `${product.itemCd}-${product.itemClsCd}-${product.name}`));
+    // const ebmItemsWithoutProducts = (response.resultCd === '000' ? response.data?.itemList : []).filter(item => {
+    //     const itemKey = `${item.itemCd}-${item.itemClsCd}-${item.itemNm}`;
+    //     return !productKeys.has(itemKey);
+    // });
 
     products = await Promise.all(products.map(async (p) => {
         const product = await Product.findOne({productName: p.productName});
@@ -475,7 +475,7 @@ const getStockProducts = catchAsync(async (req, res) => {
     return res.status(httpStatus.CREATED).json({
         success: true,
         products,
-        ebmItems: ebmItemsWithoutProducts
+        // ebmItems: ebmItemsWithoutProducts
     });
 });
 
