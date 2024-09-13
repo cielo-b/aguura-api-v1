@@ -954,156 +954,156 @@ const newSales = catchAsync(async (req, res) => {
     }
 
     // manage ebm sales
-    let itemList = [];
-    let totalTxAmt = 0;
+    // let itemList = [];
+    // let totalTxAmt = 0;
 
-    for (let i = 0; i < products.length; i++) {
-        const product = products[i];
-        const tx = (18 / 118) * product.totalPrice;
-        itemList.push({
-            itemSeq: i + 1,
-            itemCd: product.itemCd,
-            itemClsCd: product.itemClsCd,
-            itemNm: product.name,
-            bcd: null,
-            pkgUnitCd: product.pkgUnitCd,
-            pkg: i + 1,
-            qtyUnitCd: product.qtyUnitCd,
-            qty: product.quantity,
-            prc: product.unitPrice,
-            splyAmt: product.unitPrice,
-            dcRt: 0,
-            dcAmt: 0,
-            isrccCd: null,
-            isrccNm: null,
-            isrcRt: null,
-            isrcAmt: null,
-            taxTyCd: "B",
-            taxblAmt: parseFloat(product.totalPrice.toFixed(2)),
-            taxAmt: parseFloat(tx.toFixed(2)),
-            totAmt: parseFloat(product.totalPrice.toFixed(2))
-            // totAmt: parseFloat((product.totalPrice - tx).toFixed(2))
-        });
+    // for (let i = 0; i < products.length; i++) {
+    //     const product = products[i];
+    //     const tx = (18 / 118) * product.totalPrice;
+    //     itemList.push({
+    //         itemSeq: i + 1,
+    //         itemCd: product.itemCd,
+    //         itemClsCd: product.itemClsCd,
+    //         itemNm: product.name,
+    //         bcd: null,
+    //         pkgUnitCd: product.pkgUnitCd,
+    //         pkg: i + 1,
+    //         qtyUnitCd: product.qtyUnitCd,
+    //         qty: product.quantity,
+    //         prc: product.unitPrice,
+    //         splyAmt: product.unitPrice,
+    //         dcRt: 0,
+    //         dcAmt: 0,
+    //         isrccCd: null,
+    //         isrccNm: null,
+    //         isrcRt: null,
+    //         isrcAmt: null,
+    //         taxTyCd: "B",
+    //         taxblAmt: parseFloat(product.totalPrice.toFixed(2)),
+    //         taxAmt: parseFloat(tx.toFixed(2)),
+    //         totAmt: parseFloat(product.totalPrice.toFixed(2))
+    //         // totAmt: parseFloat((product.totalPrice - tx).toFixed(2))
+    //     });
 
-        totalTxAmt = parseFloat(totalTxAmt + ((18 / 118) * product.totalPrice).toFixed(2));
-    }
+    //     totalTxAmt = parseFloat(totalTxAmt + ((18 / 118) * product.totalPrice).toFixed(2));
+    // }
 
-    // total sales
-    if (manager.country === 'rwandaaa') {
-        const availableSales = await Sales.find({[entityType]: entityId});
-        const pmtTyCd = _payments.length === 0 ? '02' :
-            _payments[0].name.toString().trim().toLowerCase() === 'cash' ? '01' :
-                ['momo', 'mobile'].some(substring => _payments[0].name.toString().trim().toLowerCase().includes(substring)) ? '06' :
-                    ['card', 'credit', 'debit'].some(substring => _payments[0].name.toString().trim().toLowerCase().includes(substring)) ? '05' :
-                        ['bank', 'check'].some(substring => _payments[0].name.toString().trim().toLowerCase().includes(substring)) ? '04' : '07';
+    // // total sales
+    // if (manager.country === 'rwandaaa') {
+    //     const availableSales = await Sales.find({[entityType]: entityId});
+    //     const pmtTyCd = _payments.length === 0 ? '02' :
+    //         _payments[0].name.toString().trim().toLowerCase() === 'cash' ? '01' :
+    //             ['momo', 'mobile'].some(substring => _payments[0].name.toString().trim().toLowerCase().includes(substring)) ? '06' :
+    //                 ['card', 'credit', 'debit'].some(substring => _payments[0].name.toString().trim().toLowerCase().includes(substring)) ? '05' :
+    //                     ['bank', 'check'].some(substring => _payments[0].name.toString().trim().toLowerCase().includes(substring)) ? '04' : '07';
 
-        const now = new Date();
-        const year = now.getFullYear();
-        const month = String(now.getMonth() + 1).padStart(2, '0');
-        const day = String(now.getDate()).padStart(2, '0');
-        const hours = String(now.getHours()).padStart(2, '0');
-        const minutes = String(now.getMinutes()).padStart(2, '0');
-        const seconds = String(now.getSeconds()).padStart(2, '0');
-        const cfmDt = `${year}${month}${day}${hours}${minutes}${seconds}`;
+    //     const now = new Date();
+    //     const year = now.getFullYear();
+    //     const month = String(now.getMonth() + 1).padStart(2, '0');
+    //     const day = String(now.getDate()).padStart(2, '0');
+    //     const hours = String(now.getHours()).padStart(2, '0');
+    //     const minutes = String(now.getMinutes()).padStart(2, '0');
+    //     const seconds = String(now.getSeconds()).padStart(2, '0');
+    //     const cfmDt = `${year}${month}${day}${hours}${minutes}${seconds}`;
 
-        const data = {
-            tin: manager.tin,
-            bhfId: manager.bhfId,
-            invcNo: availableSales.length + 10000000,
-            orgInvcNo: 0,
-            custTin: customerTin,
-            prcOrdCd: null,
-            custNm: customerName,
-            salesTyCd: "T", // change for prod
-            rcptTyCd: "S",
-            pmtTyCd,
-            salesSttsCd: "02",
-            cfmDt,
-            salesDt: `${year}${month}${day}`,
-            stockRlsDt: cfmDt,
-            cnclReqDt: null,
-            cnclDt: null,
-            rfdDt: null,
-            rfdRsnCd: null,
-            totItemCnt: itemList.length,
-            taxblAmtA: 0,
-            taxblAmtB: totalPrice,
-            taxblAmtC: 0,
-            taxblAmtD: 0,
-            taxRtA: 0,
-            taxRtB: 18,
-            taxRtC: 0,
-            taxRtD: 0,
-            taxAmtA: 0,
-            taxAmtB: parseFloat(((18 / 118) * totalPrice).toFixed(2)),
-            taxAmtC: 0,
-            taxAmtD: 0,
-            totTaxblAmt: totalPrice,
-            totTaxAmt: parseFloat(((18 / 118) * totalPrice).toFixed(2)),
-            totAmt: totalPrice,
-            // totAmt: parseFloat((totalPrice - totalTxAmt).toFixed(2)),
-            prchrAcptcYn: "Y",
-            remark: null,
-            regrId: entity.id.slice(0, 20),
-            regrNm: entity.name,
-            modrId: manager.id.slice(0, 20),
-            modrNm: manager.fullName,
-            receipt: {
-                custTin: customerTin, // check with ebm team if customer has no tin
-                custMblNo: customerPhone,
-                rptNo: availableSales.length,
-                trdeNm: null,
-                adrs: null,
-                topMsg: `${entity.name}\nAdrs: ${entity.location}\nTel: ${manager.phone}`,
-                btmMsg: `Powered By Aguura`,
-                prchrAcptcYn: "Y"
-            },
-            itemList
-        };
-        const resp = await ebmService.saveSales(data);
-        console.log(resp);
+    //     const data = {
+    //         tin: manager.tin,
+    //         bhfId: manager.bhfId,
+    //         invcNo: availableSales.length + 10000000,
+    //         orgInvcNo: 0,
+    //         custTin: customerTin,
+    //         prcOrdCd: null,
+    //         custNm: customerName,
+    //         salesTyCd: "T", // change for prod
+    //         rcptTyCd: "S",
+    //         pmtTyCd,
+    //         salesSttsCd: "02",
+    //         cfmDt,
+    //         salesDt: `${year}${month}${day}`,
+    //         stockRlsDt: cfmDt,
+    //         cnclReqDt: null,
+    //         cnclDt: null,
+    //         rfdDt: null,
+    //         rfdRsnCd: null,
+    //         totItemCnt: itemList.length,
+    //         taxblAmtA: 0,
+    //         taxblAmtB: totalPrice,
+    //         taxblAmtC: 0,
+    //         taxblAmtD: 0,
+    //         taxRtA: 0,
+    //         taxRtB: 18,
+    //         taxRtC: 0,
+    //         taxRtD: 0,
+    //         taxAmtA: 0,
+    //         taxAmtB: parseFloat(((18 / 118) * totalPrice).toFixed(2)),
+    //         taxAmtC: 0,
+    //         taxAmtD: 0,
+    //         totTaxblAmt: totalPrice,
+    //         totTaxAmt: parseFloat(((18 / 118) * totalPrice).toFixed(2)),
+    //         totAmt: totalPrice,
+    //         // totAmt: parseFloat((totalPrice - totalTxAmt).toFixed(2)),
+    //         prchrAcptcYn: "Y",
+    //         remark: null,
+    //         regrId: entity.id.slice(0, 20),
+    //         regrNm: entity.name,
+    //         modrId: manager.id.slice(0, 20),
+    //         modrNm: manager.fullName,
+    //         receipt: {
+    //             custTin: customerTin, // check with ebm team if customer has no tin
+    //             custMblNo: customerPhone,
+    //             rptNo: availableSales.length,
+    //             trdeNm: null,
+    //             adrs: null,
+    //             topMsg: `${entity.name}\nAdrs: ${entity.location}\nTel: ${manager.phone}`,
+    //             btmMsg: `Powered By Aguura`,
+    //             prchrAcptcYn: "Y"
+    //         },
+    //         itemList
+    //     };
+    //     const resp = await ebmService.saveSales(data);
+    //     console.log(resp);
 
-        if (resp.resultCd !== '000') {
-            return res.status(httpStatus.CREATED).json({
-                success: false,
-                message: resp.resultMsg,
-            });
-        } else {
-            const data = generateEBMRequestData(products, manager, entity);
+    //     if (resp.resultCd !== '000') {
+    //         return res.status(httpStatus.CREATED).json({
+    //             success: false,
+    //             message: resp.resultMsg,
+    //         });
+    //     } else {
+    //         const data = generateEBMRequestData(products, manager, entity);
 
-            const response = await ebmService.saveStockItems(data);
+    //         const response = await ebmService.saveStockItems(data);
 
-            console.log(response);
+    //         console.log(response);
 
-            if (response.resultCd !== '000') {
-                return res.status(httpStatus.CREATED).json({
-                    success: false,
-                    message: 'Sales Recorded Into Aguura But Failed Into EBM, Plz Delete This Sales And Try Again.',
-                });
-            } else {
-                // update stock Items master
-                for (let i = 0; i < products.length; i++) {
+    //         if (response.resultCd !== '000') {
+    //             return res.status(httpStatus.CREATED).json({
+    //                 success: false,
+    //                 message: 'Sales Recorded Into Aguura But Failed Into EBM, Plz Delete This Sales And Try Again.',
+    //             });
+    //         } else {
+    //             // update stock Items master
+    //             for (let i = 0; i < products.length; i++) {
 
-                    const product = products[i];
-                    const p = entityType === 'producer' ?
-                        await Product.findById(product.product) :
-                        await InventoryProduct.findById(product.product);
+    //                 const product = products[i];
+    //                 const p = entityType === 'producer' ?
+    //                     await Product.findById(product.product) :
+    //                     await InventoryProduct.findById(product.product);
 
-                    const reqData = generateStockMasterRequestData(manager, p, entity);
-                    const response = await ebmService.stockItemsMaster(reqData);
-                    console.log(response);
-                }
+    //                 const reqData = generateStockMasterRequestData(manager, p, entity);
+    //                 const response = await ebmService.stockItemsMaster(reqData);
+    //                 console.log(response);
+    //             }
 
-                let rct = resp.data;
-                sales.rct = {
-                    ...rct,
-                    intrlData: generateInternalData(),
-                    rcptSign: generateReceiptSignature()
-                };
-                await sales.save({validateBeforeSave: false});
-            }
-        }
-    }
+    //             let rct = resp.data;
+    //             sales.rct = {
+    //                 ...rct,
+    //                 intrlData: generateInternalData(),
+    //                 rcptSign: generateReceiptSignature()
+    //             };
+    //             await sales.save({validateBeforeSave: false});
+    //         }
+    //     }
+    // }
 
     return res.status(httpStatus.CREATED).json({
         success: true,
