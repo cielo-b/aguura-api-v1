@@ -8,7 +8,6 @@ const {checkStock} = require('./stock.controller');
 const config = require('../config/config');
 const {ebmService} = require('../services');
 const {getEntityById} = require('./sales.controller');
-const {number} = require('joi');
 
 
 const generateEBMRequestData = (product, manager, entity, number) => {
@@ -231,34 +230,34 @@ const newStockProduct = catchAsync(async (req, res) => {
 
     const currentProducts = await InventoryProduct.find({stock: stock.id});
 
-    if (iP) {
-        if (manager.country === 'rwanda') {
-            const product = iP;
+    // if (iP) {
+    //     if (manager.country === 'rwanda') {
+    //         const product = iP;
 
-            const data = generateEBMRequestData(product, manager, stock, (currentProducts.length + i + 1));
+    //         const data = generateEBMRequestData(product, manager, stock, (currentProducts.length + i + 1));
 
-            const response = await ebmService.saveItems(data);
+    //         const response = await ebmService.saveItems(data);
 
-            if (response && response.resultCd === '000') {
-                product.itemCd = itemCd;
-                product.itemClsCd = data.itemClsCd;
-                product.itemTyCd = data.itemTyCd;
-                product.orgnNatCd = data.orgnNatCd;
-                product.pkgUnitCd = pkgUnitCd;
-                product.qtyUnitCd = qtyUnitCd;
+    //         if (response && response.resultCd === '000') {
+    //             product.itemCd = itemCd;
+    //             product.itemClsCd = data.itemClsCd;
+    //             product.itemTyCd = data.itemTyCd;
+    //             product.orgnNatCd = data.orgnNatCd;
+    //             product.pkgUnitCd = pkgUnitCd;
+    //             product.qtyUnitCd = qtyUnitCd;
 
-                await product.save({validateBeforeSave: false});
-                await SalesProduct.create({stock: stock.id, price, inventoryProduct: iP.id});
-            } else {
-                // delete product if not recorded into ebm servers
-                const salesProduct = await SalesProduct.findOne({inventoryProduct: product.id, stock: stock.id});
-                if (salesProduct) {
-                    await salesProduct.deleteOne();
-                }
-                await product.deleteOne();
-            }
-        }
-    }
+    //             await product.save({validateBeforeSave: false});
+    //             await SalesProduct.create({stock: stock.id, price, inventoryProduct: iP.id});
+    //         } else {
+    //             // delete product if not recorded into ebm servers
+    //             const salesProduct = await SalesProduct.findOne({inventoryProduct: product.id, stock: stock.id});
+    //             if (salesProduct) {
+    //                 await salesProduct.deleteOne();
+    //             }
+    //             await product.deleteOne();
+    //         }
+    //     }
+    // }
 
     return res.status(httpStatus.CREATED).json({
         success: true,
@@ -392,35 +391,35 @@ const addStockProducts = catchAsync(async (req, res) => {
     const currentProducts = await InventoryProduct.find({stock: stock.id});
 
     // save products to ebm
-    if (manager.country === 'rwanda') {
-        for (let i = 0; i < savedProducts.length; i++) {
+    // if (manager.country === 'rwanda') {
+    //     for (let i = 0; i < savedProducts.length; i++) {
 
-            const product = savedProducts[i];
+    //         const product = savedProducts[i];
 
-            const data = generateEBMRequestData(product, manager, stock, (currentProducts.length + i + 1));
+    //         const data = generateEBMRequestData(product, manager, stock, (currentProducts.length + i + 1));
 
-            const response = await ebmService.saveItems(data);
+    //         const response = await ebmService.saveItems(data);
 
-            if (response && response.resultCd === '000') {
-                product.itemCd = data.itemCd;
-                product.itemClsCd = data.itemClsCd;
-                product.itemTyCd = data.itemTyCd;
-                product.orgnNatCd = data.orgnNatCd;
-                product.pkgUnitCd = data.pkgUnitCd;
-                product.qtyUnitCd = data.qtyUnitCd;
-                product.nmbr = data.nmbr;
+    //         if (response && response.resultCd === '000') {
+    //             product.itemCd = data.itemCd;
+    //             product.itemClsCd = data.itemClsCd;
+    //             product.itemTyCd = data.itemTyCd;
+    //             product.orgnNatCd = data.orgnNatCd;
+    //             product.pkgUnitCd = data.pkgUnitCd;
+    //             product.qtyUnitCd = data.qtyUnitCd;
+    //             product.nmbr = data.nmbr;
 
-                await product.save({validateBeforeSave: false});
-            } else {
-                // delete product if not recorded into ebm servers
-                const salesProduct = await SalesProduct.findOne({inventoryProduct: product.id, stock: stock.id});
-                if (salesProduct) {
-                    await salesProduct.deleteOne();
-                }
-                await product.deleteOne();
-            }
-        }
-    }
+    //             await product.save({validateBeforeSave: false});
+    //         } else {
+    //             // delete product if not recorded into ebm servers
+    //             const salesProduct = await SalesProduct.findOne({inventoryProduct: product.id, stock: stock.id});
+    //             if (salesProduct) {
+    //                 await salesProduct.deleteOne();
+    //             }
+    //             await product.deleteOne();
+    //         }
+    //     }
+    // }
 
     return res.status(httpStatus.CREATED).json({
         success: true,
