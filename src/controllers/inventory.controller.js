@@ -124,12 +124,12 @@ const newInventory = catchAsync(async (req, res) => {
             unitPrice: product.price,
             totalPrice: product.price * parseFloat(reqProduct.quantity),
             id: product.id,
-            itemCd: product.itemCd,
-            itemClsCd: product.itemClsCd,
-            itemTyCd: product.itemTyCd,
-            orgnNatCd: product.orgnNatCd,
-            pkgUnitCd: product.pkgUnitCd,
-            qtyUnitCd: product.qtyUnitCd
+            itemCd: product.itemCd || null,
+            itemClsCd: product.itemClsCd || null,
+            itemTyCd: product.itemTyCd || null,
+            orgnNatCd: product.orgnNatCd || null,
+            pkgUnitCd: product.pkgUnitCd || null,
+            qtyUnitCd: product.qtyUnitCd || null
         };
 
         products.push(inventoryProduct);
@@ -156,34 +156,34 @@ const newInventory = catchAsync(async (req, res) => {
         await product.save({validateBeforeSave: false});
     }
 
-    if (manager.country === 'rwanda') {
-        // update ebm products 
+    // if (manager.country === 'rwanda') {
+    //     // update ebm products 
 
-        const data = generateEBMRequestData(products, manager, entity);
+    //     const data = generateEBMRequestData(products, manager, entity);
 
-        const response = await ebmService.saveStockItems(data);
+    //     const response = await ebmService.saveStockItems(data);
 
-        if (response.resultCd !== '000') {
-            return res.status(httpStatus.CREATED).json({
-                success: false,
-                message: 'Inventory Recorded Into Aguura But Failed Into EBM, Plz Delete This Inventory And Try Again.',
-            });
-        } else {
-            // update stock Items master
-            for (let i = 0; i < products.length; i++) {
+    //     if (response.resultCd !== '000') {
+    //         return res.status(httpStatus.CREATED).json({
+    //             success: false,
+    //             message: 'Inventory Recorded Into Aguura But Failed Into EBM, Plz Delete This Inventory And Try Again.',
+    //         });
+    //     } else {
+    //         // update stock Items master
+    //         for (let i = 0; i < products.length; i++) {
 
-                const product = products[i];
-                const p = entityType === 'producer' ?
-                    await Product.findById(product.id) :
-                    await InventoryProduct.findById(product.id);
+    //             const product = products[i];
+    //             const p = entityType === 'producer' ?
+    //                 await Product.findById(product.id) :
+    //                 await InventoryProduct.findById(product.id);
 
-                const reqData = generateStockMasterRequestData(manager, p, entity);
-                const response = await ebmService.stockItemsMaster(reqData);
+    //             const reqData = generateStockMasterRequestData(manager, p, entity);
+    //             const response = await ebmService.stockItemsMaster(reqData);
 
-                console.log(response);
-            }
-        }
-    }
+    //             console.log(response);
+    //         }
+    //     }
+    // }
 
     return res.status(httpStatus.CREATED).json({
         success: true,
