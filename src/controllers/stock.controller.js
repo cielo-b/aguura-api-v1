@@ -304,6 +304,7 @@ const myStocks = catchAsync(async (req, res) => {
             name: _stock.name,
             type: _stock.type,
             description: _stock.description,
+            location: _stock.location
         });
     }
 
