@@ -1,15 +1,15 @@
 const allRoles = {
-    producer: ['producer'],
-    distributor: ['distributor'],
-    superAdmin: ['superAdmin'],
-    admin: ['admin'],
-    user: ['user']
+  producer: ["producer"],
+  distributor: ["distributor"],
+  superAdmin: ["superAdmin"],
+  admin: ["admin"],
+  user: ["user"],
 };
 
 const roles = Object.keys(allRoles);
 const roleRights = new Map(Object.entries(allRoles));
 
 module.exports = {
-    roles,
-    roleRights,
+  roles,
+  roleRights,
 };

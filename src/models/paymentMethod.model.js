@@ -1,35 +1,35 @@
-const mongoose = require('mongoose');
-const {toJSON} = require('./plugins');
+const mongoose = require("mongoose");
+const { toJSON } = require("./plugins");
 
 const paymentMethodSchema = mongoose.Schema(
-    {
-        stock: {
-            type: mongoose.SchemaTypes.ObjectId,
-            ref: 'Stock',
-        },
-
-        producer: {
-            type: mongoose.SchemaTypes.ObjectId,
-            ref: 'Producer',
-        },
-
-        distributionPoint: {
-            type: mongoose.SchemaTypes.ObjectId,
-            ref: 'DistributionPoint',
-        },
-
-        name: {
-            type: String,
-            required: true,
-        },
-        methodName: {
-            type: String,
-            required: true,
-        },
+  {
+    stock: {
+      type: mongoose.SchemaTypes.ObjectId,
+      ref: "Stock",
     },
-    {
-        timestamps: true,
-    }
+
+    producer: {
+      type: mongoose.SchemaTypes.ObjectId,
+      ref: "Producer",
+    },
+
+    distributionPoint: {
+      type: mongoose.SchemaTypes.ObjectId,
+      ref: "DistributionPoint",
+    },
+
+    name: {
+      type: String,
+      required: true,
+    },
+    methodName: {
+      type: String,
+      required: true,
+    },
+  },
+  {
+    timestamps: true,
+  },
 );
 
 // add plugin that converts mongoose to json
@@ -39,6 +39,6 @@ paymentMethodSchema.plugin(toJSON);
  * @typedef PaymentMethod
  */
 
-const PaymentMethod = mongoose.model('PaymentMethod', paymentMethodSchema);
+const PaymentMethod = mongoose.model("PaymentMethod", paymentMethodSchema);
 
 module.exports = PaymentMethod;

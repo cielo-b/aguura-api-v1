@@ -6,7 +6,8 @@
   "scripts": {
     "start": "pm2 start ecosystem.config.json --no-daemon",
     "dev": "cross-env NODE_ENV=development nodemon src/index.js",
-    "prepare": "husky install"
+    "prepare": "husky install",
+    "format": "prettier --write ."
   },
   "keywords": [],
   "author": "",
@@ -40,6 +41,7 @@
     "passport-jwt": "^4.0.1",
     "pdfkit-table": "^0.1.99",
     "pm2": "^5.4.2",
+    "prettier": "^3.3.3",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1",
     "validator": "^13.12.0",

@@ -1,9 +1,9 @@
-const httpStatus = require('http-status');
-const tokenService = require('./token.service');
-const userService = require('./user.service');
-const Token = require('../models/token.model');
-const ApiError = require('../utils/ApiError');
-const {tokenTypes} = require('../config/tokens');
+const httpStatus = require("http-status");
+const tokenService = require("./token.service");
+const userService = require("./user.service");
+const Token = require("../models/token.model");
+const ApiError = require("../utils/ApiError");
+const { tokenTypes } = require("../config/tokens");
 
 /**
  * Login with phone and password
@@ -12,11 +12,11 @@ const {tokenTypes} = require('../config/tokens');
  * @returns {Promise<User>}
  */
 const loginWithPhoneAndPassword = async (phone, password) => {
-    const user = await userService.getUserByPhone(phone);
-    if (!user || !(await user.isPasswordMatch(password))) {
-        throw new ApiError(httpStatus.UNAUTHORIZED, 'Incorrect Phone Or Password');
-    }
-    return user;
+  const user = await userService.getUserByPhone(phone);
+  if (!user || !(await user.isPasswordMatch(password))) {
+    throw new ApiError(httpStatus.UNAUTHORIZED, "Incorrect Phone Or Password");
+  }
+  return user;
 };
 
 /**
@@ -25,11 +25,15 @@ const loginWithPhoneAndPassword = async (phone, password) => {
  * @returns {Promise}
  */
 const logout = async (refreshToken) => {
-    const refreshTokenDoc = await Token.findOne({token: refreshToken, type: tokenTypes.REFRESH, blacklisted: false});
-    if (!refreshTokenDoc) {
-        throw new ApiError(httpStatus.NOT_FOUND, 'Not Found.');
-    }
-    await refreshTokenDoc.deleteOne();
+  const refreshTokenDoc = await Token.findOne({
+    token: refreshToken,
+    type: tokenTypes.REFRESH,
+    blacklisted: false,
+  });
+  if (!refreshTokenDoc) {
+    throw new ApiError(httpStatus.NOT_FOUND, "Not Found.");
+  }
+  await refreshTokenDoc.deleteOne();
 };
 
 /**
@@ -38,17 +42,20 @@ const logout = async (refreshToken) => {
  * @returns {Promise<Object>}
  */
 const refreshAuth = async (refreshToken) => {
-    try {
-        const refreshTokenDoc = await tokenService.verifyToken(refreshToken, tokenTypes.REFRESH);
-        const user = await userService.getUserById(refreshTokenDoc.user);
-        if (!user) {
-            throw new Error();
-        }
-        await refreshTokenDoc.deleteOne();
-        return await tokenService.generateAuthTokens(user);
-    } catch (error) {
-        throw new ApiError(httpStatus.UNAUTHORIZED, 'Please Authenticate.');
+  try {
+    const refreshTokenDoc = await tokenService.verifyToken(
+      refreshToken,
+      tokenTypes.REFRESH,
+    );
+    const user = await userService.getUserById(refreshTokenDoc.user);
+    if (!user) {
+      throw new Error();
     }
+    await refreshTokenDoc.deleteOne();
+    return await tokenService.generateAuthTokens(user);
+  } catch (error) {
+    throw new ApiError(httpStatus.UNAUTHORIZED, "Please Authenticate.");
+  }
 };
 
 /**
@@ -58,22 +65,25 @@ const refreshAuth = async (refreshToken) => {
  * @returns {Promise}
  */
 const resetPassword = async (resetPasswordToken, newPassword) => {
-    try {
-        const resetPasswordTokenDoc = await tokenService.verifyToken(resetPasswordToken, tokenTypes.RESET_PASSWORD);
-        const user = await userService.getUserById(resetPasswordTokenDoc.user);
-        if (!user) {
-            throw new Error();
-        }
-        await userService.updateUserById(user.id, {password: newPassword});
-        await Token.deleteMany({user: user.id, type: tokenTypes.RESET_PASSWORD});
-    } catch (error) {
-        throw new ApiError(httpStatus.UNAUTHORIZED, 'Password Reset Failed.');
+  try {
+    const resetPasswordTokenDoc = await tokenService.verifyToken(
+      resetPasswordToken,
+      tokenTypes.RESET_PASSWORD,
+    );
+    const user = await userService.getUserById(resetPasswordTokenDoc.user);
+    if (!user) {
+      throw new Error();
     }
+    await userService.updateUserById(user.id, { password: newPassword });
+    await Token.deleteMany({ user: user.id, type: tokenTypes.RESET_PASSWORD });
+  } catch (error) {
+    throw new ApiError(httpStatus.UNAUTHORIZED, "Password Reset Failed.");
+  }
 };
 
 module.exports = {
-    loginWithPhoneAndPassword,
-    logout,
-    refreshAuth,
-    resetPassword,
+  loginWithPhoneAndPassword,
+  logout,
+  refreshAuth,
+  resetPassword,
 };

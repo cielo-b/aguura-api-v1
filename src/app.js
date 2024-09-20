@@ -1,36 +1,37 @@
-const express = require('express');
-const helmet = require('helmet');
-const path = require('path');
-const {xss} = require('express-xss-sanitizer');
-const mongoSanitize = require('express-mongo-sanitize');
-const compression = require('compression');
-const cors = require('cors');
-const passport = require('passport');
-const httpStatus = require('http-status');
-const config = require('./config/config');
-const morgan = require('./config/morgan');
-const {jwtStrategy} = require('./config/passport');
-const {rateLimiter} = require('./middlewares/rateLimiter');
-const routes = require('./routes/v2');
-const {errorConverter, errorHandler} = require('./middlewares/error');
-const ApiError = require('./utils/ApiError');
+const express = require("express");
+const helmet = require("helmet");
+const path = require("path");
+const { xss } = require("express-xss-sanitizer");
+const mongoSanitize = require("express-mongo-sanitize");
+const compression = require("compression");
+const cors = require("cors");
+const passport = require("passport");
+const httpStatus = require("http-status");
+const config = require("./config/config");
+const morgan = require("./config/morgan");
+const { jwtStrategy } = require("./config/passport");
+const { rateLimiter } = require("./middlewares/rateLimiter");
+const routes = require("./routes/v2");
+const { errorConverter, errorHandler } = require("./middlewares/error");
+const ApiError = require("./utils/ApiError");
 
 const app = express();
 
-if (config.env !== 'test') {
-    app.use(morgan.successHandler);
-    app.use(morgan.errorHandler);
+// Morgan Logger
+if (config.env !== "test") {
+  app.use(morgan.successHandler);
+  app.use(morgan.errorHandler);
 }
 
 // set security HTTP headers
 app.use(helmet());
-app.use(helmet.crossOriginResourcePolicy({policy: "cross-origin"}));
+app.use(helmet.crossOriginResourcePolicy({ policy: "cross-origin" }));
 
 // parse json request body
 app.use(express.json());
 
 // parse urlencoded request body
-app.use(express.urlencoded({extended: true}));
+app.use(express.urlencoded({ extended: true }));
 
 // sanitize request data
 app.use(xss());
@@ -40,41 +41,48 @@ app.use(mongoSanitize());
 app.use(compression());
 
 // enable cors for only specific domains
-app.use(cors({
+app.use(
+  cors({
     origin: [
-        'http://localhost:5173',
-        'https://aguura.com',
-        'https://146.190.157.141'
-    ]
-}));
+      "http://localhost:5173",
+      "https://aguura.com",
+      "https://146.190.157.141",
+    ],
+  }),
+);
 
 // jwt authentication
 app.use(passport.initialize());
-passport.use('jwt', jwtStrategy);
+passport.use("jwt", jwtStrategy);
 
 //server static files
-app.use('/public/images', express.static(path.join(__dirname, '../public/images')));
-app.use('/public/reports', express.static(path.join(__dirname, '../public/reports')));
-
+app.use(
+  "/public/images",
+  express.static(path.join(__dirname, "../public/images")),
+);
+app.use(
+  "/public/reports",
+  express.static(path.join(__dirname, "../public/reports")),
+);
 
 // limit repeated failed requests to auth endpoints
-if (config.env === 'production') {
-    app.use('/api/v2/', rateLimiter);
+if (config.env === "production") {
+  app.use("/api/v2/", rateLimiter);
 }
 
-app.get('/', (req, res) => {
-    return res.status(httpStatus.OK).json({
-        success: true,
-        message: 'Welcome To Stock Backend.'
-    });
+app.get("/", (req, res) => {
+  return res.status(httpStatus.OK).json({
+    success: true,
+    message: "Welcome To Aguura APIs.",
+  });
 });
 
 // v2 api routes
-app.use('/api/v2', routes);
+app.use("/api/v2", routes);
 
 // send back a 404 error for any unknown api request
 app.use((req, res, next) => {
-    next(new ApiError(httpStatus.NOT_FOUND, 'Not Found.'));
+  next(new ApiError(httpStatus.NOT_FOUND, "Not Found."));
 });
 
 // convert error to ApiError, if needed

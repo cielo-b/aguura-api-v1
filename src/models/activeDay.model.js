@@ -1,45 +1,50 @@
-const mongoose = require('mongoose');
-const {toJSON} = require('./plugins');
+const mongoose = require("mongoose");
+const { toJSON } = require("./plugins");
 
 const activeDaySchema = mongoose.Schema(
-    {
-        stock: {
-            type: mongoose.SchemaTypes.ObjectId,
-            ref: 'Stock',
-        },
-
-        producer: {
-            type: mongoose.SchemaTypes.ObjectId,
-            ref: 'Producer',
-        },
-
-        distributionPoint: {
-            type: mongoose.SchemaTypes.ObjectId,
-            ref: 'DistributionPoint',
-        },
-
-        name: {
-            type: String,
-            required: true,
-            trim: true,
-            default: () => new Date().getDate() + '-' + (parseInt(new Date().getMonth()) + 1) + '-' + new Date().getFullYear()
-        },
-
-        type: {
-            type: String,
-            required: true,
-            enum: ['day', 'month']
-        },
-
-        isActive: {
-            type: Boolean,
-            required: true,
-            default: true
-        }
+  {
+    stock: {
+      type: mongoose.SchemaTypes.ObjectId,
+      ref: "Stock",
     },
-    {
-        timestamps: true,
-    }
+
+    producer: {
+      type: mongoose.SchemaTypes.ObjectId,
+      ref: "Producer",
+    },
+
+    distributionPoint: {
+      type: mongoose.SchemaTypes.ObjectId,
+      ref: "DistributionPoint",
+    },
+
+    name: {
+      type: String,
+      required: true,
+      trim: true,
+      default: () =>
+        new Date().getDate() +
+        "-" +
+        (parseInt(new Date().getMonth()) + 1) +
+        "-" +
+        new Date().getFullYear(),
+    },
+
+    type: {
+      type: String,
+      required: true,
+      enum: ["day", "month"],
+    },
+
+    isActive: {
+      type: Boolean,
+      required: true,
+      default: true,
+    },
+  },
+  {
+    timestamps: true,
+  },
 );
 
 // add plugin that converts mongoose to json
@@ -49,6 +54,6 @@ activeDaySchema.plugin(toJSON);
  * @typedef ActiveDay
  */
 
-const ActiveDay = mongoose.model('ActiveDay', activeDaySchema);
+const ActiveDay = mongoose.model("ActiveDay", activeDaySchema);
 
 module.exports = ActiveDay;

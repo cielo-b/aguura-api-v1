@@ -16,7 +16,7 @@ components:
         fullName: fake name
         phone: 0790016650
         role: user
-        
+
     Token:
       type: object
       properties:
