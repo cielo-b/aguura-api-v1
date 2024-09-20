@@ -29,14 +29,14 @@ const userSchema = mongoose.Schema(
         type: String,
         required: true,
         trim: true,
-      }
+      },
     },
 
     email: {
       type: String,
-      required: true,
-      trim: true,
-      unique: true,
+      // required: true,
+      // trim: true,
+      // unique: true,
     },
 
     password: {
@@ -93,7 +93,6 @@ const userSchema = mongoose.Schema(
     country: {
       type: String,
       required: true,
-      default: "rwanda",
     },
 
     countryCode: {

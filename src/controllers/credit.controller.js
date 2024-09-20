@@ -116,9 +116,8 @@ const adminCredits = catchAsync(async (req, res) => {
 
 const myCredits = catchAsync(async (req, res) => {
   const credits = await Credit.find({
-    isFullyPaid: false,
+    isFullyPaid: req.query.isFullyPaid,
     customer: req.user._id,
-    stock: req.query.stockId,
   }).populate("sales");
 
   return res.status(httpStatus.OK).json({

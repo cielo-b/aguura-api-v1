@@ -1,6 +1,5 @@
 const httpStatus = require("http-status");
 const jwt = require("jsonwebtoken");
-const moment = require("moment");
 const catchAsync = require("../utils/catchAsync");
 const {
   authService,
@@ -14,16 +13,16 @@ const config = require("../config/config");
 const { tokenTypes } = require("../config/tokens");
 
 const register = catchAsync(async (req, res) => {
-  let { fullName, phone, password, role, tin } = req.body;
+  let { fullName, phone, password, role, tin, country } = req.body;
 
   const stocks = await Stock.find({});
 
-  if (stocks.length === 0 && role !== "superAdmin") {
-    return res.status(httpStatus.BAD_REQUEST).json({
-      success: false,
-      message: "No Stocks Availabel Yet. Plz Try Again Later.",
-    });
-  }
+  // if (stocks.length === 0 && role !== "superAdmin") {
+  //   return res.status(httpStatus.BAD_REQUEST).json({
+  //     success: false,
+  //     message: "No Stocks Availabel Yet. Plz Try Again Later.",
+  //   });
+  // }
 
   if (await User.isPhoneTaken(phone)) {
     return res.status(httpStatus.BAD_REQUEST).json({
@@ -45,7 +44,9 @@ const register = catchAsync(async (req, res) => {
     password,
     role,
     tin,
+    country,
   });
+
   const tokens = await tokenService.generateAuthTokens(user);
   res.status(httpStatus.CREATED).json({
     success: true,
@@ -56,6 +57,7 @@ const register = catchAsync(async (req, res) => {
 
 const login = catchAsync(async (req, res) => {
   const { phone, password } = req.body;
+  console.log(phone, password);
   const user = await authService.loginWithPhoneAndPassword(phone, password);
 
   // const _tokens = await Token.find({user: user.id});

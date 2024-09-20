@@ -14,8 +14,16 @@ const newStock = catchAsync(async (req, res) => {
     });
   }
 
-  const { name, fullName, phone, password, type, description, location } =
-    req.body;
+  const {
+    name,
+    fullName,
+    phone,
+    password,
+    type,
+    description,
+    location,
+    country,
+  } = req.body;
   const stockName = name.replace(/\s/g, "").toLowerCase();
 
   const stock = await Stock.findOne({ stockName, superAdmin: user.id });
@@ -38,6 +46,7 @@ const newStock = catchAsync(async (req, res) => {
     fullName,
     phone,
     password,
+    country,
     role: "admin",
   });
 
@@ -57,7 +66,7 @@ const newStock = catchAsync(async (req, res) => {
     description,
     location,
   });
-  user.monthlyPayment = user.monthlyPayment + parseFloat("50");
+  user.monthlyPayment = user.monthlyPayment + parseFloat("49");
 
   return res.status(httpStatus.CREATED).json({
     success: true,

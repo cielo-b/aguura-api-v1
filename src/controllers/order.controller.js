@@ -1148,19 +1148,9 @@ const myOrders = catchAsync(async (req, res) => {
     });
   }
 
-  const stockId = req.query.stockId;
-  const stock = await checkStock(stockId);
-
-  if (!stock) {
-    return res.status(httpStatus.BAD_REQUEST).json({
-      success: false,
-      message: "Stock Not Found.",
-    });
-  }
-
   const orders = await Order.find({
     customer: user.id,
-    stock: req.query.stockId,
+    status: req.query.status,
   });
 
   return res.status(httpStatus.OK).json({
