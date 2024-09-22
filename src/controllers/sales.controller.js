@@ -715,6 +715,8 @@ const newSales = catchAsync(async (req, res) => {
     entityType,
   } = req.body;
 
+  console.log(req.body);
+
   // if (!customerId) {
   //     return res.status(httpStatus.NOT_FOUND).json({
   //         success: false,

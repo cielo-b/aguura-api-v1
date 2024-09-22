@@ -150,6 +150,8 @@ const newInventory = catchAsync(async (req, res) => {
       `${inventoryProduct.name}: ${formatNumber(inventoryProduct.quantity)} x ${formatNumber(inventoryProduct.unitPrice)} = ${formatNumber(inventoryProduct.totalPrice)} Rwf\n`;
   }
 
+  console.log(products, description);
+
   const inventory = await Inventory.create({
     activeDay: activeDay.id,
     products,
