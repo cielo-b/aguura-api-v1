@@ -197,7 +197,7 @@ async function processPayments(payments) {
       let method = await PaymentMethod.findById(payment.id);
       const _payment = {
         id: method.id,
-        name: method.name,
+        name: method.type,
         amount: payment.amount,
       };
       _payments.push(_payment);

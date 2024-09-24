@@ -1,11 +1,11 @@
 const httpStatus = require("http-status");
 
-const { Payment } = require("../models");
+const {Payment} = require("../models");
 const catchAsync = require("../utils/catchAsync");
-const { getEntityById } = require("./sales.controller");
+const {getEntityById} = require("./sales.controller");
 
 const allPayments = catchAsync(async (req, res) => {
-  const { entityType, entityId } = req.query;
+  const {entityType, entityId} = req.query;
 
   let entity = await getEntityById(entityType, entityId);
 
@@ -16,14 +16,14 @@ const allPayments = catchAsync(async (req, res) => {
     });
   }
 
-  let queryObj = { [entityType]: entityId };
+  let queryObj = {[entityType]: entityId};
   if (entityType === "distributionPoint") {
     queryObj.producer = null;
   } else if (entityType === "stock") {
     queryObj.distributionPoint = null;
   }
 
-  let payments = await Payment.find(queryObj, { activeDay: 0 }).populate(
+  let payments = await Payment.find(queryObj, {activeDay: 0}).populate(
     "method",
   );
 
@@ -34,7 +34,7 @@ const allPayments = catchAsync(async (req, res) => {
       customerPhone: payment.customerPhone,
       amount: payment.amount,
       date: payment.date,
-      method: payment.method.name,
+      method: payment.method.type,
     };
   });
 
@@ -45,7 +45,7 @@ const allPayments = catchAsync(async (req, res) => {
 });
 
 const dailyPayments = catchAsync(async (req, res) => {
-  const { entityId, entityType, dayId } = req.query;
+  const {entityId, entityType, dayId} = req.query;
   let entity = await getEntityById(entityType, entityId);
 
   if (!entity) {
@@ -54,15 +54,16 @@ const dailyPayments = catchAsync(async (req, res) => {
       message: "Entity Not Found.",
     });
   }
-  let queryObj = { [entityType]: entityId, activeDay: dayId };
+  let queryObj = {[entityType]: entityId, activeDay: dayId};
   if (entityType === "distributionPoint") {
     queryObj.producer = null;
   } else if (entityType === "stock") {
     queryObj.distributionPoint = null;
   }
-  let payments = await Payment.find(queryObj, { activeDay: 0 }).populate(
+  let payments = await Payment.find(queryObj, {activeDay: 0}).populate(
     "method",
   );
+
 
   payments = payments.map((payment) => {
     return {
@@ -71,7 +72,7 @@ const dailyPayments = catchAsync(async (req, res) => {
       customerPhone: payment.customerPhone,
       amount: payment.amount,
       date: payment.date,
-      method: payment.method.name,
+      method: payment.method.type,
     };
   });
 

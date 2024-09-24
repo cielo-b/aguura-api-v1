@@ -1,11 +1,12 @@
 const httpStatus = require("http-status");
 
-const { PaymentMethod } = require("../models");
+const {PaymentMethod} = require("../models");
 const catchAsync = require("../utils/catchAsync");
-const { getEntityById } = require("./sales.controller");
+const {getEntityById} = require("./sales.controller");
 
 const newMethod = catchAsync(async (req, res) => {
-  const { entityId, entityType, name } = req.body;
+
+  const {entityId, entityType, number, bankName, type, momoRegName, nameOnCard, bankRegName} = req.body;
 
   let entity = await getEntityById(entityType, entityId);
 
@@ -16,24 +17,28 @@ const newMethod = catchAsync(async (req, res) => {
     });
   }
 
-  const methodName = name.replace(/\s/g, "").toLowerCase();
+  // const methodName = name.replace(/\s/g, "").toLowerCase();
 
-  const method = await PaymentMethod.findOne({
-    methodName,
-    [entityType]: entity.id,
-  });
+  // const method = await PaymentMethod.findOne({
+  //   methodName,
+  //   [entityType]: entity.id,
+  // });
 
-  if (method) {
-    return res.status(httpStatus.BAD_REQUEST).json({
-      success: false,
-      message: "Method Already Exist.",
-    });
-  }
+  // if (method) {
+  //   return res.status(httpStatus.BAD_REQUEST).json({
+  //     success: false,
+  //     message: "Method Already Exist.",
+  //   });
+  // }
 
   const newMethod = await PaymentMethod.create({
-    name,
-    methodName,
     [entityType]: entity.id,
+    type,
+    number,
+    bankName,
+    momoRegName,
+    bankRegName,
+    nameOnCard
   });
 
   return res.status(httpStatus.CREATED).json({
@@ -53,7 +58,7 @@ const editMethod = catchAsync(async (req, res) => {
     });
   }
 
-  const { name, entityType, entityId } = req.body;
+  const {name, entityType, entityId} = req.body;
   const methodName = name.replace(/\s/g, "").toLowerCase();
 
   const _method = await PaymentMethod.findOne({
@@ -71,7 +76,7 @@ const editMethod = catchAsync(async (req, res) => {
   method.name = name;
   method.methodName = methodName;
 
-  await method.save({ validateBeforeSave: false });
+  await method.save({validateBeforeSave: false});
 
   return res.status(httpStatus.OK).json({
     success: true,
@@ -81,10 +86,10 @@ const editMethod = catchAsync(async (req, res) => {
 });
 
 const allmethods = catchAsync(async (req, res) => {
-  const { entityType, entityId } = req.query;
+  const {entityType, entityId} = req.query;
   const methods = await PaymentMethod.find(
-    { [entityType]: entityId },
-    { methodName: 0 },
+    {[entityType]: entityId},
+    {methodName: 0},
   );
 
   return res.status(httpStatus.OK).json({

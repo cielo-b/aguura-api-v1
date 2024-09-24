@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-const { toJSON } = require("./plugins");
+const {toJSON} = require("./plugins");
 
 const paymentMethodSchema = mongoose.Schema(
   {
@@ -18,13 +18,30 @@ const paymentMethodSchema = mongoose.Schema(
       ref: "DistributionPoint",
     },
 
-    name: {
+    type: {
       type: String,
       required: true,
+      enum: ["cash", "bank transfer", 'mobile money', 'card'],
     },
-    methodName: {
+
+    number: {
+      type: Number,
+    },
+
+    bankName: {
       type: String,
-      required: true,
+    },
+
+    momoRegName: {
+      type: String,
+    },
+
+    bankRegName: {
+      type: String,
+    },
+
+    nameOnCard: {
+      type: String,
     },
   },
   {
