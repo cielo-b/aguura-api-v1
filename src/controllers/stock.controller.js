@@ -210,6 +210,27 @@ const getStock = catchAsync(async (req, res) => {
 });
 
 const getAllStocks = catchAsync(async (req, res) => {
+  if (!req.query.type) {
+    let allStocks = await Stock.find().populate("admin");
+    allStocks = await Promise.all(
+      allStocks.map(async (stock) => {
+        return {
+          managerName: stock.admin?.fullName,
+          managerPhone: stock.admin?.phone,
+          id: stock.id,
+          name: stock.name,
+          type: stock.type,
+          location: stock.location,
+          description: stock.description,
+        };
+      }),
+    );
+    return res.status(httpStatus.OK).json({
+      success: true,
+      stocks: allStocks,
+    });
+  }
+
   let stocks = await Stock.find({ type: req.query.type }).populate("admin");
   stocks = await Promise.all(
     stocks.map(async (stock) => {
@@ -219,6 +240,7 @@ const getAllStocks = catchAsync(async (req, res) => {
         id: stock.id,
         name: stock.name,
         type: stock.type,
+        location: stock.location,
         description: stock.description,
       };
     }),
