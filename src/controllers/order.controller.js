@@ -1030,6 +1030,8 @@ const newOrder = catchAsync(async (req, res) => {
   let totalPrice = 0;
   let description = ``;
 
+  console.log(reqProducts);
+
   for (let i = 0; i < reqProducts.length; i++) {
     let reqProduct = reqProducts[i];
     let product = await SalesProduct.findById(reqProduct.id).populate(

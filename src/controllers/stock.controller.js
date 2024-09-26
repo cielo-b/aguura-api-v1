@@ -1,8 +1,8 @@
 const httpStatus = require("http-status");
 
-const { Stock, User, ActiveDay } = require("../models");
+const {Stock, User, ActiveDay} = require("../models");
 const catchAsync = require("../utils/catchAsync");
-const { userService, ebmService } = require("../services");
+const {userService, ebmService} = require("../services");
 
 const newStock = catchAsync(async (req, res) => {
   const user = await User.findById(req.user._id);
@@ -26,7 +26,7 @@ const newStock = catchAsync(async (req, res) => {
   } = req.body;
   const stockName = name.replace(/\s/g, "").toLowerCase();
 
-  const stock = await Stock.findOne({ stockName, superAdmin: user.id });
+  const stock = await Stock.findOne({stockName, superAdmin: user.id});
 
   if (stock) {
     return res.status(httpStatus.BAD_REQUEST).json({
@@ -85,11 +85,11 @@ const editStock = catchAsync(async (req, res) => {
     });
   }
 
-  const { name, fullName, phone, password, type, description } = req.body;
+  const {name, fullName, phone, password, type, description} = req.body;
 
   const stockName = name.replace(/\s/g, "").toLowerCase();
 
-  const _stock = await Stock.findOne({ stockName });
+  const _stock = await Stock.findOne({stockName});
 
   if (_stock && stock.id.toString() !== _stock.id.toString()) {
     return res.status(httpStatus.BAD_REQUEST).json({
@@ -102,7 +102,7 @@ const editStock = catchAsync(async (req, res) => {
   admin.fullName = fullName;
   admin.phone = phone;
   if (password) admin.password = password;
-  await admin.save({ validateBeforeSave: false });
+  await admin.save({validateBeforeSave: false});
 
   const sName = name ? name : stock.name;
   stock.name = sName;
@@ -110,7 +110,7 @@ const editStock = catchAsync(async (req, res) => {
   stock.type = type ? type : stock.type;
   stock.description = description ? description : stock.description;
 
-  await stock.save({ validateBeforeSave: false });
+  await stock.save({validateBeforeSave: false});
 
   return res.status(httpStatus.OK).json({
     success: true,
@@ -129,7 +129,7 @@ const allStocks = catchAsync(async (req, res) => {
     });
   }
 
-  let stocks = await Stock.find({ superAdmin: user.id }).populate("admin");
+  let stocks = await Stock.find({superAdmin: user.id}).populate("admin");
   stocks = stocks.map((stock) => {
     return {
       managerName: stock.admin.fullName,
@@ -149,7 +149,7 @@ const allStocks = catchAsync(async (req, res) => {
 });
 
 const getStockByAdmin = catchAsync(async (req, res) => {
-  let stock = await Stock.findOne({ admin: req.query.adminId });
+  let stock = await Stock.findOne({admin: req.query.adminId});
   const activeDay = await ActiveDay.findOne({
     isActive: true,
     stock: stock.id,
@@ -210,7 +210,11 @@ const getStock = catchAsync(async (req, res) => {
 });
 
 const getAllStocks = catchAsync(async (req, res) => {
-  let stocks = await Stock.find({ type: req.query.type }).populate("admin");
+  let stocks = await Stock.find({}).populate("admin");
+  if(req.query.type !== "all") {
+    stocks = stocks.filter(stock => stock.type === req.query.type);
+  }
+
   stocks = await Promise.all(
     stocks.map(async (stock) => {
       return {
@@ -240,7 +244,7 @@ const addStocks = catchAsync(async (req, res) => {
     });
   }
 
-  const { stockIds } = req.body;
+  const {stockIds} = req.body;
 
   for (let id of stockIds) {
     const stock = await Stock.findById(id);
@@ -255,7 +259,7 @@ const addStocks = catchAsync(async (req, res) => {
       if (!customers.includes(user.id)) {
         customers.push(user.id);
         stock.customers = customers;
-        await stock.save({ validateBeforeSave: false });
+        await stock.save({validateBeforeSave: false});
 
         // check ebm stock
         if (user.tin) {
@@ -291,7 +295,7 @@ const addStocks = catchAsync(async (req, res) => {
       }
 
       user.stocks = userStocks;
-      await user.save({ validateBeforeSave: false });
+      await user.save({validateBeforeSave: false});
     }
   }
 
