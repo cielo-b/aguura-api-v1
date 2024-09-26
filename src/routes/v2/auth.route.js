@@ -66,7 +66,12 @@ module.exports = router;
  *               role:
  *                 type: string
  *               phone:
- *                 type: string
+ *                 type: Object
+ *                 properties:
+ *                  countryCode: 
+ *                   type: string
+ *                 number:
+ *                  type: Number
  *               password:
  *                 type: string
  *                 format: password
@@ -74,7 +79,7 @@ module.exports = router;
  *                 description: At least one number and one letter
  *             example:
  *               fullName: Valens DABAGIRE
- *               phone: '0790016651'
+ *               phone: {countryCode: '+250', number: 788888888}
  *               role: user
  *               password: Const@123
  *     responses:
@@ -106,16 +111,21 @@ module.exports = router;
  *           schema:
  *             type: object
  *             required:
- *               - username
+ *               - phone
  *               - password
  *             properties:
- *               username:
- *                 type: string
+ *               phone:
+ *                 type: Object
+ *                 properties:
+ *                  countryCode:
+ *                   type: string
+ *                 number:
+ *                   type: Number
  *               password:
  *                 type: string
  *                 format: password
  *             example:
- *               username: fakeusername
+ *               phone: {countryCode: '+250', number: 788888888}
  *               password: password1
  *     responses:
  *       "200":
@@ -304,4 +314,170 @@ module.exports = router;
  *             example:
  *               code: 401
  *               message: verify email failed
+ */
+
+
+/**
+ * @swagger
+ * /auth/add-customer:
+ *   post:
+ *     summary: Add a new customer
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - name
+ *               - email
+ *               - phone
+ *               - role
+ *             properties:
+ *               name:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *                 format: email
+ *               phone:
+ *                 type: string
+ *               role:
+ *                 type: string
+ *             example:
+ *               name: John Doe
+ *               email: johndoe@example.com
+ *               phone: '1234567890'
+ *               role: customer
+ *     responses:
+ *       "201":
+ *         description: Created
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/User'
+ *       "400":
+ *         description: Bad Request
+ *       "401":
+ *         description: Unauthorized
+ */
+
+/**
+ * @swagger
+ * /auth/set-fcm-token:
+ *   patch:
+ *     summary: Set FCM token for user
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - fcmToken
+ *             properties:
+ *               fcmToken:
+ *                 type: string
+ *                 description: Firebase Cloud Messaging token
+ *             example:
+ *               fcmToken: "abcd1234efgh5678ijkl"
+ *     responses:
+ *       "200":
+ *         description: Token set successfully
+ *       "400":
+ *         description: Bad Request
+ *       "401":
+ *         description: Unauthorized
+ */
+
+/**
+ * @swagger
+ * /auth/connect-ebm:
+ *   post:
+ *     summary: Connect to EBM
+ *     description: Initialize EBM connection for producers, distributors, and admins
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - apiKey
+ *             properties:
+ *               apiKey:
+ *                 type: string
+ *                 description: EBM API Key
+ *             example:
+ *               apiKey: "ebm-api-key"
+ *     responses:
+ *       "200":
+ *         description: EBM connection initialized successfully
+ *       "400":
+ *         description: Bad Request
+ *       "401":
+ *         description: Unauthorized
+ *       "403":
+ *         description: Forbidden
+ */
+
+/**
+ * @swagger
+ * /auth/customers:
+ *   get:
+ *     summary: Get all customers
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       "200":
+ *         description: A list of all customers
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/User'
+ *       "401":
+ *         description: Unauthorized
+ *       "403":
+ *         description: Forbidden
+ *       "404":
+ *         description: Not Found
+ */
+
+/**
+ * @swagger
+ * /auth/logout:
+ *   post:
+ *     summary: Logout
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - refreshToken
+ *             properties:
+ *               refreshToken:
+ *                 type: string
+ *             example:
+ *               refreshToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI1ZWJhYzUzNDk1NGI1NDEzOTgwNmMxMTIiLCJpYXQiOjE1ODkyOTg0ODQsImV4cCI6MTU4OTMwMDI4NH0.m1U63blB0MLej_WfB7yC2FTMnCziif9X8yzwDEfJXAg
+ *     responses:
+ *       "204":
+ *         description: No content
+ *       "401":
+ *         $ref: '#/components/responses/Unauthorized'
  */

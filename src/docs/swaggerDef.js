@@ -4,7 +4,7 @@ const config = require("../config/config");
 const swaggerDef = {
   openapi: "3.0.0",
   info: {
-    title: "Stock API documentation",
+    title: "Aguura APIs documentation",
     version,
     license: {
       name: "MIT",
@@ -13,10 +13,10 @@ const swaggerDef = {
   },
   servers: [
     {
-      url: `http://localhost:${config.port}/api/v1`,
+      url: `http://localhost:${config.port}/api/v2`,
     },
     {
-      url: `https://apis.aguura.com/api/v1`,
+      url: `https://apis.aguura.com/api/v2`,
     },
   ],
 };

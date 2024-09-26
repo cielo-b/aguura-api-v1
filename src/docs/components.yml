@@ -8,14 +8,56 @@ components:
         fullName:
           type: string
         phone:
+          type: object
+          properties:
+            countryCode:
+              type: string
+              example: "250"
+            number:
+              type: string
+              example: "790016650"
+        email:
           type: string
         role:
           type: string
-          enum: [user, admin]
+          enum: [user, admin, superAdmin, producer, distributor]
+        fcmToken:
+          type: string
+        monthlyPayment:
+          type: number
+          example: 0
+        tin:
+          type: string
+        bhfId:
+          type: string
+        dvcSrlNo:
+          type: string
+        credit:
+          type: number
+          example: 0
+        suspended:
+          type: boolean
+        country:
+          type: string
+          example: "Rwanda"
+        countryCode:
+          type: string
+          example: "RW"
+        isVerified:
+          type: boolean
+        hasEbm:
+          type: boolean
+        initialSales:
+          type: number
       example:
         fullName: fake name
-        phone: 0790016650
+        phone:
+          countryCode: "250"
+          number: "0790016650"
         role: user
+        email: example@gmail.com
+        country: "Rwanda"
+        countryCode: "RW"
 
     Token:
       type: object
@@ -52,6 +94,569 @@ components:
           type: string
       example:
         message: Deleted successfully
+
+    Payment:
+      type: object
+      properties:
+        id:
+          type: string
+        stock:
+          type: string
+        producer:
+          type: string
+        distributionPoint:
+          type: string
+        customer:
+          type: string
+        activeDay:
+          type: string
+        method:
+          type: string
+        sale:
+          type: string
+        amount:
+          type: number
+        customerName:
+          type: string
+        customerPhone:
+          type: string
+        isCreditPayment:
+          type: boolean
+        credit:
+          type: string
+        isMine:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    PaymentMethod:
+      type: object
+      properties:
+        id:
+          type: string
+        stock:
+          type: string
+        producer:
+          type: string
+        distributionPoint:
+          type: string
+        type:
+          type: string
+          enum: ["cash", "bank transfer", "mobile money", "card"]
+        number:
+          type: number
+        bankName:
+          type: string
+        momoRegName:
+          type: string
+        bankRegName:
+          type: string
+        nameOnCard:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    Producer:
+      type: object
+      properties:
+        id:
+          type: string
+        manager:
+          type: string
+        name:
+          type: string
+        location:
+          type: string
+        type:
+          type: string
+          example: drinks
+        distributionPoints:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              totalPurchases:
+                type: number
+        stocks:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              totalPurchases:
+                type: number
+        customers:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              totalPurchases:
+                type: number
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    Product:
+      type: object
+      properties:
+        id:
+          type: string
+        producer:
+          type: string
+        name:
+          type: string
+        productName:
+          type: string
+        price:
+          type: number
+        totalAvailable:
+          type: number
+        dailyAdded:
+          type: number
+        itemCd:
+          type: string
+        itemClsCd:
+          type: string
+        itemTyCd:
+          type: string
+        orgnNatCd:
+          type: string
+        pkgUnitCd:
+          type: string
+        qtyUnitCd:
+          type: string
+        nmbr:
+          type: number
+        taxTyCd:
+          type: object
+          properties:
+            code:
+              type: string
+            name:
+              type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    Sales:
+      type: object
+      properties:
+        id:
+          type: string
+        activeDay:
+          type: string
+        stock:
+          type: string
+        distributionPoint:
+          type: string
+        producer:
+          type: string
+        inventory:
+          type: string
+        customer:
+          type: string
+        products:
+          type: array
+          items:
+            type: object
+            properties:
+              product:
+                type: string
+              salesProduct:
+                type: string
+              inventoryProduct:
+                type: string
+              name:
+                type: string
+              quantity:
+                type: number
+              unitPrice:
+                type: number
+              totalPrice:
+                type: number
+              taxTyCd:
+                type: object
+                properties:
+                  code:
+                    type: string
+                  name:
+                    type: string
+        payments:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              name:
+                type: string
+              amount:
+                type: number
+        description:
+          type: string
+        paymentDescription:
+          type: string
+        totalPrice:
+          type: number
+        amountPaid:
+          type: number
+        isFullyPaid:
+          type: boolean
+        fromOrder:
+          type: boolean
+        customerName:
+          type: string
+        customerPhone:
+          type: string
+        purchase:
+          type: number
+        rct:
+          type: object
+          properties:
+            rcptNo:
+              type: number
+            intrlData:
+              type: string
+            rcptSign:
+              type: string
+            totRcptNo:
+              type: number
+            vsdcRcptPbctDate:
+              type: string
+            sdcId:
+              type: string
+            mrcNo:
+              type: string
+        rcptNo:
+          type: number
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    SalesProduct:
+      type: object
+      properties:
+        id:
+          type: string
+        stock:
+          type: string
+        distributionPoint:
+          type: string
+        inventoryProduct:
+          type: string
+        price:
+          type: number
+        ebmItemCode:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    Stock:
+      type: object
+      properties:
+        id:
+          type: string
+        superAdmin:
+          type: string
+        admin:
+          type: string
+        name:
+          type: string
+        location:
+          type: string
+        description:
+          type: string
+        stockName:
+          type: string
+        customers:
+          type: array
+          items:
+            type: string
+        type:
+          type: string
+          enum:
+            - pharmacy
+            - bralirwa
+            - drinks
+            - food
+            - fashion
+            - electronics
+            - others
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    ActiveDay:
+      type: object
+      properties:
+        id:
+          type: string
+        stock:
+          type: string
+        producer:
+          type: string
+        distributionPoint:
+          type: string
+        name:
+          type: string
+        type:
+          type: string
+          enum: [day, month]
+        
+    Crate:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+          required: true
+        capacity:
+          type: number
+          required: true
+        location:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      example:
+        name: Crate A
+        capacity: 50
+        location: Warehouse 1
+
+    Credit:
+      type: object
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+          required: true
+        amount:
+          type: number
+          required: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      example:
+        userId: 609c1e4a4f1a2b001c4fbd3e
+        amount: 1000
+
+    DistributionPoint:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+          required: true
+        location:
+          type: string
+          required: true
+        type:
+          type: string
+          enum: [retail, wholesale, distributor]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      example:
+        name: Main Distribution Center
+        location: City Center
+        type: wholesale
+
+    EmptyCrate:
+      type: object
+      properties:
+        id:
+          type: string
+        crateId:
+          type: string
+          required: true
+        status:
+          type: string
+          enum: [available, in-use, damaged]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      example:
+        crateId: 609c1e4a4f1a2b001c4fbd3f
+        status: available
+    
+    Expense:
+      type: object
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+          required: true
+        amount:
+          type: number
+          required: true
+        description:
+          type: string
+          required: true
+        date:
+          type: string
+          format: date-time
+          required: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      example:
+        userId: 609c1e4a4f1a2b001c4fbd3e
+        amount: 150.75
+        description: Office supplies purchase
+        date: 2023-09-20T10:00:00Z
+
+    Inventory:
+      type: object
+      properties:
+        id:
+          type: string
+        stockId:
+          type: string
+          required: true
+        productId:
+          type: string
+          required: true
+        quantity:
+          type: number
+          required: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      example:
+        stockId: 609c1e4a4f1a2b001c4fbd3d
+        productId: 609c1e4a4f1a2b001c4fbd3f
+        quantity: 100
+
+    InventoryProduct:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+          required: true
+        description:
+          type: string
+        price:
+          type: number
+          required: true
+        stockId:
+          type: string
+          required: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      example:
+        name: Product A
+        description: A sample product description.
+        price: 25.99
+        stockId: 609c1e4a4f1a2b001c4fbd3d
+    
+    Order:
+      type: object
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+          required: true
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              inventoryProductId:
+                type: string
+                required: true
+              quantity:
+                type: number
+                required: true
+              price:
+                type: number
+                required: true
+        totalAmount:
+          type: number
+          required: true
+        status:
+          type: string
+          enum: [pending, completed, canceled, invented, in-progress]
+          required: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      example:
+        userId: 609c1e4a4f1a2b001c4fbd3e
+        items: [
+          {
+            inventoryProductId: 609c1e4a4f1a2b001c4fbd3f,
+            quantity: 2,
+            price: 25.99
+          },
+          {
+            inventoryProductId: 609c1e4a4f1a2b001c4fbd3g,
+            quantity: 1,
+            price: 15.00
+          }
+        ]
+        totalAmount: 67.98
+        status: pending
 
   responses:
     DuplicateEmail:

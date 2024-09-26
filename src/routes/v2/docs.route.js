@@ -15,6 +15,9 @@ router.get(
   "/",
   swaggerUi.setup(specs, {
     explorer: true,
+    customSiteTitle: "Aguura APIs Documentation",
+    customCss: ".swagger-ui .topbar { display: none }",
+    docExpansion: "none",
   }),
 );
 
