@@ -11,11 +11,11 @@ const {
   EmptyCrates,
 } = require("../models");
 const catchAsync = require("../utils/catchAsync");
-const { checkDay } = require("./activeDay.controller");
-const { getEntityById } = require("./sales.controller");
+const {checkDay} = require("./activeDay.controller");
+const {getEntityById} = require("./sales.controller");
 
 const newCratesRender = catchAsync(async (req, res) => {
-  const { entityId, entityType, products: reqProducts, customerId } = req.body;
+  const {entityId, entityType, products: reqProducts, customerId} = req.body;
 
   let entity = await getEntityById(entityType, entityId);
   if (!entity) {
@@ -25,7 +25,7 @@ const newCratesRender = catchAsync(async (req, res) => {
     });
   }
 
-  const activeDay = await checkDay({ entityId, entityType });
+  const activeDay = await checkDay({entityId, entityType});
 
   let user = await User.findById(customerId);
   let stock = await Stock.findById(customerId).populate("admin");
@@ -53,12 +53,12 @@ const newCratesRender = catchAsync(async (req, res) => {
         const iP = await Product.findById(p.id);
 
         // update empty
-        const iProduct = await InventoryProduct.findOne({ product: iP?._id });
+        const iProduct = await InventoryProduct.findOne({product: iP?._id});
         if (iProduct) {
-          const eCrate = await EmptyCrates.findOne({ product: iProduct._id });
+          const eCrate = await EmptyCrates.findOne({product: iProduct._id});
           if (eCrate) {
             eCrate.number -= parseFloat(p.given);
-            await eCrate.save({ validateBeforeSave: false });
+            await eCrate.save({validateBeforeSave: false});
           }
         }
 
@@ -72,10 +72,10 @@ const newCratesRender = catchAsync(async (req, res) => {
         const iP = await InventoryProduct.findById(p.id);
         // update empty
         if (iP) {
-          const eCrate = await EmptyCrates.findOne({ product: iP._id });
+          const eCrate = await EmptyCrates.findOne({product: iP._id});
           if (eCrate) {
             eCrate.number -= parseFloat(p.given);
-            await eCrate.save({ validateBeforeSave: false });
+            await eCrate.save({validateBeforeSave: false});
           }
         }
         return {
@@ -123,7 +123,7 @@ const newCratesRender = catchAsync(async (req, res) => {
 });
 
 const editCrates = catchAsync(async (req, res) => {
-  const { products: reqProducts, id } = req.body;
+  const {products: reqProducts, id} = req.body;
 
   let crates = await Crates.findById(id);
   if (!crates) {
@@ -145,10 +145,10 @@ const editCrates = catchAsync(async (req, res) => {
     const iP = await InventoryProduct.findById(i.id);
     // update empty
     if (iP) {
-      const eCrate = await EmptyCrates.findOne({ product: iP._id });
+      const eCrate = await EmptyCrates.findOne({product: iP._id});
       if (eCrate) {
         eCrate.number += parseFloat(p.given);
-        await eCrate.save({ validateBeforeSave: false });
+        await eCrate.save({validateBeforeSave: false});
       }
     }
   }
@@ -159,12 +159,12 @@ const editCrates = catchAsync(async (req, res) => {
         const iP = await Product.findById(p.id);
 
         // update empty
-        const iProduct = await InventoryProduct.findOne({ product: iP?._id });
+        const iProduct = await InventoryProduct.findOne({product: iP?._id});
         if (iProduct) {
-          const eCrate = await EmptyCrates.findOne({ product: iProduct._id });
+          const eCrate = await EmptyCrates.findOne({product: iProduct._id});
           if (eCrate) {
             eCrate.number -= parseFloat(p.given);
-            await eCrate.save({ validateBeforeSave: false });
+            await eCrate.save({validateBeforeSave: false});
           }
         }
 
@@ -178,10 +178,10 @@ const editCrates = catchAsync(async (req, res) => {
         const iP = await InventoryProduct.findById(p.id);
         // update empty
         if (iP) {
-          const eCrate = await EmptyCrates.findOne({ product: iP._id });
+          const eCrate = await EmptyCrates.findOne({product: iP._id});
           if (eCrate) {
             eCrate.number -= parseFloat(p.given);
-            await eCrate.save({ validateBeforeSave: false });
+            await eCrate.save({validateBeforeSave: false});
           }
         }
         return {
@@ -195,7 +195,7 @@ const editCrates = catchAsync(async (req, res) => {
   );
 
   crates.products = products;
-  await crates.save({ validateBeforeSave: false });
+  await crates.save({validateBeforeSave: false});
 
   return res.status(httpStatus.OK).json({
     success: true,
@@ -204,7 +204,7 @@ const editCrates = catchAsync(async (req, res) => {
 });
 
 const allCrates = catchAsync(async (req, res) => {
-  const { entityId, entityType, allReturned } = req.query;
+  const {entityId, entityType, allReturned} = req.query;
   let entity = await getEntityById(entityType, entityId);
   if (!entity) {
     return res.status(httpStatus.NOT_FOUND).json({
@@ -212,7 +212,7 @@ const allCrates = catchAsync(async (req, res) => {
       message: "Entity Not Found.",
     });
   }
-  const crates = await Crates.find({ allReturned, [entityType]: entityId });
+  const crates = await Crates.find({allReturned, [entityType]: entityId});
 
   return res.status(httpStatus.OK).json({
     success: true,
@@ -229,7 +229,7 @@ const returnCrates = catchAsync(async (req, res) => {
     });
   }
 
-  const { products } = req.body;
+  const {products} = req.body;
   const crates = cratesOrder.products;
 
   let updatedCrates = [];
@@ -259,7 +259,17 @@ const returnCrates = catchAsync(async (req, res) => {
   cratesOrder.products = updatedCrates;
   cratesOrder.allReturned = allReturned;
 
-  await cratesOrder.save({ validateBeforeSave: false });
+  // Update Empty Crates
+  for (let p of products) {
+    const iP = await InventoryProduct.findById(p.id);
+    const eCrate = await EmptyCrates.findOne({product: iP._id});
+    if (eCrate) {
+      eCrate.number += parseFloat(p.number);
+      await eCrate.save({validateBeforeSave: false});
+    }
+  }
+
+  await cratesOrder.save({validateBeforeSave: false});
 
   return res.status(httpStatus.OK).json({
     success: true,
@@ -268,7 +278,7 @@ const returnCrates = catchAsync(async (req, res) => {
 });
 
 const myCrates = catchAsync(async (req, res) => {
-  const { entityId, entityType } = req.query;
+  const {entityId, entityType} = req.query;
   let entity = await getEntityById(entityType, entityId);
   if (!entity) {
     return res.status(httpStatus.NOT_FOUND).json({
@@ -277,7 +287,7 @@ const myCrates = catchAsync(async (req, res) => {
     });
   }
 
-  let crates = await Crates.find({ allReturned: false, renderedTo: entityId });
+  let crates = await Crates.find({allReturned: false, renderedTo: entityId});
 
   crates = await Promise.all(
     crates.map(async (crate) => {

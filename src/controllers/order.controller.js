@@ -83,7 +83,7 @@ const completeOrder = catchAsync(async (req, res) => {
       let method = await PaymentMethod.findById(payment.id);
       const _payment = {
         id: method.id,
-        name: method.name,
+        name: method.type,
         amount: payment.amount,
       };
       _payments.push(_payment);
@@ -1030,7 +1030,6 @@ const newOrder = catchAsync(async (req, res) => {
   let totalPrice = 0;
   let description = ``;
 
-  console.log(reqProducts);
 
   for (let i = 0; i < reqProducts.length; i++) {
     let reqProduct = reqProducts[i];
