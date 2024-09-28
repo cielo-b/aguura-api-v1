@@ -48,6 +48,8 @@ app.use(
       "http://localhost:4000",
       "https://aguura.com",
       "https://146.190.157.141",
+      'https://staging.aguura.com',
+      'https://staging-aguura.pages.dev'
     ],
   }),
 );
