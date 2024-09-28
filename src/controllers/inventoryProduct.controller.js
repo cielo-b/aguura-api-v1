@@ -445,7 +445,8 @@ const addStockProducts = catchAsync(async (req, res) => {
         producers.push(product.producer);
         _products.push({
           productName,
-          taxTyCd: product.taxTyCd,
+          // taxTyCd: product.taxTyCd,
+          taxTyCd: 'B',
           name: product.name,
           product: product.product || null,
           salePrice: p.price,
@@ -456,7 +457,7 @@ const addStockProducts = catchAsync(async (req, res) => {
     } else {
       _products.push({
         productName,
-        taxTyCd: p.taxTyCd,
+        taxTyCd: 'B',
         name: p.name,
         salePrice: p.price,
         price: p.purchasePrice,
