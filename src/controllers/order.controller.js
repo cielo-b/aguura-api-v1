@@ -19,13 +19,13 @@ const {
 } = require("../models");
 const catchAsync = require("../utils/catchAsync");
 const formatNumber = require("../utils/formatNumber");
-const { checkDay, checkActive } = require("./activeDay.controller");
-const { checkStock } = require("./stock.controller");
+const {checkDay, checkActive} = require("./activeDay.controller");
+const {checkStock} = require("./stock.controller");
 const sendPushNotification = require("../utils/fcmSendPushNotifications");
-const { validateTotalPayments, getEntityById } = require("./sales.controller");
+const {validateTotalPayments, getEntityById} = require("./sales.controller");
 
 const completeOrder = catchAsync(async (req, res) => {
-  const { entityType, entityId, id, payments, amountPaid, isFullyPaying } =
+  const {entityType, entityId, id, payments, amountPaid, isFullyPaying} =
     req.body;
 
   let entity = await getEntityById(entityType, entityId);
@@ -44,7 +44,7 @@ const completeOrder = catchAsync(async (req, res) => {
     });
   }
 
-  const activeDay = await checkDay({ entityId, entityType });
+  const activeDay = await checkDay({entityId, entityType});
 
   if (!isFullyPaying && !amountPaid) {
     return res.status(httpStatus.BAD_REQUEST).json({
@@ -153,7 +153,7 @@ const completeOrder = catchAsync(async (req, res) => {
       }
 
       inventoryProduct.totalAvailable -= parseFloat(reqProduct.quantity);
-      await inventoryProduct.save({ validateBeforeSave: false });
+      await inventoryProduct.save({validateBeforeSave: false});
 
       // update empty
       const eCrate = await EmptyCrates.findOne({
@@ -161,7 +161,7 @@ const completeOrder = catchAsync(async (req, res) => {
       });
       if (eCrate) {
         eCrate.number += parseFloat(reqProduct.quantity);
-        await eCrate.save({ validateBeforeSave: false });
+        await eCrate.save({validateBeforeSave: false});
       }
     }
 
@@ -175,7 +175,7 @@ const completeOrder = catchAsync(async (req, res) => {
         customers[stockIndex].totalPurchases -= parseFloat(iPurchase);
         customers[stockIndex].totalPurchases += parseFloat(total);
         producer.customers = customers;
-        await producer.save({ validateBeforeSave: false });
+        await producer.save({validateBeforeSave: false});
       }
     }
   } else if (entityType === "distributionPoint") {
@@ -193,7 +193,7 @@ const completeOrder = catchAsync(async (req, res) => {
       // === update dist products ===
       if (distProduct) {
         distProduct.totalAvailable -= parseFloat(reqProduct.quantity);
-        await distProduct.save({ validateBeforeSave: false });
+        await distProduct.save({validateBeforeSave: false});
       }
     }
   } else {
@@ -205,7 +205,7 @@ const completeOrder = catchAsync(async (req, res) => {
       // === update producer products ===
       if (product) {
         product.totalAvailable -= parseFloat(reqProduct.quantity);
-        await product.save({ validateBeforeSave: false });
+        await product.save({validateBeforeSave: false});
       }
     }
   }
@@ -261,7 +261,7 @@ const completeOrder = catchAsync(async (req, res) => {
   order.isCompleted = true;
   order.sale = sales.id;
   order.status = "completed";
-  await order.save({ validateBeforeSave: false });
+  await order.save({validateBeforeSave: false});
 
   return res.status(httpStatus.OK).json({
     success: true,
@@ -270,7 +270,7 @@ const completeOrder = catchAsync(async (req, res) => {
 });
 
 const inventOrder = catchAsync(async (req, res) => {
-  const { entityType, entityId, id, activeDay } = req.body;
+  const {entityType, entityId, id, activeDay} = req.body;
 
   let entity = await getEntityById(entityType, entityId);
   if (!entity) {
@@ -345,7 +345,7 @@ const inventOrder = catchAsync(async (req, res) => {
 
       if (sales) {
         sales.inventory = inventory.id;
-        await sales.save({ validateBeforeSave: false });
+        await sales.save({validateBeforeSave: false});
       }
 
       // update inventory products availability
@@ -358,15 +358,15 @@ const inventOrder = catchAsync(async (req, res) => {
 
         product.totalAvailable += parseFloat(reqProduct.quantity);
         product.dailyAdded += parseFloat(reqProduct.quantity);
-        await product.save({ validateBeforeSave: false });
+        await product.save({validateBeforeSave: false});
 
         // update empty
 
         // distributor
-        const eCrate = await EmptyCrates.findOne({ product: product._id });
+        const eCrate = await EmptyCrates.findOne({product: product._id});
         if (eCrate) {
           eCrate.number -= parseFloat(reqProduct.quantity);
-          await eCrate.save({ validateBeforeSave: false });
+          await eCrate.save({validateBeforeSave: false});
         }
 
         // producer
@@ -374,10 +374,10 @@ const inventOrder = catchAsync(async (req, res) => {
         if (_product) {
           producer = await Producer.findById(_product.producer);
         }
-        const _eCrate = await EmptyCrates.findOne({ product: _product._id });
+        const _eCrate = await EmptyCrates.findOne({product: _product._id});
         if (_eCrate) {
           _eCrate.number += parseFloat(reqProduct.quantity);
-          await _eCrate.save({ validateBeforeSave: false });
+          await _eCrate.save({validateBeforeSave: false});
         }
       }
 
@@ -393,13 +393,13 @@ const inventOrder = catchAsync(async (req, res) => {
             order.totalPrice
           );
           entity.distributionPoints = distributors;
-          await entity.save({ validateBeforeSave: false });
+          await entity.save({validateBeforeSave: false});
         }
       }
     }
   } else if (entityType === "stock") {
     const stock = await Stock.findById(order.stock);
-    const stockProducts = await InventoryProduct.find({ stock: stock._id });
+    const stockProducts = await InventoryProduct.find({stock: stock._id});
     const distributorProducts = await InventoryProduct.find({
       distributionPoint: order.distributionPoint,
     });
@@ -439,7 +439,7 @@ const inventOrder = catchAsync(async (req, res) => {
     if (inventory) {
       if (sales) {
         sales.inventory = inventory.id;
-        await sales.save({ validateBeforeSave: false });
+        await sales.save({validateBeforeSave: false});
       }
 
       // update inventory products availability
@@ -463,15 +463,15 @@ const inventOrder = catchAsync(async (req, res) => {
               parseFloat(reqProduct.quantity);
             product.dailyAdded =
               parseFloat(product.dailyAdded) + parseFloat(reqProduct.quantity);
-            await product.save({ validateBeforeSave: false });
+            await product.save({validateBeforeSave: false});
 
             // update empty to be checked
 
             // stock
-            const eCrate = await EmptyCrates.findOne({ product: product._id });
+            const eCrate = await EmptyCrates.findOne({product: product._id});
             if (eCrate) {
               eCrate.number -= parseFloat(reqProduct.quantity);
-              await eCrate.save({ validateBeforeSave: false });
+              await eCrate.save({validateBeforeSave: false});
             }
 
             // distributor
@@ -480,7 +480,7 @@ const inventOrder = catchAsync(async (req, res) => {
             });
             if (_eCrate) {
               _eCrate.number += parseFloat(reqProduct.quantity);
-              await _eCrate.save({ validateBeforeSave: false });
+              await _eCrate.save({validateBeforeSave: false});
             }
           }
         }
@@ -520,10 +520,10 @@ const inventOrder = catchAsync(async (req, res) => {
         if (stockIndex !== -1) {
           stocks[stockIndex].totalPurchases += parseFloat(total);
         } else {
-          stocks.push({ id: stock._id, totalPurchases: parseFloat(total) });
+          stocks.push({id: stock._id, totalPurchases: parseFloat(total)});
         }
         producer.stocks = stocks;
-        await producer.save({ validateBeforeSave: false });
+        await producer.save({validateBeforeSave: false});
       }
 
       // update distributor stocks
@@ -545,13 +545,13 @@ const inventOrder = catchAsync(async (req, res) => {
           });
         }
         distributor.stocks = stocks;
-        await distributor.save({ validateBeforeSave: false });
+        await distributor.save({validateBeforeSave: false});
       }
     }
   }
 
   order.status = "invented";
-  await order.save({ validateBeforeSave: false });
+  await order.save({validateBeforeSave: false});
 
   return res.status(httpStatus.OK).json({
     success: true,
@@ -639,7 +639,7 @@ const newDistributorOrder = catchAsync(async (req, res) => {
 });
 
 const editDistributorOrder = catchAsync(async (req, res) => {
-  const { distributorId, producerId, products: reqProducts, id } = req.body;
+  const {distributorId, producerId, products: reqProducts, id} = req.body;
   const distributionPoint =
     await DistributionPoint.findById(distributorId).populate("manager");
   if (!distributionPoint) {
@@ -692,7 +692,7 @@ const editDistributorOrder = catchAsync(async (req, res) => {
   order.producer = producer.id;
   order.description = description;
   order.totalPrice = totalPrice;
-  await order.save({ validateBeforeSave: false });
+  await order.save({validateBeforeSave: false});
 
   return res.status(httpStatus.CREATED).json({
     success: true,
@@ -701,7 +701,7 @@ const editDistributorOrder = catchAsync(async (req, res) => {
 });
 
 const getProducerOrders = catchAsync(async (req, res) => {
-  const { producerId, isCompleted } = req.query;
+  const {producerId, isCompleted} = req.query;
   const producer = await Producer.findById(producerId);
   if (!producer) {
     return res.status(httpStatus.BAD_REQUEST).json({
@@ -738,7 +738,7 @@ const getProducerOrders = catchAsync(async (req, res) => {
 });
 
 const getDistributorOrders = catchAsync(async (req, res) => {
-  const { isCompleted, isMine, distributorId, status } = req.query;
+  const {isCompleted, isMine, distributorId, status} = req.query;
 
   const distributionPoint = await DistributionPoint.findById(distributorId);
   if (!distributionPoint) {
@@ -754,7 +754,7 @@ const getDistributorOrders = catchAsync(async (req, res) => {
       distributionPoint: distributionPoint.id,
       isCompleted,
       status,
-      producer: { $ne: null },
+      producer: {$ne: null},
     };
     orders = await Order.find(queryObj);
     orders = await Promise.all(
@@ -804,7 +804,7 @@ const getDistributorOrders = catchAsync(async (req, res) => {
 
 // ========== stock =========
 const newStockOrder = catchAsync(async (req, res) => {
-  const { distributorId, stockId, products: reqProducts } = req.body;
+  const {distributorId, stockId, products: reqProducts} = req.body;
   const stock = await Stock.findById(stockId).populate("admin");
   if (!stock) {
     return res.status(httpStatus.BAD_REQUEST).json({
@@ -885,7 +885,7 @@ const newStockOrder = catchAsync(async (req, res) => {
     });
   }
   distributionPoint.stocks = stocks;
-  await distributionPoint.save({ validateBeforeSave: false });
+  await distributionPoint.save({validateBeforeSave: false});
 
   return res.status(httpStatus.CREATED).json({
     success: true,
@@ -894,7 +894,7 @@ const newStockOrder = catchAsync(async (req, res) => {
 });
 
 const editStockOrder = catchAsync(async (req, res) => {
-  const { distributorId, stockId, products: reqProducts, id } = req.body;
+  const {distributorId, stockId, products: reqProducts, id} = req.body;
   const stock = await Stock.findById(stockId).populate("admin");
   if (!stock) {
     return res.status(httpStatus.BAD_REQUEST).json({
@@ -952,7 +952,7 @@ const editStockOrder = catchAsync(async (req, res) => {
   order.totalPrice = totalPrice;
   order.customerName = stock.admin.fullName;
   order.phone = stock.admin.phone;
-  await order.save({ validateBeforeSave: false });
+  await order.save({validateBeforeSave: false});
 
   return res.status(httpStatus.CREATED).json({
     success: true,
@@ -961,7 +961,7 @@ const editStockOrder = catchAsync(async (req, res) => {
 });
 
 const getStockOrders = catchAsync(async (req, res) => {
-  const { isCompleted, isMine, stockId, status } = req.query;
+  const {isCompleted, isMine, stockId, status} = req.query;
 
   const stock = await Stock.findById(stockId);
   if (!stock) {
@@ -976,7 +976,7 @@ const getStockOrders = catchAsync(async (req, res) => {
     stock: stock._id,
     isCompleted,
     status,
-    distributionPoint: { $ne: null },
+    distributionPoint: {$ne: null},
   };
   orders = await Order.find(queryObj);
   orders = await Promise.all(
@@ -1015,7 +1015,7 @@ const newOrder = catchAsync(async (req, res) => {
     });
   }
 
-  const { products: reqProducts } = req.body;
+  const {products: reqProducts} = req.body;
   const user = await User.findById(req.user._id);
 
   if (!user) {
@@ -1082,7 +1082,7 @@ const newOrder = catchAsync(async (req, res) => {
 });
 
 const editOrder = catchAsync(async (req, res) => {
-  const { products: reqProducts } = req.body;
+  const {products: reqProducts} = req.body;
   const user = await User.findById(req.user._id);
 
   if (!user) {
@@ -1129,7 +1129,7 @@ const editOrder = catchAsync(async (req, res) => {
   order.totalPrice = totalPrice;
   order.description = description;
 
-  await order.save({ validateBeforeSave: false });
+  await order.save({validateBeforeSave: false});
 
   return res.status(httpStatus.OK).json({
     success: true,
@@ -1147,13 +1147,11 @@ const myOrders = catchAsync(async (req, res) => {
     });
   }
 
-  const query = { customer: user.id };
+  const orders = await Order.find({
+    customer: user.id,
+    status: req.query.status,
+  }).populate("stock");
 
-  if (req.query.status) {
-    query.status = req.query.status;
-  }
-
-  const orders = await Order.find(query);
 
   return res.status(httpStatus.OK).json({
     success: true,
@@ -1168,7 +1166,7 @@ const adminOrders = catchAsync(async (req, res) => {
       stock: req.query.stockId,
       distributionPoint: null,
     },
-    { products: 0 }
+    {products: 0},
   ).populate("customer");
   orders = orders.map((o) => {
     return {
