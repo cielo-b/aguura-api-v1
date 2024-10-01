@@ -35,7 +35,7 @@ router.post(
 );
 router.get(
   "/all-stock-products",
-  auth(["admin", "superAdmin"]),
+  auth(["admin", "superAdmin","user"]),
   inventoryProductController.getStockProducts,
 );
 

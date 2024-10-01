@@ -21,7 +21,6 @@ router.get(
 );
 router.get(
   "/available-products",
-  auth(["user", "admin", "superAdmin"]),
   salesProductController.availableProducts,
 );
 

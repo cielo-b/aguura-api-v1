@@ -12,7 +12,7 @@ router.patch(
   stockController.editStock,
 );
 router.get("/all-stocks", auth("superAdmin"), stockController.allStocks);
-router.get("/get", auth([]), stockController.getStock);
+router.get("/get", stockController.getStock);
 router.get("/by-admin", auth("admin"), stockController.getStockByAdmin);
 router.get("/by-user", auth("user"), stockController.getStockByCustomer);
 router.get("/my-stocks", auth("user"), stockController.myStocks);
