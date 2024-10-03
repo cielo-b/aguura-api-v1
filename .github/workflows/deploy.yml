@@ -1,7 +1,9 @@
-name: Stock APIs CI/CD
+name: Aguura APIs CI/CD
 
 on:
   push:
+    branches: ["main"]
+  pull_request:
     branches: ["main"]
 
 jobs:
@@ -19,9 +21,9 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node-version }}
-          cache: "npm"
-      - run: npm install -g pm2
-      - run: npm ci
+          cache: "pnpm"
+      # - run: npm install -g pm2
+      - run: pnpm ci
       - run: |
           touch .env
           echo "${{ secrets.PROD_ENV_FILE }}" > .env
