@@ -1,11 +1,10 @@
 {
   "apps": [
     {
-      "name": "aguura",
+      "name": "Aguura APIs",
       "script": "src/index.js",
       "instances": "max",
       "autorestart": true,
-      "watch": true,
       "time": true,
       "exec_mode": "cluster",
       "env": {
