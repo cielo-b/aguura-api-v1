@@ -211,7 +211,7 @@ const getStock = catchAsync(async (req, res) => {
 });
 
 const getAllStocks = catchAsync(async (req, res) => {
-  if (!req.query.type) {
+  if (!req.query.type || req.query.type === "all") {
     let allStocks = await Stock.find().populate("admin");
     allStocks = await Promise.all(
       allStocks.map(async (stock) => {
