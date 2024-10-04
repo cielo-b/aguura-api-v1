@@ -27,7 +27,6 @@ router.get(
 
 module.exports = router;
 
-
 // Swagger documentation for the Expense routes
 /**
  * @swagger

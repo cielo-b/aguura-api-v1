@@ -20,7 +20,6 @@ router.get("/all-available-stocks", auth("user"), stockController.getAllStocks);
 
 module.exports = router;
 
-
 /**
  * @swagger
  * tags:
@@ -459,5 +458,3 @@ module.exports = router;
  *                   type: string
  *                   example: "Access denied."
  */
-
-

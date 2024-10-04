@@ -35,7 +35,7 @@ router.post(
 );
 router.get(
   "/all-stock-products",
-  auth(["admin", "superAdmin","user"]),
+  auth(["admin", "superAdmin", "user"]),
   inventoryProductController.getStockProducts,
 );
 
@@ -56,8 +56,6 @@ router.post(
 );
 
 module.exports = router;
-
-
 
 // Swagger documentation for the Inventory Product routes
 /**
@@ -447,4 +445,3 @@ module.exports = router;
  *       500:
  *         description: Internal Server Error
  */
-

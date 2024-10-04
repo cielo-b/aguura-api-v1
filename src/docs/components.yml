@@ -431,7 +431,7 @@ components:
         type:
           type: string
           enum: [day, month]
-        
+
     Crate:
       type: object
       properties:
@@ -522,7 +522,7 @@ components:
       example:
         crateId: 609c1e4a4f1a2b001c4fbd3f
         status: available
-    
+
     Expense:
       type: object
       properties:
@@ -605,7 +605,7 @@ components:
         description: A sample product description.
         price: 25.99
         stockId: 609c1e4a4f1a2b001c4fbd3d
-    
+
     Order:
       type: object
       properties:
@@ -643,18 +643,19 @@ components:
           format: date-time
       example:
         userId: 609c1e4a4f1a2b001c4fbd3e
-        items: [
-          {
-            inventoryProductId: 609c1e4a4f1a2b001c4fbd3f,
-            quantity: 2,
-            price: 25.99
-          },
-          {
-            inventoryProductId: 609c1e4a4f1a2b001c4fbd3g,
-            quantity: 1,
-            price: 15.00
-          }
-        ]
+        items:
+          [
+            {
+              inventoryProductId: 609c1e4a4f1a2b001c4fbd3f,
+              quantity: 2,
+              price: 25.99,
+            },
+            {
+              inventoryProductId: 609c1e4a4f1a2b001c4fbd3g,
+              quantity: 1,
+              price: 15.00,
+            },
+          ]
         totalAmount: 67.98
         status: pending
 

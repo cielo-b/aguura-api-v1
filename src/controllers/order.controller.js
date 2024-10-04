@@ -139,7 +139,7 @@ const completeOrder = catchAsync(async (req, res) => {
       let reqProduct = order.products[i];
       let product = await SalesProduct.findById(reqProduct.id);
       let inventoryProduct = await InventoryProduct.findById(
-        product.inventoryProduct
+        product.inventoryProduct,
       );
 
       const producerProduct = await Product.findById(inventoryProduct?.product);
@@ -168,7 +168,7 @@ const completeOrder = catchAsync(async (req, res) => {
     if (producer) {
       let customers = producer.customers;
       let stockIndex = customers.findIndex(
-        (d) => d.id.toString() === order.customer.toString()
+        (d) => d.id.toString() === order.customer.toString(),
       );
 
       if (stockIndex !== -1) {
@@ -187,7 +187,7 @@ const completeOrder = catchAsync(async (req, res) => {
     for (let i = 0; i < reqProducts.length; i++) {
       let reqProduct = reqProducts[i];
       const distProduct = distributorProducts.find(
-        (p) => p._id.toString() === reqProduct.id.toString()
+        (p) => p._id.toString() === reqProduct.id.toString(),
       );
 
       // === update dist products ===
@@ -304,7 +304,7 @@ const inventOrder = catchAsync(async (req, res) => {
   // update inventory products availability
   if (entityType === "distributionPoint") {
     const distributor = await DistributionPoint.findById(
-      order.distributionPoint
+      order.distributionPoint,
     );
     const distributionProducts = await InventoryProduct.find({
       distributionPoint: distributor._id,
@@ -313,7 +313,7 @@ const inventOrder = catchAsync(async (req, res) => {
 
     for (let product of distributionProducts) {
       const _product = reqProducts.find(
-        (p) => p.id.toString() === product.product?.toString()
+        (p) => p.id.toString() === product.product?.toString(),
       );
       if (_product) {
         const producerProduct = await Product.findById(product.product);
@@ -385,12 +385,12 @@ const inventOrder = catchAsync(async (req, res) => {
       if (producer) {
         let distributors = producer.distributionPoints;
         let distributorIndex = distributors.findIndex(
-          (d) => d.id.toString() === distributor._id.toString()
+          (d) => d.id.toString() === distributor._id.toString(),
         );
 
         if (distributorIndex !== -1) {
           distributors[distributorIndex].totalPurchases += parseFloat(
-            order.totalPrice
+            order.totalPrice,
           );
           entity.distributionPoints = distributors;
           await entity.save({ validateBeforeSave: false });
@@ -407,10 +407,10 @@ const inventOrder = catchAsync(async (req, res) => {
 
     for (let product of stockProducts) {
       const distProduct = distributorProducts.find(
-        (p) => p.productName === product.productName
+        (p) => p.productName === product.productName,
       );
       const _product = reqProducts.find(
-        (p) => p.id.toString() === distProduct?._id.toString()
+        (p) => p.id.toString() === distProduct?._id.toString(),
       );
       if (_product) {
         const inventoryProduct = {
@@ -449,10 +449,11 @@ const inventOrder = catchAsync(async (req, res) => {
       for (let i = 0; i < reqProducts.length; i++) {
         let reqProduct = reqProducts[i];
         const distProduct = distributorProducts.find(
-          (p) => p._id.toString() === reqProduct.id.toString()
+          (p) => p._id.toString() === reqProduct.id.toString(),
         );
         const _product = stockProducts.find(
-          (p) => p.productName.toString() === distProduct.productName.toString()
+          (p) =>
+            p.productName.toString() === distProduct.productName.toString(),
         );
         let product = null;
         if (_product) {
@@ -503,7 +504,7 @@ const inventOrder = catchAsync(async (req, res) => {
             const p = await Product.findById(product.product);
             if (p.producer.toString() === producer.id.toString()) {
               total += parseFloat(
-                distProduct.price * parseFloat(reqProduct.quantity)
+                distProduct.price * parseFloat(reqProduct.quantity),
               );
             }
           }
@@ -514,7 +515,7 @@ const inventOrder = catchAsync(async (req, res) => {
       if (producer) {
         let stocks = producer.stocks;
         let stockIndex = stocks.findIndex(
-          (s) => s.id.toString() === stock._id.toString()
+          (s) => s.id.toString() === stock._id.toString(),
         );
 
         if (stockIndex !== -1) {
@@ -528,12 +529,12 @@ const inventOrder = catchAsync(async (req, res) => {
 
       // update distributor stocks
       const distributor = await DistributionPoint.findById(
-        order.distributionPoint
+        order.distributionPoint,
       );
       if (distributor) {
         let stocks = distributor.stocks;
         let stockIndex = stocks.findIndex(
-          (s) => s.id.toString() === stock._id.toString()
+          (s) => s.id.toString() === stock._id.toString(),
         );
 
         if (stockIndex !== -1) {
@@ -717,7 +718,7 @@ const getProducerOrders = catchAsync(async (req, res) => {
   orders = await Promise.all(
     orders.map(async (order) => {
       const distributor = await DistributionPoint.findById(
-        order.distributionPoint
+        order.distributionPoint,
       ).populate("manager");
       return {
         id: order.id,
@@ -728,7 +729,7 @@ const getProducerOrders = catchAsync(async (req, res) => {
         products: order.products,
         distributorId: distributor.id,
       };
-    })
+    }),
   );
 
   return res.status(httpStatus.OK).json({
@@ -760,7 +761,7 @@ const getDistributorOrders = catchAsync(async (req, res) => {
     orders = await Promise.all(
       orders.map(async (order) => {
         const producer = await Producer.findById(order.producer).populate(
-          "manager"
+          "manager",
         );
         return {
           id: order.id,
@@ -771,7 +772,7 @@ const getDistributorOrders = catchAsync(async (req, res) => {
           products: order.products,
           producerId: producer?.id,
         };
-      })
+      }),
     );
   } else {
     let queryObj = {
@@ -792,7 +793,7 @@ const getDistributorOrders = catchAsync(async (req, res) => {
           products: order.products,
           stockId: stock?.id,
         };
-      })
+      }),
     );
   }
 
@@ -875,7 +876,7 @@ const newStockOrder = catchAsync(async (req, res) => {
 
   let stocks = distributionPoint.stocks;
   let stockIndex = stocks.findIndex(
-    (s) => s.id.toString() === stock._id.toString()
+    (s) => s.id.toString() === stock._id.toString(),
   );
 
   if (stockIndex === -1) {
@@ -982,7 +983,7 @@ const getStockOrders = catchAsync(async (req, res) => {
   orders = await Promise.all(
     orders.map(async (order) => {
       const distributor = await DistributionPoint.findById(
-        order.distributionPoint
+        order.distributionPoint,
       ).populate("manager");
       return {
         id: order.id,
@@ -993,7 +994,7 @@ const getStockOrders = catchAsync(async (req, res) => {
         products: order.products,
         distributorId: distributor?.id,
       };
-    })
+    }),
   );
 
   return res.status(httpStatus.OK).json({
@@ -1032,7 +1033,7 @@ const newOrder = catchAsync(async (req, res) => {
   for (let i = 0; i < reqProducts.length; i++) {
     let reqProduct = reqProducts[i];
     let product = await SalesProduct.findById(reqProduct.id).populate(
-      "inventoryProduct"
+      "inventoryProduct",
     );
 
     const salesProduct = {
@@ -1107,7 +1108,7 @@ const editOrder = catchAsync(async (req, res) => {
   for (let i = 0; i < reqProducts.length; i++) {
     let reqProduct = reqProducts[i];
     let product = await SalesProduct.findById(reqProduct.id).populate(
-      "inventoryProduct"
+      "inventoryProduct",
     );
 
     const salesProduct = {
@@ -1164,7 +1165,7 @@ const adminOrders = catchAsync(async (req, res) => {
       stock: req.query.stockId,
       distributionPoint: null,
     },
-    { products: 0 }
+    { products: 0 },
   ).populate("customer");
   orders = orders.map((o) => {
     return {

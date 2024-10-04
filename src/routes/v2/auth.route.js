@@ -68,7 +68,7 @@ module.exports = router;
  *               phone:
  *                 type: Object
  *                 properties:
- *                  countryCode: 
+ *                  countryCode:
  *                   type: string
  *                 number:
  *                  type: Number
@@ -315,7 +315,6 @@ module.exports = router;
  *               code: 401
  *               message: verify email failed
  */
-
 
 /**
  * @swagger

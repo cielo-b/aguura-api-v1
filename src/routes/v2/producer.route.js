@@ -35,7 +35,6 @@ router.get(
 
 module.exports = router;
 
-
 // Swagger documentation for the Producer routes
 /**
  * @swagger

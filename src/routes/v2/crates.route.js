@@ -32,7 +32,6 @@ router.get(
 
 module.exports = router;
 
-
 // Swagger documentation for the Crates routes
 /**
  * @swagger

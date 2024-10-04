@@ -1,6 +1,6 @@
 const express = require("express");
 const auth = require("../../middlewares/auth");
-const {activeDayController} = require("../../controllers");
+const { activeDayController } = require("../../controllers");
 
 const router = express.Router();
 
@@ -31,7 +31,6 @@ router.get(
 );
 
 module.exports = router;
-
 
 // swagger documetation for the activeDay route
 /**
@@ -66,7 +65,6 @@ module.exports = router;
  *       500:
  *         description: Internal Server Error
  */
-
 
 /**
  * @swagger

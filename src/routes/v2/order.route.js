@@ -47,7 +47,6 @@ router.get("/all-orders", auth("admin"), orderController.adminOrders);
 
 module.exports = router;
 
-
 // Swagger documentation for the Order routes
 /**
  * @swagger

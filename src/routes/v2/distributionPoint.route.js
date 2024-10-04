@@ -33,7 +33,6 @@ router.get(
 
 module.exports = router;
 
-
 // Swagger documentation for the Distribution Point routes
 /**
  * @swagger
