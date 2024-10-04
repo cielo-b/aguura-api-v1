@@ -19,13 +19,9 @@ router.get(
   auth(["admin", "superAdmin", "user", "producer", "distributor"]),
   salesProductController.allProducts,
 );
-router.get(
-  "/available-products",
-  salesProductController.availableProducts,
-);
+router.get("/available-products", salesProductController.availableProducts);
 
 module.exports = router;
-
 
 /**
  * @swagger

@@ -19,7 +19,6 @@ router.get("/all-products", auth("producer"), productController.allProducts);
 
 module.exports = router;
 
-
 // Swagger documentation for the Product routes
 /**
  * @swagger

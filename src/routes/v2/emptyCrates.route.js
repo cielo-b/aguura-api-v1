@@ -27,7 +27,6 @@ router.get(
 
 module.exports = router;
 
-
 // Swagger documentation for the Empty Crates routes
 /**
  * @swagger
@@ -191,5 +190,3 @@ module.exports = router;
  *       500:
  *         description: Internal Server Error
  */
-
-

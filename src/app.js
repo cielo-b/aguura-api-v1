@@ -45,11 +45,13 @@ app.use(
   cors({
     origin: [
       "http://localhost:5173",
-      "http://localhost:4000",
       "https://aguura.com",
+      "https://www.aguura.com",
       "https://146.190.157.141",
-      'https://staging.aguura.com',
-      'https://staging-aguura.pages.dev'
+      "https://staging.aguura.com",
+      "https://www.staging.aguura.com",
+      "https://staging-aguura.pages.dev",
+      "https://www.staging-aguura.pages.dev",
     ],
   }),
 );

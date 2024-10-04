@@ -133,7 +133,8 @@ const allStocks = catchAsync(async (req, res) => {
   stocks = stocks.map((stock) => {
     return {
       managerName: stock.admin.fullName,
-      managerPhone: stock.admin.phone.countryCode +" "+ stock.admin.phone.number,
+      managerPhone:
+        stock.admin.phone.countryCode + " " + stock.admin.phone.number,
       id: stock.id,
       name: stock.name,
       type: stock.type,
@@ -224,7 +225,7 @@ const getAllStocks = catchAsync(async (req, res) => {
           location: stock.location,
           description: stock.description,
         };
-      })
+      }),
     );
     return res.status(httpStatus.OK).json({
       success: true,
@@ -245,7 +246,7 @@ const getAllStocks = catchAsync(async (req, res) => {
         location: stock.location,
         description: stock.description,
       };
-    })
+    }),
   );
 
   return res.status(httpStatus.OK).json({

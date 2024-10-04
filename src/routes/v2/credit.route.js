@@ -1,6 +1,6 @@
 const express = require("express");
 const auth = require("../../middlewares/auth");
-const {creditController} = require("../../controllers");
+const { creditController } = require("../../controllers");
 
 const router = express.Router();
 
@@ -26,7 +26,6 @@ router.get(
 );
 
 module.exports = router;
-
 
 // Swagger documentation for the Credit routes
 /**

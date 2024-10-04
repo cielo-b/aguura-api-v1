@@ -22,7 +22,6 @@ router.get(
 
 module.exports = router;
 
-
 // Swagger documentation for the PaymentMethod routes
 /**
  * @swagger

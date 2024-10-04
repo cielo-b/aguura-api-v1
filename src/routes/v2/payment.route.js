@@ -17,7 +17,6 @@ router.get(
 
 module.exports = router;
 
-
 // Swagger documentation for the Payment routes
 /**
  * @swagger
@@ -87,5 +86,3 @@ module.exports = router;
  *       500:
  *         description: Internal Server Error
  */
-
-

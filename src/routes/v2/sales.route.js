@@ -33,7 +33,6 @@ router.get(
 
 module.exports = router;
 
-
 /**
  * @swagger
  * tags:
