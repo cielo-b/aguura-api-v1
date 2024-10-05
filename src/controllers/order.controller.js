@@ -1079,7 +1079,7 @@ const newOrder = catchAsync(async (req, res) => {
   // add user to stock customers
   let customers = stock.customers;
   let customerIndex = customers.findIndex(
-    (c) => c.id.toString() === user.id.toString(),
+    (c) => c.userId.toString() === user.id.toString(),
   );
 
   if (customerIndex === -1) {
