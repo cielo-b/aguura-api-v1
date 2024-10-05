@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-const { toJSON } = require("./plugins");
+const {toJSON} = require("./plugins");
 
 const stockShema = mongoose.Schema(
   {
@@ -37,9 +37,21 @@ const stockShema = mongoose.Schema(
 
     customers: [
       {
-        type: mongoose.SchemaTypes.ObjectId,
-        ref: "User",
-        required: true,
+        user: {
+          type: mongoose.SchemaTypes.ObjectId,
+          ref: "User",
+          required: true,
+        },
+        totalPurchases: {
+          type: Number,
+          required: true,
+          default: 0
+        },
+        totalPurchaseAmount: {
+          type: Number,
+          required: true,
+          default: 0
+        },
       },
     ],
 

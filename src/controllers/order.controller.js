@@ -1076,6 +1076,22 @@ const newOrder = catchAsync(async (req, res) => {
     sendPushNotification(adminUser.fcmToken, title, body);
   }
 
+  // add user to stock customers
+  let customers = stock.customers;
+  let customerIndex = customers.findIndex(
+    (c) => c.id.toString() === user.id.toString(),
+  );
+
+  if (customerIndex === -1) {
+    customers.push({id: user.id, totalPurchases: 1, totalPurchaseAmount: parseFloat(order.totalPrice)});
+  } else {
+    customers[customerIndex].totalPurchases += 1;
+    customers[customerIndex].totalPurchaseAmount += parseFloat(order.totalPrice);
+  }
+  
+  stock.customers = customers;
+  await stock.save({validateBeforeSave: false});
+
   return res.status(httpStatus.CREATED).json({
     success: true,
     message: "Order Sent Successfully.",
