@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-const {toJSON} = require("./plugins");
+const { toJSON } = require("./plugins");
 
 const inventoryProductSchema = mongoose.Schema(
   {
@@ -122,8 +122,8 @@ const inventoryProductSchema = mongoose.Schema(
     },
 
     taxTyCd: {
-      code: {type: String},
-      name: {type: String},
+      code: { type: String },
+      name: { type: String },
     },
   },
   {

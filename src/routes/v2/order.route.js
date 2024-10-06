@@ -1,6 +1,6 @@
 const express = require("express");
 const auth = require("../../middlewares/auth");
-const {orderController} = require("../../controllers");
+const { orderController } = require("../../controllers");
 
 const router = express.Router();
 
@@ -44,7 +44,11 @@ router.post("/new", auth("user"), orderController.newOrder);
 router.patch("/edit-order", auth("user"), orderController.editOrder);
 router.get("/my-orders", auth("user"), orderController.myOrders);
 router.get("/all-orders", auth("admin"), orderController.adminOrders);
-router.patch('/cancel-order', auth(['user', 'admin', 'distributor']), orderController.cancelOrder);
+router.patch(
+  "/cancel-order",
+  auth(["user", "admin", "distributor"]),
+  orderController.cancelOrder,
+);
 
 module.exports = router;
 
@@ -529,7 +533,6 @@ module.exports = router;
  *       500:
  *         description: Internal Server Error
  */
-
 
 // /**
 //  * @swagger
