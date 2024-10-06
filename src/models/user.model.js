@@ -7,9 +7,21 @@ const userSchema = mongoose.Schema(
   {
     stocks: [
       {
-        type: mongoose.SchemaTypes.ObjectId,
-        ref: "Stock",
-        required: true,
+        stockId: {
+          type: mongoose.SchemaTypes.ObjectId,
+          ref: "Stock",
+          required: true,
+        },
+        totalOrdersAndPurchases: {
+          type: Number,
+          required: true,
+          default: parseFloat(0),
+        },
+        totalAmountSpent: {
+          type: Number,
+          required: true,
+          default: parseFloat(0),
+        },
       },
     ],
 

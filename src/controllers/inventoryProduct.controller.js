@@ -11,13 +11,13 @@ const {
   User,
 } = require("../models");
 const catchAsync = require("../utils/catchAsync");
-const { checkStock } = require("./stock.controller");
+const {checkStock} = require("./stock.controller");
 const config = require("../config/config");
-const { ebmService } = require("../services");
-const { getEntityById } = require("./sales.controller");
+const {ebmService} = require("../services");
+const {getEntityById} = require("./sales.controller");
 
 const generateEBMRequestData = (product, manager, entity, number) => {
-  const { itemCd, pkgUnitCd, qtyUnitCd, nmbr } = ebmService.generateItemCode(
+  const {itemCd, pkgUnitCd, qtyUnitCd, nmbr} = ebmService.generateItemCode(
     entity.type,
     manager?.countryCode || "RW",
     2,
@@ -73,7 +73,7 @@ const addDistributorProducts = catchAsync(async (req, res) => {
 
   const manager = await User.findById(distributionPoint.manager);
 
-  const { products, isByProducer } = req.body;
+  const {products, isByProducer} = req.body;
   let producers = [];
   let _products = [];
   let savedProducts = [];
@@ -137,7 +137,7 @@ const addDistributorProducts = catchAsync(async (req, res) => {
           totalOrders: parseFloat("0"),
         });
       }
-      await producer.save({ validateBeforeSave: false });
+      await producer.save({validateBeforeSave: false});
     }
   }
 
@@ -167,7 +167,7 @@ const addDistributorProducts = catchAsync(async (req, res) => {
         product.pkgUnitCd = pkgUnitCd;
         product.qtyUnitCd = qtyUnitCd;
 
-        await product.save({ validateBeforeSave: false });
+        await product.save({validateBeforeSave: false});
       } else {
         // delete product if not recorded into ebm servers
         const salesProduct = await SalesProduct.findOne({
@@ -263,7 +263,7 @@ const newStockProduct = catchAsync(async (req, res) => {
 
   const manager = await User.findById(stock.admin);
 
-  const { name, price, purchasePrice, sizes, details, description, taxTyCd } =
+  const {name, price, purchasePrice, sizes, details, description, taxTyCd} =
     req.body;
 
   const productName = name.replace(/\s/g, "").toLowerCase();
@@ -282,10 +282,10 @@ const newStockProduct = catchAsync(async (req, res) => {
   const images =
     req.files.length > 0
       ? req.files.map((file) => {
-          return {
-            url: config.url + "/public/images/" + file.filename,
-          };
-        })
+        return {
+          url: config.url + "/public/images/" + file.filename,
+        };
+      })
       : [];
 
   const iP = await InventoryProduct.create({
@@ -299,7 +299,7 @@ const newStockProduct = catchAsync(async (req, res) => {
     description,
   });
 
-  const currentProducts = await InventoryProduct.find({ stock: stock.id });
+  const currentProducts = await InventoryProduct.find({stock: stock.id});
 
   // if (iP) {
   //     if (manager.country === 'rwanda') {
@@ -377,7 +377,7 @@ const edit = catchAsync(async (req, res) => {
   product.details = JSON.parse(details);
   product.sizes = JSON.parse(sizes);
 
-  await product.save({ validateBeforeSave: false });
+  await product.save({validateBeforeSave: false});
 
   // images
   for (let i of JSON.parse(removedImages)) {
@@ -398,18 +398,18 @@ const edit = catchAsync(async (req, res) => {
   let images =
     req.files.length > 0
       ? req.files.map((file) => {
-          return {
-            url: config.url + "/public/images/" + file.filename,
-          };
-        })
+        return {
+          url: config.url + "/public/images/" + file.filename,
+        };
+      })
       : [];
 
   for (let img of JSON.parse(existingImages)) {
-    images.push({ url: img.url });
+    images.push({url: img.url});
   }
 
   product.images = images;
-  await product.save({ validateBeforeSave: false });
+  await product.save({validateBeforeSave: false});
 
   return res.status(httpStatus.CREATED).json({
     success: true,
@@ -430,7 +430,7 @@ const addStockProducts = catchAsync(async (req, res) => {
 
   const manager = await User.findById(stock.admin);
 
-  const { products, isByProducer } = req.body;
+  const {products, isByProducer} = req.body;
   let _products = [];
   let producers = [];
   let savedProducts = [];
@@ -490,13 +490,13 @@ const addStockProducts = catchAsync(async (req, res) => {
     if (producer) {
       let stocks = producer.stocks;
       if (!stocks.some((dp) => dp.id.equals(stock.id))) {
-        stocks.push({ id: stock.id, totalOrders: parseFloat("0") });
+        stocks.push({id: stock.id, totalOrders: parseFloat("0")});
       }
-      await producer.save({ validateBeforeSave: false });
+      await producer.save({validateBeforeSave: false});
     }
   }
 
-  const currentProducts = await InventoryProduct.find({ stock: stock.id });
+  const currentProducts = await InventoryProduct.find({stock: stock.id});
 
   // save products to ebm
   // if (manager.country === 'rwanda') {
@@ -548,7 +548,7 @@ const getStockProducts = catchAsync(async (req, res) => {
 
   const manager = await User.findById(stock.admin);
 
-  let products = await InventoryProduct.find({ stock: stock.id });
+  let products = await InventoryProduct.find({stock: stock.id});
 
   // const response = await ebmService.selectItems({
   //     tin: manager.tin.toString(),
@@ -564,14 +564,15 @@ const getStockProducts = catchAsync(async (req, res) => {
 
   products = await Promise.all(
     products.map(async (p) => {
-      const product = await Product.findOne({ productName: p.productName });
-      const salesP = await SalesProduct.findOne({ inventoryProduct: p._id });
+      const product = await Product.findOne({productName: p.productName});
+      const salesP = await SalesProduct.findOne({inventoryProduct: p._id});
       return {
         id: p._id,
         name: p.name,
         price: p.price,
         producer: product?.producer,
         totalAvailable: p.totalAvailable,
+        inOrders: p.inOrders,
         images: p.images,
         sizes: p.sizes,
         details: p.details,
@@ -600,13 +601,13 @@ const editProduct = catchAsync(async (req, res) => {
     });
   }
 
-  const { name, price } = req.body;
+  const {name, price} = req.body;
   const pPrice = price ? price : product.price;
   const pName = name ? name : product.name;
   product.price = pPrice;
   product.name = pName;
 
-  await product.save({ validateBeforeSave: false });
+  await product.save({validateBeforeSave: false});
 
   return res.status(httpStatus.OK).json({
     success: true,
@@ -626,7 +627,7 @@ const allProducts = catchAsync(async (req, res) => {
     });
   }
 
-  let products = await InventoryProduct.find({ stock: stock.id });
+  let products = await InventoryProduct.find({stock: stock.id});
   products = await Promise.all(
     products.map(async (p) => {
       const product = await Product.findById(p.product);
@@ -647,7 +648,7 @@ const allProducts = catchAsync(async (req, res) => {
 });
 
 const importEbmProducts = catchAsync(async (req, res) => {
-  const { entityType, entityId, ebmItems } = req.body;
+  const {entityType, entityId, ebmItems} = req.body;
 
   let entity = await getEntityById(entityType, entityId);
   if (!entity) {

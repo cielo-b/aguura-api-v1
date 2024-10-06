@@ -20,13 +20,13 @@ const reportsDirectory = path.join(__dirname, "../../public/reports");
 
 // Fonts
 
-const JainiPurva = '/usr/share/fonts/aguurafonts/JainiPurva-Regular.ttf';
-const PoppinsRegular = '/usr/share/fonts/aguurafonts/Poppins-Regular.ttf';
-const PoppinsBold = '/usr/share/fonts/aguurafonts/Poppins-Bold.ttf';
+// const JainiPurva = "/usr/share/fonts/aguurafonts/JainiPurva-Regular.ttf";
+// const PoppinsRegular = "/usr/share/fonts/aguurafonts/Poppins-Regular.ttf";
+// const PoppinsBold = "/usr/share/fonts/aguurafonts/Poppins-Bold.ttf";
 
-// const JainiPurva = "c:/fonts/Jaini_Purva/JainiPurva-Regular.ttf";
-// const PoppinsRegular = "c:/fonts/Poppins/Poppins-Regular.ttf";
-// const PoppinsBold = "c:/fonts/Poppins/Poppins-Bold.ttf";
+const JainiPurva = "c:/fonts/Jaini_Purva/JainiPurva-Regular.ttf";
+const PoppinsRegular = "c:/fonts/Poppins/Poppins-Regular.ttf";
+const PoppinsBold = "c:/fonts/Poppins/Poppins-Bold.ttf";
 
 const exportData = async (stock, activeDay) => {
   const type = stock.type;
@@ -42,7 +42,7 @@ const exportData = async (stock, activeDay) => {
   pdfDoc.fontSize(16).font(JainiPurva).text(`${title}`);
   pdfDoc.moveDown();
 
-  const adminTitle = `Manager: ${admin?.fullName} / ${admin?.phone}`;
+  const adminTitle = `Manager: ${admin?.fullName} / ${admin?.phone.countryCode} ${admin?.phone.number}`;
   pdfDoc.fontSize(8).font(PoppinsRegular).text(`${adminTitle}`);
   pdfDoc.moveDown();
 

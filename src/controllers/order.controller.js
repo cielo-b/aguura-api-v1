@@ -152,7 +152,7 @@ const completeOrder = catchAsync(async (req, res) => {
         total += parseFloat(product.price) * parseFloat(reqProduct.quantity);
       }
 
-      inventoryProduct.totalAvailable -= parseFloat(reqProduct.quantity);
+      inventoryProduct.inOrders -= parseFloat(reqProduct.quantity);
       await inventoryProduct.save({validateBeforeSave: false});
 
       // update empty
@@ -267,6 +267,38 @@ const completeOrder = catchAsync(async (req, res) => {
     success: true,
     message: "Order Completed Successfully.",
   });
+});
+
+const cancelOrder = catchAsync(async (req, res) => {
+
+  const order = await Order.findById(req.body.id);
+  if (!order) {
+    return res.status(httpStatus.BAD_REQUEST).json({
+      success: false,
+      message: "Order Not Found.",
+    });
+  }
+
+  order.status = "canceled";
+  await order.save({validateBeforeSave: false});
+
+  // update inOrder and available products
+  const products = order.products;
+  for (let i = 0; i < products.length; i++) {
+    const salesProduct = await SalesProduct.findById(products[i].id);
+    if (salesProduct) {
+      const inventoryProduct = await InventoryProduct.findById(salesProduct.inventoryProduct);
+      inventoryProduct.inOrders -= parseFloat(products[i].quantity);
+      inventoryProduct.totalAvailable += parseFloat(products[i].quantity);
+      await inventoryProduct.save({validateBeforeSave: false});
+    }
+  }
+
+  return res.status(httpStatus.OK).json({
+    success: true,
+    message: "Order Canceled Successfully.",
+  });
+
 });
 
 const inventOrder = catchAsync(async (req, res) => {
@@ -989,7 +1021,10 @@ const getStockOrders = catchAsync(async (req, res) => {
         id: order.id,
         description: order.description,
         name: distributor?.name,
-        phone: distributor?.manager.phone.countryCode + ' ' + distributor?.manager.phone.number,
+        phone:
+          distributor?.manager.phone.countryCode +
+          " " +
+          distributor?.manager.phone.number,
         totalPrice: order.totalPrice,
         products: order.products,
         distributorId: distributor?.id,
@@ -1058,7 +1093,7 @@ const newOrder = catchAsync(async (req, res) => {
     customer: user.id,
     stock: stock.id,
     customerName: user.fullName,
-    phone: user.phone.countryCode + ' ' + user.phone.number,
+    phone: user.phone.countryCode + " " + user.phone.number,
   });
 
   if (!order) {
@@ -1068,13 +1103,25 @@ const newOrder = catchAsync(async (req, res) => {
     });
   }
 
-  // send notification to admin
-  const adminUser = await User.findById(stock.admin);
-  if (adminUser) {
-    const title = "New Order";
-    const body = `\n\n\nHello ${adminUser.fullName} 👋\nYou have new order from ${user.fullName}`;
-    sendPushNotification(adminUser.fcmToken, title, body);
+  // update inventory product's inOrders and totalAvailable
+  for (let i = 0; i < reqProducts.length; i++) {
+    let reqProduct = reqProducts[i];
+    let product = await SalesProduct.findById(reqProduct.id).populate(
+      "inventoryProduct",
+    );
+
+    product.inventoryProduct.inOrders += parseFloat(reqProduct.quantity);
+    product.inventoryProduct.totalAvailable -= parseFloat(reqProduct.quantity);
+    await product.inventoryProduct.save({validateBeforeSave: false});
   }
+
+  // send notification to admin
+  // const adminUser = await User.findById(stock.admin);
+  // if (adminUser) {
+  //   const title = "New Order";
+  //   const body = `\n\n\nHello ${adminUser.fullName} 👋\nYou have new order from ${user.fullName}`;
+  //   sendPushNotification(adminUser.fcmToken, title, body);
+  // }
 
   // add user to stock customers
   let customers = stock.customers;
@@ -1083,14 +1130,40 @@ const newOrder = catchAsync(async (req, res) => {
   );
 
   if (customerIndex === -1) {
-    customers.push({id: user.id, totalPurchases: 1, totalPurchaseAmount: parseFloat(order.totalPrice)});
+    customers.push({
+      userId: user.id,
+      totalPurchases: 1,
+      totalPurchaseAmount: parseFloat(order.totalPrice),
+    });
   } else {
     customers[customerIndex].totalPurchases += 1;
-    customers[customerIndex].totalPurchaseAmount += parseFloat(order.totalPrice);
+    customers[customerIndex].totalPurchaseAmount += parseFloat(
+      order.totalPrice,
+    );
   }
-  
+
   stock.customers = customers;
   await stock.save({validateBeforeSave: false});
+
+  // add stock to user stocks
+  let userStocks = user.stocks;
+  let userStockIndex = userStocks.findIndex(
+    (s) => s.stockId.toString() === stock.id.toString(),
+  );
+
+  if (userStockIndex === -1) {
+    userStocks.push({
+      stockId: stock.id,
+      totalOrdersAndPurchases: 1,
+      totalAmountSpent: parseFloat(order.totalPrice),
+    });
+  } else {
+    userStocks[userStockIndex].totalOrdersAndPurchases += 1;
+    userStocks[userStockIndex].totalAmountSpent += parseFloat(order.totalPrice);
+  }
+
+  user.stocks = userStocks;
+  await user.save({validateBeforeSave: false});
 
   return res.status(httpStatus.CREATED).json({
     success: true,
@@ -1180,6 +1253,8 @@ const adminOrders = catchAsync(async (req, res) => {
       isCompleted: req.query.isCompleted,
       stock: req.query.stockId,
       distributionPoint: null,
+      // not canceled
+      status: {$ne: "canceled"},
     },
     {products: 0},
   ).populate("customer");
@@ -1217,4 +1292,5 @@ module.exports = {
   editOrder,
   myOrders,
   adminOrders,
+  cancelOrder
 };

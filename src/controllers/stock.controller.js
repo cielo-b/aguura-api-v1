@@ -336,20 +336,22 @@ const myStocks = catchAsync(async (req, res) => {
     });
   }
 
-  let stocks = [];
-  for (let stock of user.stocks) {
-    const _stock = await Stock.findById(stock).populate("admin");
-    stocks.push({
-      managerName: _stock.admin.fullName,
-      managerPhone: _stock.admin.phone,
-      id: _stock.id,
-      name: _stock.name,
-      type: _stock.type,
-      description: _stock.description,
-      location: _stock.location,
-    });
-  }
-
+  let stocks = user.stocks;
+  stocks = await Promise.all(
+    stocks.map(async (_stock) => {
+      const stock = await Stock.findById(_stock.stockId).populate("admin");
+      return {
+        managerName: stock.admin?.fullName,
+        managerPhone:
+          stock.admin.phone.countryCode + " " + stock.admin.phone.number,
+        id: stock.id,
+        name: stock.name,
+        type: stock.type,
+        location: stock.location,
+        description: stock.description,
+      };
+    }),
+  );
   return res.status(httpStatus.OK).json({
     success: true,
     stocks,

@@ -12,7 +12,7 @@ const catchAsync = require("../utils/catchAsync");
 const formatNumber = require("../utils/formatNumber");
 
 const payCredit = catchAsync(async (req, res) => {
-  const {creditId, amount, payments, activeDay} = req.body;
+  const { creditId, amount, payments, activeDay } = req.body;
 
   const credit = await Credit.findById(creditId);
   const sales = await Sales.findById(credit.sales);
@@ -57,8 +57,8 @@ const payCredit = catchAsync(async (req, res) => {
     sales.isFullyPaid = true;
   }
 
-  await credit.save({validateBeforeSave: false});
-  await sales.save({validateBeforeSave: false});
+  await credit.save({ validateBeforeSave: false });
+  await sales.save({ validateBeforeSave: false });
 
   if (payments.length > 0) {
     for (const payment of payments) {
@@ -81,7 +81,7 @@ const payCredit = catchAsync(async (req, res) => {
   const spd = sales.paymentDescription.replace(/\s/g, "").toLowerCase();
   sales.paymentDescription =
     spd !== "nopaymentsyet." ? sales.paymentDescription + desc : desc;
-  await sales.save({validateBeforeSave: false});
+  await sales.save({ validateBeforeSave: false });
 
   return res.status(httpStatus.OK).json({
     success: true,
@@ -90,23 +90,23 @@ const payCredit = catchAsync(async (req, res) => {
 });
 
 const adminCredits = catchAsync(async (req, res) => {
-  const {isFullyPaid, entityType, entityId} = req.query;
+  const { isFullyPaid, entityType, entityId } = req.query;
 
   const credits =
     entityType === "producer"
-      ? await Credit.find({isFullyPaid, [entityType]: entityId})
+      ? await Credit.find({ isFullyPaid, [entityType]: entityId })
       : entityType === "distributionPoint"
         ? await Credit.find({
-          isFullyPaid,
-          [entityType]: entityId,
-          producer: {$eq: null},
-        })
+            isFullyPaid,
+            [entityType]: entityId,
+            producer: { $eq: null },
+          })
         : await Credit.find({
-          isFullyPaid,
-          [entityType]: entityId,
-          distributionPoint: {$eq: null},
-          producer: {$eq: null},
-        });
+            isFullyPaid,
+            [entityType]: entityId,
+            distributionPoint: { $eq: null },
+            producer: { $eq: null },
+          });
 
   return res.status(httpStatus.OK).json({
     success: true,
@@ -118,7 +118,9 @@ const myCredits = catchAsync(async (req, res) => {
   const credits = await Credit.find({
     isFullyPaid: req.query.isFullyPaid,
     customer: req.user._id,
-  }).populate("sales").populate("stock");
+  })
+    .populate("sales")
+    .populate("stock");
 
   // for each credit stock only return the name  and stock id
   credits.forEach((credit) => {
@@ -134,21 +136,21 @@ const myCredits = catchAsync(async (req, res) => {
 });
 
 const entityCredits = catchAsync(async (req, res) => {
-  const {entityType, entityId} = req.query;
+  const { entityType, entityId } = req.query;
 
   let credits =
     entityType === "distributionPoint"
       ? await Credit.find({
-        isFullyPaid: false,
-        [entityType]: entityId,
-        producer: {$ne: null},
-      })
+          isFullyPaid: false,
+          [entityType]: entityId,
+          producer: { $ne: null },
+        })
       : await Credit.find({
-        isFullyPaid: false,
-        [entityType]: entityId,
-        distributionPoint: {$ne: null},
-        producer: {$eq: null},
-      });
+          isFullyPaid: false,
+          [entityType]: entityId,
+          distributionPoint: { $ne: null },
+          producer: { $eq: null },
+        });
 
   credits = await Promise.all(
     credits.map(async (credit) => {

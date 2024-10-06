@@ -7,13 +7,13 @@ const {
   tokenService,
   ebmService,
 } = require("../services");
-const { Token, User, Order, Stock, Sales } = require("../models");
-const { checkStock } = require("./stock.controller");
+const {Token, User, Order, Stock, Sales} = require("../models");
+const {checkStock} = require("./stock.controller");
 const config = require("../config/config");
-const { tokenTypes } = require("../config/tokens");
+const {tokenTypes} = require("../config/tokens");
 
 const register = catchAsync(async (req, res) => {
-  let { fullName, phone, password, role, tin, country } = req.body;
+  let {fullName, phone, password, role, tin, country} = req.body;
 
   const stocks = await Stock.find({});
 
@@ -56,7 +56,7 @@ const register = catchAsync(async (req, res) => {
 });
 
 const login = catchAsync(async (req, res) => {
-  const { phone, password } = req.body;
+  const {phone, password} = req.body;
   console.log(phone, password);
   const user = await authService.loginWithPhoneAndPassword(phone, password);
 
@@ -103,7 +103,7 @@ const setFCMToken = catchAsync(async (req, res) => {
   }
 
   user.fcmToken = req.body.fcmToken;
-  await user.save({ validateBeforeSave: false });
+  await user.save({validateBeforeSave: false});
 
   res.status(httpStatus.OK).json({
     success: true,
@@ -200,7 +200,7 @@ const addUser = catchAsync(async (req, res) => {
     });
   }
 
-  let { fullName, phone } = req.body;
+  let {fullName, phone} = req.body;
 
   if (await User.isPhoneTaken(phone)) {
     return res.status(httpStatus.BAD_REQUEST).json({
@@ -237,34 +237,20 @@ const allCutomers = catchAsync(async (req, res) => {
     });
   }
 
-  let customers = [];
+  let customers = stock.customers;
 
-  const users = await User.find({ stocks: { $in: [stockId] } });
-
-  for (let i = 0; i < users.length; i++) {
-    const u = users[i];
-    const orders = await Order.find({ customer: u.id, stock: stockId });
-    let totalOrdersAmount = 0;
-    for (const order of orders) {
-      totalOrdersAmount += order.totalPrice;
-    }
-
-    const sales = await Sales.find({ customer: u.id, stock: stockId });
-    let totalSales = 0;
-    for (const sale of sales) {
-      totalSales += sale.totalPrice;
-    }
-
-    customers.push({
-      name: u.fullName,
-      phone: u.phone ? u.phone : "",
-      totalOrders: orders.length,
-      totalOrdersAmount: totalOrdersAmount,
-      id: u.id,
-      totalSales: sales.length,
-      totalSalesAmount: totalSales,
-    });
-  }
+  customers = await Promise.all(
+    customers.map(async customer => {
+      const user = await userService.getUserById(customer.userId);
+      return {
+        userId: user.id,
+        fullName: user.fullName,
+        phone: user.phone.countryCode + " " + user.phone.number,
+        totalPurchases: customer.totalPurchases,
+        totalPurchaseAmount: customer.totalPurchaseAmount,
+      };
+    })
+  );
 
   res.status(httpStatus.CREATED).json({
     success: true,
@@ -282,9 +268,9 @@ const initializeEBM = catchAsync(async (req, res) => {
     });
   }
 
-  const { tin, bhfId, dvcSrlNo } = req.body;
+  const {tin, bhfId, dvcSrlNo} = req.body;
 
-  const existingUser = await User.findOne({ tin });
+  const existingUser = await User.findOne({tin});
   if (existingUser) {
     return res.status(httpStatus.BAD_REQUEST).json({
       success: false,
@@ -292,13 +278,13 @@ const initializeEBM = catchAsync(async (req, res) => {
     });
   }
 
-  const data = await ebmService.initialize({ tin, bhfId, dvcSrlNo });
+  const data = await ebmService.initialize({tin, bhfId, dvcSrlNo});
 
   if (data.resultCd === "902" || data.resultCd === "000") {
     user.tin = tin;
     user.bhfId = bhfId;
     user.dvcSrlNo = dvcSrlNo;
-    await user.save({ validateBeforeSave: false });
+    await user.save({validateBeforeSave: false});
 
     return res.status(httpStatus.OK).json({
       success: true,

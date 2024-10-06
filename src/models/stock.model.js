@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-const {toJSON} = require("./plugins");
+const { toJSON } = require("./plugins");
 
 const stockShema = mongoose.Schema(
   {
@@ -45,12 +45,12 @@ const stockShema = mongoose.Schema(
         totalPurchases: {
           type: Number,
           required: true,
-          default: 0
+          default: 0,
         },
         totalPurchaseAmount: {
           type: Number,
           required: true,
-          default: 0
+          default: 0,
         },
       },
     ],

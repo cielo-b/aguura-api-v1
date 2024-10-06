@@ -1,6 +1,6 @@
 const express = require("express");
 const auth = require("../../middlewares/auth");
-const { orderController } = require("../../controllers");
+const {orderController} = require("../../controllers");
 
 const router = express.Router();
 
@@ -44,6 +44,7 @@ router.post("/new", auth("user"), orderController.newOrder);
 router.patch("/edit-order", auth("user"), orderController.editOrder);
 router.get("/my-orders", auth("user"), orderController.myOrders);
 router.get("/all-orders", auth("admin"), orderController.adminOrders);
+router.patch('/cancel-order', auth(['user', 'admin', 'distributor']), orderController.cancelOrder);
 
 module.exports = router;
 
@@ -528,3 +529,44 @@ module.exports = router;
  *       500:
  *         description: Internal Server Error
  */
+
+
+// /**
+//  * @swagger
+//  * /order/cancel-order:
+//  *  patch:
+//  *   summary: Cancel an order
+//  *   description: Marks an order as cancelled
+//  *   tags: [Order]
+//  *   security:
+//  *    - bearerAuth: []
+//  *   requestBody:
+//  *     required: true
+//  *     content:
+//  *     application/json:
+//  *      schema:
+//  *        type: object
+//  *       properties:
+//  *          orderId:
+//  *         type: string
+//  *         example: '60c72b2f9b1d4b3b88e3c1a1'
+//  *   responses:
+//  *    200:
+//  *      description: Order cancelled successfully
+//  *      content:
+//  *        application/json:
+//  *          schema:
+//  *            type: object
+//  *              properties:
+//  *               message:
+//  *                 type: string
+//  *                 example: 'Order cancelled successfully'
+//  *    400:
+//  *      description: Bad request
+//  *    401:
+//  *      description: Unauthorized
+//  *    403:
+//  *      description: Forbidden
+//  *    500:
+//  *      description: Internal Server Error
+//  */
