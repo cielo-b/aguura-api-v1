@@ -57,7 +57,6 @@ const register = catchAsync(async (req, res) => {
 
 const login = catchAsync(async (req, res) => {
   const { phone, password } = req.body;
-  console.log(phone, password);
   const user = await authService.loginWithPhoneAndPassword(phone, password);
 
   // const _tokens = await Token.find({user: user.id});
