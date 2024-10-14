@@ -80,58 +80,58 @@ const editProduct = catchAsync(async (req, res) => {
   await product.save({ validateBeforeSave: false });
 
   // update ebm product
-  const inventoryProduct = await InventoryProduct.findById(
-    product.inventoryProduct,
-  );
+  // const inventoryProduct = await InventoryProduct.findById(
+  //   product.inventoryProduct,
+  // );
 
-  if (!inventoryProduct) {
-    return res.status(httpStatus.BAD_REQUEST).json({
-      success: false,
-      message: "Inventory Product Not Found To Update EBM.",
-    });
-  }
+  // if (!inventoryProduct) {
+  //   return res.status(httpStatus.BAD_REQUEST).json({
+  //     success: false,
+  //     message: "Inventory Product Not Found To Update EBM.",
+  //   });
+  // }
 
-  const data = {
-    tin: user.tin,
-    bhfId: user.bhfId,
-    itemCd: inventoryProduct.itemCd,
-    itemClsCd: inventoryProduct.itemClsCd,
-    itemTyCd: inventoryProduct.itemTyCd,
-    itemNm: inventoryProduct.name,
-    itemStdNm: null,
-    orgnNatCd: "RW",
-    pkgUnitCd: inventoryProduct.pkgUnitCd,
-    qtyUnitCd: inventoryProduct.qtyUnitCd,
-    taxTyCd: inventoryProduct.taxTyCd,
-    btchNo: null,
-    bcd: null,
-    dftPrc: price,
-    grpPrcL1: null,
-    grpPrcL2: null,
-    grpPrcL3: null,
-    grpPrcL4: null,
-    grpPrcL5: null,
-    addInfo: null,
-    sftyQty: null,
-    isrcAplcbYn: "N",
-    useYn: "Y",
-    regrNm: entity.name,
-    regrId: entity.id.slice(0, 20),
-    modrNm: user.fullName,
-    modrId: user.id.slice(0, 20),
-  };
+  // const data = {
+  //   tin: user.tin,
+  //   bhfId: user.bhfId,
+  //   itemCd: inventoryProduct.itemCd,
+  //   itemClsCd: inventoryProduct.itemClsCd,
+  //   itemTyCd: inventoryProduct.itemTyCd,
+  //   itemNm: inventoryProduct.name,
+  //   itemStdNm: null,
+  //   orgnNatCd: "RW",
+  //   pkgUnitCd: inventoryProduct.pkgUnitCd,
+  //   qtyUnitCd: inventoryProduct.qtyUnitCd,
+  //   taxTyCd: inventoryProduct.taxTyCd,
+  //   btchNo: null,
+  //   bcd: null,
+  //   dftPrc: price,
+  //   grpPrcL1: null,
+  //   grpPrcL2: null,
+  //   grpPrcL3: null,
+  //   grpPrcL4: null,
+  //   grpPrcL5: null,
+  //   addInfo: null,
+  //   sftyQty: null,
+  //   isrcAplcbYn: "N",
+  //   useYn: "Y",
+  //   regrNm: entity.name,
+  //   regrId: entity.id.slice(0, 20),
+  //   modrNm: user.fullName,
+  //   modrId: user.id.slice(0, 20),
+  // };
 
-  console.log(data);
-  const response = await ebmService.saveItems(data);
+  // console.log(data);
+  // const response = await ebmService.saveItems(data);
 
-  console.log(response);
+  // console.log(response);
 
-  if (response.resultCd !== "00") {
-    return res.status(httpStatus.BAD_REQUEST).json({
-      success: true,
-      message: response.resultMsg,
-    });
-  }
+  // if (response.resultCd !== "00") {
+  //   return res.status(httpStatus.BAD_REQUEST).json({
+  //     success: true,
+  //     message: response.resultMsg,
+  //   });
+  // }
 
   return res.status(httpStatus.OK).json({
     success: true,
